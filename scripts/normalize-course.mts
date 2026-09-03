@@ -1345,7 +1345,7 @@ function correctionEvidenceIncludesPage(
   pdfPage: number,
 ): boolean {
   return correction.sourceEvidence.some((evidence) =>
-    evidence.kind === 'lineSpans'
+    evidence.kind === 'pageLines'
       ? evidence.pdfPage === pdfPage
       : pdfPage >= evidence.pageRange[0] && pdfPage <= evidence.pageRange[1],
   );
@@ -2048,6 +2048,395 @@ function assertAppliedReplacement(
   }
 }
 
+type ReviewedListItemsAllowance =
+  | { kind: 'all' }
+  | { kind: 'indexes'; itemIndexes: Set<number> };
+
+type ReviewedMutationAllowlist = {
+  sectionTitleIds: Set<string>;
+  paragraphChildrenBlockIds: Set<string>;
+  listItemsByBlockId: Map<string, ReviewedListItemsAllowance>;
+  conceptChainStepsBlockIds: Set<string>;
+  formulaPayloadBlockIds: Set<string>;
+  removedBlockIds: Set<string>;
+};
+
+function registerUniqueMutationPath(
+  paths: Set<string>,
+  id: string,
+  description: string,
+): void {
+  if (paths.has(id)) fail(`Duplicate reviewed ${description} path ${id}`);
+  paths.add(id);
+}
+
+function buildReviewedMutationAllowlist(
+  corrections: readonly ReviewedCourseCorrection[],
+): ReviewedMutationAllowlist {
+  const allowlist: ReviewedMutationAllowlist = {
+    sectionTitleIds: new Set(),
+    paragraphChildrenBlockIds: new Set(),
+    listItemsByBlockId: new Map(),
+    conceptChainStepsBlockIds: new Set(),
+    formulaPayloadBlockIds: new Set(),
+    removedBlockIds: new Set(),
+  };
+
+  for (const correction of corrections) {
+    if (courseContentCorrectionOutcome(correction) !== 'applied') continue;
+    const { target } = correction;
+    switch (target.kind) {
+      case 'paragraph':
+        for (const patch of target.patches) {
+          registerUniqueMutationPath(
+            allowlist.paragraphChildrenBlockIds,
+            patch.blockId,
+            'paragraph.children',
+          );
+        }
+        break;
+      case 'list':
+        if (allowlist.listItemsByBlockId.has(target.blockId)) {
+          fail(`Duplicate reviewed list.items path ${target.blockId}`);
+        }
+        allowlist.listItemsByBlockId.set(target.blockId, { kind: 'all' });
+        break;
+      case 'listItem': {
+        const existing = allowlist.listItemsByBlockId.get(target.blockId);
+        if (existing?.kind === 'all') {
+          fail(`Conflicting reviewed list.items path ${target.blockId}`);
+        }
+        const allowance = existing ?? {
+          kind: 'indexes' as const,
+          itemIndexes: new Set<number>(),
+        };
+        if (allowance.itemIndexes.has(target.itemIndex)) {
+          fail(
+            `Duplicate reviewed list item path ${target.blockId}[${target.itemIndex}]`,
+          );
+        }
+        allowance.itemIndexes.add(target.itemIndex);
+        allowlist.listItemsByBlockId.set(target.blockId, allowance);
+        break;
+      }
+      case 'sectionTitle':
+        registerUniqueMutationPath(
+          allowlist.sectionTitleIds,
+          target.sectionId,
+          'section.title',
+        );
+        break;
+      case 'conceptChain':
+        registerUniqueMutationPath(
+          allowlist.conceptChainStepsBlockIds,
+          target.blockId,
+          'conceptChain.steps',
+        );
+        break;
+      case 'formulaAbsorption':
+        registerUniqueMutationPath(
+          allowlist.formulaPayloadBlockIds,
+          target.formulaBlockId,
+          'formula payload',
+        );
+        for (const blockId of target.absorbedBlockIds) {
+          registerUniqueMutationPath(
+            allowlist.removedBlockIds,
+            blockId,
+            'removed block',
+          );
+        }
+        break;
+      case 'formulaReference':
+      case 'excludedNavigation':
+      case 'sourceOnlyNoop':
+        fail(`${correction.correctionId} has no reviewed mutable path`);
+    }
+  }
+
+  for (const removedBlockId of allowlist.removedBlockIds) {
+    if (
+      allowlist.paragraphChildrenBlockIds.has(removedBlockId) ||
+      allowlist.listItemsByBlockId.has(removedBlockId) ||
+      allowlist.conceptChainStepsBlockIds.has(removedBlockId) ||
+      allowlist.formulaPayloadBlockIds.has(removedBlockId)
+    ) {
+      fail(`Removed block ${removedBlockId} also has a reviewed field path`);
+    }
+  }
+  return allowlist;
+}
+
+function assertSameStringSet(
+  actual: ReadonlySet<string>,
+  expected: ReadonlySet<string>,
+  description: string,
+): void {
+  if (!sameOrderedValues([...actual].sort(), [...expected].sort())) {
+    fail(`Independent correction projection missed ${description}`);
+  }
+}
+
+function reviewedInlineMarker(path: string): InlineNode[] {
+  return [{ type: 'text', value: `[[reviewed:${path}]]` }];
+}
+
+function projectUnreviewedCourseState(
+  rootsToProject: readonly SectionNode[],
+  allowlist: ReviewedMutationAllowlist,
+  expectedRemovedBlockCount: number,
+): string {
+  const projected = structuredClone(rootsToProject) as SectionNode[];
+  const seenSectionTitleIds = new Set<string>();
+  const seenParagraphBlockIds = new Set<string>();
+  const seenListBlockIds = new Set<string>();
+  const seenListItemPaths = new Set<string>();
+  const seenConceptChainBlockIds = new Set<string>();
+  const seenFormulaBlockIds = new Set<string>();
+  let removedBlockCount = 0;
+
+  const visitBlocks = (blocks: ContentBlock[]): void => {
+    for (let index = blocks.length - 1; index >= 0; index -= 1) {
+      if (allowlist.removedBlockIds.has(blocks[index].id)) {
+        blocks.splice(index, 1);
+        removedBlockCount += 1;
+      }
+    }
+
+    for (const block of blocks) {
+      if (allowlist.paragraphChildrenBlockIds.has(block.id)) {
+        if (block.type !== 'paragraph') {
+          fail(`Reviewed paragraph path ${block.id} changed type`);
+        }
+        block.children = reviewedInlineMarker(`${block.id}.children`);
+        seenParagraphBlockIds.add(block.id);
+      }
+
+      const listAllowance = allowlist.listItemsByBlockId.get(block.id);
+      if (listAllowance) {
+        if (block.type !== 'list') {
+          fail(`Reviewed list path ${block.id} changed type`);
+        }
+        seenListBlockIds.add(block.id);
+        if (listAllowance.kind === 'all') {
+          block.items = [reviewedInlineMarker(`${block.id}.items`)];
+        } else {
+          for (const itemIndex of listAllowance.itemIndexes) {
+            if (block.items[itemIndex] === undefined) {
+              fail(`Reviewed list path ${block.id}[${itemIndex}] is missing`);
+            }
+            block.items[itemIndex] = reviewedInlineMarker(
+              `${block.id}.items[${itemIndex}]`,
+            );
+            seenListItemPaths.add(`${block.id}:${itemIndex}`);
+          }
+        }
+      }
+
+      if (allowlist.conceptChainStepsBlockIds.has(block.id)) {
+        if (block.type !== 'conceptChain') {
+          fail(`Reviewed concept-chain path ${block.id} changed type`);
+        }
+        block.steps = [`[[reviewed:${block.id}.steps]]`];
+        seenConceptChainBlockIds.add(block.id);
+      }
+
+      if (allowlist.formulaPayloadBlockIds.has(block.id)) {
+        if (block.type !== 'formula') {
+          fail(`Reviewed formula path ${block.id} changed type`);
+        }
+        block.latex = `[[reviewed:${block.id}.latex]]`;
+        block.accessibleText = `[[reviewed:${block.id}.accessibleText]]`;
+        seenFormulaBlockIds.add(block.id);
+      }
+
+      if (block.type === 'callout') visitBlocks(block.blocks);
+      if (block.type === 'knowledgeCheck' && block.answer) {
+        visitBlocks(block.answer);
+      }
+    }
+  };
+
+  const visitSection = (section: SectionNode): void => {
+    if (allowlist.sectionTitleIds.has(section.id)) {
+      section.title = `[[reviewed:${section.id}.title]]`;
+      seenSectionTitleIds.add(section.id);
+    }
+    visitBlocks(section.blocks);
+    section.children.forEach(visitSection);
+  };
+  projected.forEach(visitSection);
+
+  const expectedListBlockIds = new Set(allowlist.listItemsByBlockId.keys());
+  const expectedListItemPaths = new Set(
+    [...allowlist.listItemsByBlockId].flatMap(([blockId, allowance]) =>
+      allowance.kind === 'indexes'
+        ? [...allowance.itemIndexes].map(
+            (itemIndex) => `${blockId}:${itemIndex}`,
+          )
+        : [],
+    ),
+  );
+  assertSameStringSet(
+    seenSectionTitleIds,
+    allowlist.sectionTitleIds,
+    'section-title paths',
+  );
+  assertSameStringSet(
+    seenParagraphBlockIds,
+    allowlist.paragraphChildrenBlockIds,
+    'paragraph paths',
+  );
+  assertSameStringSet(seenListBlockIds, expectedListBlockIds, 'list paths');
+  assertSameStringSet(
+    seenListItemPaths,
+    expectedListItemPaths,
+    'list-item paths',
+  );
+  assertSameStringSet(
+    seenConceptChainBlockIds,
+    allowlist.conceptChainStepsBlockIds,
+    'concept-chain paths',
+  );
+  assertSameStringSet(
+    seenFormulaBlockIds,
+    allowlist.formulaPayloadBlockIds,
+    'formula paths',
+  );
+  if (removedBlockCount !== expectedRemovedBlockCount) {
+    fail(
+      `Independent correction projection found ${removedBlockCount}/${expectedRemovedBlockCount} reviewed removals`,
+    );
+  }
+
+  return JSON.stringify(projected);
+}
+
+const REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS = [
+  {
+    spanId: 'p023-s00045',
+    oldBlockId: 'body-00374',
+    formulaBlockId: 'formula-math-p023-g001',
+  },
+  {
+    spanId: 'p023-s00046',
+    oldBlockId: 'body-00375',
+    formulaBlockId: 'formula-math-p023-g001',
+  },
+  {
+    spanId: 'p025-s00035',
+    oldBlockId: 'body-00417',
+    formulaBlockId: 'formula-math-p025-g005',
+  },
+  {
+    spanId: 'p025-s00036',
+    oldBlockId: 'body-00418',
+    formulaBlockId: 'formula-math-p025-g005',
+  },
+  {
+    spanId: 'p025-s00052',
+    oldBlockId: 'body-00425',
+    formulaBlockId: 'formula-math-p025-g007',
+  },
+  {
+    spanId: 'p025-s00053',
+    oldBlockId: 'body-00426',
+    formulaBlockId: 'formula-math-p025-g007',
+  },
+] as const;
+
+function assertReviewedAbsorptionTargets(
+  corrections: readonly ReviewedCourseCorrection[],
+): void {
+  const actual = corrections
+    .flatMap(({ target }) => {
+      if (target.kind !== 'formulaAbsorption') return [];
+      const { formulaBlockId } = target;
+      return target.absorbedBlockIds.map(
+        (oldBlockId) => `${oldBlockId}\u0000${formulaBlockId}`,
+      );
+    })
+    .sort();
+  const expected = REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS.map(
+    ({ oldBlockId, formulaBlockId }) => `${oldBlockId}\u0000${formulaBlockId}`,
+  ).sort();
+  if (!sameOrderedValues(actual, expected)) {
+    fail('Reviewed formula-absorption target ownership changed');
+  }
+}
+
+function assertReviewedAbsorptionAssignmentsBeforeMutation(
+  assignments: readonly { spanId: string; blockId: string }[],
+): void {
+  const reviewedSpanIds = new Set<string>(
+    REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS.map(({ spanId }) => spanId),
+  );
+  const absorbedBlockIds = new Set<string>(
+    REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS.map(({ oldBlockId }) => oldBlockId),
+  );
+  const actual = assignments
+    .filter(
+      (assignment) =>
+        reviewedSpanIds.has(assignment.spanId) ||
+        absorbedBlockIds.has(assignment.blockId),
+    )
+    .map(({ spanId, blockId }) => `${spanId}\u0000${blockId}`)
+    .sort();
+  const expected = REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS.map(
+    ({ spanId, oldBlockId }) => `${spanId}\u0000${oldBlockId}`,
+  ).sort();
+  if (!sameOrderedValues(actual, expected)) {
+    fail('Reviewed absorbed source assignment ownership changed');
+  }
+}
+
+function expectedReviewedAbsorptionAssignmentsAfterMutation(
+  assignments: readonly { spanId: string; blockId: string }[],
+): { spanId: string; blockId: string }[] {
+  const reviewedOwnerBySpanId = new Map<
+    string,
+    (typeof REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS)[number]
+  >(
+    REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS.map((owner) => [owner.spanId, owner]),
+  );
+  return assignments.map((assignment) => {
+    const reviewedOwner = reviewedOwnerBySpanId.get(assignment.spanId);
+    if (!reviewedOwner) return { ...assignment };
+    if (assignment.blockId !== reviewedOwner.oldBlockId) {
+      fail(`Reviewed absorbed source assignment ${assignment.spanId} drifted`);
+    }
+    return {
+      spanId: assignment.spanId,
+      blockId: reviewedOwner.formulaBlockId,
+    };
+  });
+}
+
+function assertReviewedAbsorptionAssignmentsAfterMutation(
+  assignments: readonly { spanId: string; blockId: string }[],
+): void {
+  const absorbedBlockIds = new Set<string>(
+    REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS.map(({ oldBlockId }) => oldBlockId),
+  );
+  if (
+    assignments.some((assignment) =>
+      absorbedBlockIds.has(assignment.blockId),
+    ) ||
+    REVIEWED_ABSORPTION_ASSIGNMENT_OWNERS.some(
+      ({ spanId, formulaBlockId }) =>
+        assignments.filter(
+          (assignment) =>
+            assignment.spanId === spanId &&
+            assignment.blockId === formulaBlockId,
+        ).length !== 1 ||
+        assignments.filter((assignment) => assignment.spanId === spanId)
+          .length !== 1,
+    )
+  ) {
+    fail('Reviewed absorbed source assignment redirects changed');
+  }
+}
+
 const courseCorrectionIndex = assertCourseContentCorrectionLedger(
   raw as SourceAudit,
   reviewLedger.decisions,
@@ -2075,52 +2464,39 @@ const correctionPreflights = COURSE_CONTENT_CORRECTIONS.map((correction) =>
     courseCorrectionIndex.formulaByBlockId,
   ),
 );
-const expectedAbsorbedAssignmentOwners = new Map<string, string>();
-for (const correction of COURSE_CONTENT_CORRECTIONS) {
-  if (correction.target.kind !== 'formulaAbsorption') continue;
-  const absorbedIds = new Set(correction.target.absorbedBlockIds);
-  const absorbedAssignments = assigned.filter((assignment) =>
-    absorbedIds.has(assignment.blockId),
-  );
-  if (absorbedAssignments.length === 0) {
-    fail(`${correction.correctionId} has no absorbed source assignments`);
-  }
-  for (const assignment of absorbedAssignments) {
-    if (expectedAbsorbedAssignmentOwners.has(assignment.spanId)) {
-      fail(`Absorbed source span ${assignment.spanId} is guarded twice`);
-    }
-    expectedAbsorbedAssignmentOwners.set(
-      assignment.spanId,
-      correction.target.formulaBlockId,
-    );
-  }
-}
-if (expectedAbsorbedAssignmentOwners.size !== 6) {
-  fail('Expected exactly six absorbed paragraph source assignments');
-}
-
-const expectedCorrectionRoots = structuredClone(courseCorrectionRoots);
-const expectedCorrectionSections = indexSectionTree(expectedCorrectionRoots);
-for (const correction of COURSE_CONTENT_CORRECTIONS) {
-  applyCourseCorrection(correction, expectedCorrectionSections);
-}
+const reviewedMutationAllowlist = buildReviewedMutationAllowlist(
+  COURSE_CONTENT_CORRECTIONS,
+);
+assertReviewedAbsorptionTargets(COURSE_CONTENT_CORRECTIONS);
+assertReviewedAbsorptionAssignmentsBeforeMutation(assigned);
+const expectedAssignmentsAfterCorrections =
+  expectedReviewedAbsorptionAssignmentsAfterMutation(assigned);
+const unreviewedCourseStateBefore = projectUnreviewedCourseState(
+  courseCorrectionRoots,
+  reviewedMutationAllowlist,
+  6,
+);
 for (const correction of COURSE_CONTENT_CORRECTIONS) {
   applyCourseCorrection(correction, correctionSectionById, assigned);
 }
-if (
-  JSON.stringify(courseCorrectionRoots) !==
-  JSON.stringify(expectedCorrectionRoots)
-) {
+const unreviewedCourseStateAfter = projectUnreviewedCourseState(
+  courseCorrectionRoots,
+  reviewedMutationAllowlist,
+  0,
+);
+if (unreviewedCourseStateAfter !== unreviewedCourseStateBefore) {
   fail('Course corrections changed content outside the reviewed targets');
+}
+if (
+  JSON.stringify(assigned) !==
+  JSON.stringify(expectedAssignmentsAfterCorrections)
+) {
+  fail('Course corrections changed assignments outside reviewed redirects');
 }
 
 const postCorrectionSections = indexSectionTree(courseCorrectionRoots);
 const postCorrectionBlocks = indexCourseBlocks(postCorrectionSections);
-const absorbedParagraphIds = COURSE_CONTENT_CORRECTIONS.flatMap((correction) =>
-  correction.target.kind === 'formulaAbsorption'
-    ? [...correction.target.absorbedBlockIds]
-    : [],
-);
+const absorbedParagraphIds = [...reviewedMutationAllowlist.removedBlockIds];
 if (
   !sameOrderedValues(
     [...postCorrectionSections.keys()],
@@ -2131,22 +2507,11 @@ if (
     blockIdsBeforeCorrections.filter(
       (blockId) => !absorbedParagraphIds.includes(blockId),
     ),
-  ) ||
-  assigned.some((assignment) =>
-    absorbedParagraphIds.includes(assignment.blockId),
-  ) ||
-  [...expectedAbsorbedAssignmentOwners].some(
-    ([spanId, formulaBlockId]) =>
-      assigned.filter(
-        (assignment) =>
-          assignment.spanId === spanId && assignment.blockId === formulaBlockId,
-      ).length !== 1,
   )
 ) {
-  fail(
-    'Course correction IDs or absorbed source assignments changed unexpectedly',
-  );
+  fail('Course correction section or block IDs changed unexpectedly');
 }
+assertReviewedAbsorptionAssignmentsAfterMutation(assigned);
 for (const preflight of correctionPreflights) {
   assertAppliedReplacement(
     preflight,

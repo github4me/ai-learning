@@ -37,39 +37,28 @@ export type TableCorrection = LineRangeCorrection & {
   rows: string[][];
 };
 
-export type LineSpanSourceEvidence = {
-  kind: 'lineSpans';
+export type PageLinesSourceEvidence = {
+  kind: 'pageLines';
   pdfPage: number;
-  lineIndexes: readonly number[];
-  sourceSpanIds: readonly string[];
+  lineIndexes: number[];
+  sourceSpanIds: string[];
   sourceChecksum: string;
   sourceGeometryChecksum: string;
 };
 
-export type SelectedSpanSourceEvidence = {
-  kind: 'selectedSpans';
-  pageRange: readonly [number, number];
-  lineIndexesByPage: readonly {
-    pdfPage: number;
-    lineIndexes: readonly number[];
-  }[];
-  predicate: {
-    field: 'textRaw';
-    operation: 'includes';
-    value: '\u2011';
-  };
-  sourceSpanIds: readonly string[];
-  sourceSpanIdChecksum: string;
-  expectedSpanCount: number;
-  expectedLineCount: number;
-  expectedOccurrenceCount: number;
+export type CrossPageSelectorSourceEvidence = {
+  kind: 'crossPageSelector';
+  pageRange: [161, 169];
+  selector: 'textRaw-includes-U+2011';
+  lineIndexesByPage: Record<string, number[]>;
+  sourceSpanIds: string[];
   sourceChecksum: string;
   sourceGeometryChecksum: string;
 };
 
 export type SourceEvidence =
-  | LineSpanSourceEvidence
-  | SelectedSpanSourceEvidence;
+  | PageLinesSourceEvidence
+  | CrossPageSelectorSourceEvidence;
 
 export type ParagraphPatch = {
   sectionId: string;
@@ -213,12 +202,12 @@ function lineEvidence(
   sourceSpanIds: readonly string[],
   sourceChecksum: string,
   sourceGeometryChecksum: string,
-): LineSpanSourceEvidence {
+): PageLinesSourceEvidence {
   return {
-    kind: 'lineSpans',
+    kind: 'pageLines',
     pdfPage,
-    lineIndexes,
-    sourceSpanIds,
+    lineIndexes: [...lineIndexes],
+    sourceSpanIds: [...sourceSpanIds],
     sourceChecksum,
     sourceGeometryChecksum,
   };
@@ -1211,33 +1200,33 @@ const CC25_SOURCE_SPAN_IDS = [
   'p169-s00298',
 ];
 
-const CC25_SOURCE_EVIDENCE: SelectedSpanSourceEvidence = {
-  kind: 'selectedSpans',
-  pageRange: [161, 169],
-  lineIndexesByPage: [
-    { pdfPage: 161, lineIndexes: [0, 1, 4, 5, 25, 41, 49] },
-    { pdfPage: 162, lineIndexes: [3, 5, 11, 14, 28, 30, 49, 50] },
-    { pdfPage: 163, lineIndexes: [3, 5, 13, 21, 24, 30, 35] },
-    { pdfPage: 164, lineIndexes: [1, 12, 28, 41, 49, 51, 53] },
-    { pdfPage: 165, lineIndexes: [1, 4, 6, 12, 20, 30, 38] },
-    { pdfPage: 166, lineIndexes: [1, 29, 42] },
-    { pdfPage: 167, lineIndexes: [4, 6, 9] },
-    { pdfPage: 168, lineIndexes: [45, 47] },
-    {
-      pdfPage: 169,
-      lineIndexes: [
-        14, 18, 20, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
-        39, 40, 41, 47, 48, 49, 50, 51, 52, 53, 56,
-      ],
-    },
+const CC25_LINE_INDEXES_BY_PAGE = {
+  p161: [0, 1, 4, 5, 25, 41, 49],
+  p162: [3, 5, 11, 14, 28, 30, 49, 50],
+  p163: [3, 5, 13, 21, 24, 30, 35],
+  p164: [1, 12, 28, 41, 49, 51, 53],
+  p165: [1, 4, 6, 12, 20, 30, 38],
+  p166: [1, 29, 42],
+  p167: [4, 6, 9],
+  p168: [45, 47],
+  p169: [
+    14, 18, 20, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+    40, 41, 47, 48, 49, 50, 51, 52, 53, 56,
   ],
-  predicate: { field: 'textRaw', operation: 'includes', value: '\u2011' },
+};
+
+const CC25_SOURCE_SPAN_ID_CHECKSUM =
+  '704586b0ec112462218d592f21a8b1e064312aa41682c02a87e77dc4b1ddb1b3';
+const CC25_EXPECTED_SPAN_COUNT = 75;
+const CC25_EXPECTED_LINE_COUNT = 73;
+const CC25_EXPECTED_OCCURRENCE_COUNT = 129;
+
+const CC25_SOURCE_EVIDENCE: CrossPageSelectorSourceEvidence = {
+  kind: 'crossPageSelector',
+  pageRange: [161, 169],
+  selector: 'textRaw-includes-U+2011',
+  lineIndexesByPage: CC25_LINE_INDEXES_BY_PAGE,
   sourceSpanIds: CC25_SOURCE_SPAN_IDS,
-  sourceSpanIdChecksum:
-    '704586b0ec112462218d592f21a8b1e064312aa41682c02a87e77dc4b1ddb1b3',
-  expectedSpanCount: 75,
-  expectedLineCount: 73,
-  expectedOccurrenceCount: 129,
   sourceChecksum:
     'd738e50f29670ec57f26f1f33999608dfd0ea7abe6f19ea0d79b3200dcb29312',
   sourceGeometryChecksum:
@@ -1841,16 +1830,39 @@ export function courseContentCorrectionOutcome(
   return 'applied';
 }
 
-export function isLineSpanSourceEvidence(
+export function isPageLinesSourceEvidence(
   evidence: SourceEvidence,
-): evidence is LineSpanSourceEvidence {
-  return evidence.kind === 'lineSpans';
+): evidence is PageLinesSourceEvidence {
+  return evidence.kind === 'pageLines';
 }
 
-function assertLineSpanEvidence(
-  evidence: LineSpanSourceEvidence,
+export function isCrossPageSelectorSourceEvidence(
+  evidence: SourceEvidence,
+): evidence is CrossPageSelectorSourceEvidence {
+  return evidence.kind === 'crossPageSelector';
+}
+
+function hasExactKeys(value: object, expectedKeys: readonly string[]): boolean {
+  const actualKeys = Object.keys(value).sort();
+  return sameValues(actualKeys, [...expectedKeys].sort());
+}
+
+function assertPageLinesEvidence(
+  evidence: PageLinesSourceEvidence,
   pagesByNumber: ReadonlyMap<number, SourceAudit['pages'][number]>,
 ): void {
+  if (
+    !hasExactKeys(evidence, [
+      'kind',
+      'pdfPage',
+      'lineIndexes',
+      'sourceSpanIds',
+      'sourceChecksum',
+      'sourceGeometryChecksum',
+    ])
+  ) {
+    failCorrection(`page ${evidence.pdfPage} evidence wire shape changed`);
+  }
   const page =
     pagesByNumber.get(evidence.pdfPage) ??
     failCorrection(`missing source page ${evidence.pdfPage}`);
@@ -1884,33 +1896,51 @@ function selectedLineIndexes(
   sourceSpanIds: ReadonlySet<string>,
   firstPage: number,
   lastPage: number,
-): { pdfPage: number; lineIndexes: number[] }[] {
-  return audit.pages
-    .filter((page) => page.pdfPage >= firstPage && page.pdfPage <= lastPage)
-    .map((page) => ({
-      pdfPage: page.pdfPage,
-      lineIndexes: page.lines
-        .map((line, lineIndex) =>
-          line.spanIds.some((spanId) => sourceSpanIds.has(spanId))
-            ? lineIndex
-            : -1,
-        )
-        .filter((lineIndex) => lineIndex >= 0),
-    }))
-    .filter(({ lineIndexes }) => lineIndexes.length > 0);
+): Record<string, number[]> {
+  return Object.fromEntries(
+    audit.pages
+      .filter((page) => page.pdfPage >= firstPage && page.pdfPage <= lastPage)
+      .map((page) => ({
+        pdfPage: page.pdfPage,
+        lineIndexes: page.lines
+          .map((line, lineIndex) =>
+            line.spanIds.some((spanId) => sourceSpanIds.has(spanId))
+              ? lineIndex
+              : -1,
+          )
+          .filter((lineIndex) => lineIndex >= 0),
+      }))
+      .filter(({ lineIndexes }) => lineIndexes.length > 0)
+      .map(({ pdfPage, lineIndexes }) => [`p${pdfPage}`, lineIndexes]),
+  );
 }
 
-function assertSelectedSpanEvidence(
-  evidence: SelectedSpanSourceEvidence,
+function assertCrossPageSelectorEvidence(
+  evidence: CrossPageSelectorSourceEvidence,
   audit: SourceAudit,
 ): void {
+  if (
+    !hasExactKeys(evidence, [
+      'kind',
+      'pageRange',
+      'selector',
+      'lineIndexesByPage',
+      'sourceSpanIds',
+      'sourceChecksum',
+      'sourceGeometryChecksum',
+    ]) ||
+    evidence.pageRange.length !== 2 ||
+    evidence.pageRange[0] !== 161 ||
+    evidence.pageRange[1] !== 169 ||
+    evidence.selector !== 'textRaw-includes-U+2011'
+  ) {
+    failCorrection('CC-25 cross-page selector wire shape changed');
+  }
   const [firstPage, lastPage] = evidence.pageRange;
   const spans = audit.pages
     .filter((page) => page.pdfPage >= firstPage && page.pdfPage <= lastPage)
     .flatMap((page) =>
-      page.spans.filter((span) =>
-        span[evidence.predicate.field].includes(evidence.predicate.value),
-      ),
+      page.spans.filter((span) => span.textRaw.includes('\u2011')),
     );
   const sourceSpanIds = spans.map((span) => span.id);
   const lineIndexesByPage = selectedLineIndexes(
@@ -1920,32 +1950,36 @@ function assertSelectedSpanEvidence(
     lastPage,
   );
   const occurrenceCount = spans.reduce(
-    (count, span) =>
-      count + span.textRaw.split(evidence.predicate.value).length - 1,
+    (count, span) => count + span.textRaw.split('\u2011').length - 1,
     0,
   );
 
   if (
-    evidence.predicate.field !== 'textRaw' ||
-    evidence.predicate.operation !== 'includes' ||
-    evidence.predicate.value !== '\u2011' ||
-    spans.length !== evidence.expectedSpanCount ||
-    lineIndexesByPage.reduce(
-      (count, page) => count + page.lineIndexes.length,
+    spans.length !== CC25_EXPECTED_SPAN_COUNT ||
+    Object.values(lineIndexesByPage).reduce(
+      (count, lineIndexes) => count + lineIndexes.length,
       0,
-    ) !== evidence.expectedLineCount ||
-    occurrenceCount !== evidence.expectedOccurrenceCount ||
+    ) !== CC25_EXPECTED_LINE_COUNT ||
+    occurrenceCount !== CC25_EXPECTED_OCCURRENCE_COUNT ||
     !sameValues(sourceSpanIds, evidence.sourceSpanIds) ||
     courseContentCorrectionFingerprint(sourceSpanIds) !==
-      evidence.sourceSpanIdChecksum ||
+      CC25_SOURCE_SPAN_ID_CHECKSUM ||
     spanChecksum(spans) !== evidence.sourceChecksum ||
     formulaSourceGeometryChecksum(spans) !== evidence.sourceGeometryChecksum ||
     JSON.stringify(lineIndexesByPage) !==
       JSON.stringify(evidence.lineIndexesByPage)
   ) {
-    failCorrection('CC-25 selected-span source evidence changed');
+    failCorrection('CC-25 cross-page selector source evidence changed');
   }
 }
+
+const MULTI_PAGE_LINE_EVIDENCE_COUNTS = new Map<string, number>([
+  ['CC-06', 2],
+  ['CC-17', 2],
+  ['CC-19', 2],
+  ['CC-22', 2],
+  ['CC-23', 3],
+]);
 
 export function assertCourseCorrectionSourceEvidence(
   correction: ReviewedCourseCorrection,
@@ -1957,16 +1991,35 @@ export function assertCourseCorrectionSourceEvidence(
   if (correction.sourceEvidence.length === 0) {
     failCorrection(`${correction.correctionId} has no source evidence`);
   }
+  const pageLinesEvidence = correction.sourceEvidence.filter(
+    isPageLinesSourceEvidence,
+  );
+  const crossPageSelectorEvidence = correction.sourceEvidence.filter(
+    isCrossPageSelectorSourceEvidence,
+  );
+  const isCrossPageCorrection = correction.correctionId === 'CC-25';
+  const expectedPageLinesCount = isCrossPageCorrection
+    ? 0
+    : (MULTI_PAGE_LINE_EVIDENCE_COUNTS.get(correction.correctionId) ?? 1);
+  if (
+    pageLinesEvidence.length !== expectedPageLinesCount ||
+    crossPageSelectorEvidence.length !== (isCrossPageCorrection ? 1 : 0) ||
+    correction.sourceEvidence.length !==
+      expectedPageLinesCount + (isCrossPageCorrection ? 1 : 0)
+  ) {
+    failCorrection(
+      `${correction.correctionId} source-evidence cardinality or kind changed`,
+    );
+  }
   for (const evidence of correction.sourceEvidence) {
-    if (isLineSpanSourceEvidence(evidence)) {
-      assertLineSpanEvidence(evidence, pagesByNumber);
+    if (isPageLinesSourceEvidence(evidence)) {
+      assertPageLinesEvidence(evidence, pagesByNumber);
+    } else if (isCrossPageSelectorSourceEvidence(evidence)) {
+      assertCrossPageSelectorEvidence(evidence, audit);
     } else {
-      if (correction.correctionId !== 'CC-25') {
-        failCorrection(
-          `${correction.correctionId} unexpectedly uses selected-span evidence`,
-        );
-      }
-      assertSelectedSpanEvidence(evidence, audit);
+      failCorrection(
+        `${correction.correctionId} has an unknown source-evidence kind`,
+      );
     }
   }
 
@@ -2151,6 +2204,17 @@ export function assertCourseContentCorrectionLedger(
     assertCourseCorrectionSourceEvidence(correction, audit);
   }
 
+  const allSourceEvidence = COURSE_CONTENT_CORRECTIONS.flatMap(
+    (correction) => correction.sourceEvidence,
+  );
+  if (
+    allSourceEvidence.filter(isPageLinesSourceEvidence).length !== 46 ||
+    allSourceEvidence.filter(isCrossPageSelectorSourceEvidence).length !== 1 ||
+    allSourceEvidence.length !== 47
+  ) {
+    failCorrection('expected exactly 46 page-lines and 1 cross-page evidence');
+  }
+
   if (
     categoryCounts.get('fidelity') !== 6 ||
     categoryCounts.get('inlineMath') !== 10 ||
@@ -2199,7 +2263,7 @@ export function assertCourseContentCorrectionLedger(
         correction.target.reason !== PRINTED_TOC_REASON ||
         correction.sourceProjection.kind !== 'excludedNavigation' ||
         correction.sourceEvidence.some(
-          (evidence) => evidence.kind !== 'lineSpans' || evidence.pdfPage !== 6,
+          (evidence) => evidence.kind !== 'pageLines' || evidence.pdfPage !== 6,
         ),
     ) ||
     !sourceOnlyCorrection ||
