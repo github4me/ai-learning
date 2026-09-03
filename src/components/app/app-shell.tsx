@@ -169,6 +169,10 @@ export function AppShell({
     () => setActiveSurface('navigation'),
     [],
   );
+  const closeActiveSurface = React.useCallback(
+    () => setActiveSurface('none'),
+    [],
+  );
   const showStudy = React.useCallback(() => setActiveSurface('study'), []);
   const showSettings = React.useCallback(() => {
     setActiveSurface('settings');
@@ -385,6 +389,7 @@ export function AppShell({
                   <StudyDrawer
                     activeSectionId={currentSectionId}
                     course={course}
+                    onSectionNavigate={closeActiveSurface}
                   />
                 </React.Suspense>
               )}

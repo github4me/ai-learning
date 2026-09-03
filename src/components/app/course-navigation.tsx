@@ -10,6 +10,7 @@ import type {
   SectionNode,
   WeekUnit,
 } from '@/src/content/schema';
+import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
 export type CourseNavigationProps = {
   course: Course;
@@ -62,9 +63,10 @@ function SectionLinks({
                 data-current={isCurrent || undefined}
                 href={`${unitPath(unit)}#${node.id}`}
                 aria-current={isCurrent ? 'location' : undefined}
-                onClick={() =>
-                  onNavigate?.({ unitId: unit.id, sectionId: node.id })
-                }
+                onClick={(event) => {
+                  requestSectionAnchorFocus(node.id, event);
+                  onNavigate?.({ unitId: unit.id, sectionId: node.id });
+                }}
               >
                 {isComplete ? (
                   <CheckCircle2 aria-hidden="true" />

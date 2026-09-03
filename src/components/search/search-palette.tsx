@@ -25,10 +25,7 @@ import {
   type CourseSearchIndex,
   type SearchResult,
 } from '@/src/search/course-search';
-import {
-  notifySearchResultNavigation,
-  requestSearchResultFocus,
-} from '@/src/search/search-focus';
+import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
 let cachedSearchIndex: CourseSearchIndex | undefined;
 
@@ -102,12 +99,11 @@ export default function SearchPalette({
   function selectResult(result: SearchResult) {
     const destination = destinationFor(result);
     flushPendingNotes();
-    requestSearchResultFocus(result.sectionId);
+    requestSectionAnchorFocus(result.sectionId);
     navigating.current = true;
     onOpenChange(false);
     window.requestAnimationFrame(() => {
       router.push(destination);
-      window.requestAnimationFrame(notifySearchResultNavigation);
     });
   }
 

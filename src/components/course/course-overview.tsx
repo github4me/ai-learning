@@ -13,6 +13,7 @@ import {
   selectContinueLocation,
   selectCourseProgress,
 } from '@/src/learning/learning-store';
+import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
 export function CourseOverview({
   course: injectedCourse,
@@ -81,7 +82,10 @@ export function CourseOverview({
       <a
         className="primary-action"
         href={destination}
-        onClick={flushPendingNotes}
+        onClick={(event) => {
+          requestSectionAnchorFocus(continueLocation.sectionId, event);
+          flushPendingNotes();
+        }}
       >
         {actionLabel}
       </a>

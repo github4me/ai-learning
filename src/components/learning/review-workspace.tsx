@@ -12,6 +12,7 @@ import { getCourse } from '@/src/content/course-runtime';
 import type { Course } from '@/src/content/schema';
 import { sectionReferenceMap } from '@/src/learning/course-tools';
 import type { LearningStore } from '@/src/learning/learning-store';
+import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
 type ReviewItem = {
   key: string;
@@ -69,10 +70,12 @@ export function LearningItemGroups({
   course = getCourse(),
   kinds = ['note', 'bookmark'],
   compact = false,
+  onNavigate,
 }: {
   course?: Course;
   kinds?: Array<'note' | 'bookmark'>;
   compact?: boolean;
+  onNavigate?: () => void;
 }) {
   const state = useLearningStore((current) => ({
     notesBySection: current.notesBySection,
@@ -134,7 +137,14 @@ export function LearningItemGroups({
                   {item.kind === 'note' ? 'Note' : 'Bookmark'}
                 </p>
                 {item.href ? (
-                  <a href={item.href} onClick={flushPendingNotes}>
+                  <a
+                    href={item.href}
+                    onClick={(event) => {
+                      requestSectionAnchorFocus(item.sectionId, event);
+                      flushPendingNotes();
+                      onNavigate?.();
+                    }}
+                  >
                     {item.title}
                   </a>
                 ) : (

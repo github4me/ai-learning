@@ -17,6 +17,7 @@ import {
 import { getCourse, getSection } from '@/src/content/course-runtime';
 import type { Course } from '@/src/content/schema';
 import { MAX_NOTE_CODE_POINTS } from '@/src/learning/storage-adapter';
+import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 import { LearningItemGroups } from './review-workspace';
 
 const UNDO_WINDOW_MS = 8_000;
@@ -24,9 +25,11 @@ const UNDO_WINDOW_MS = 8_000;
 function NotesPanel({
   sectionId,
   course,
+  onSectionNavigate,
 }: {
   sectionId?: string;
   course: Course;
+  onSectionNavigate?: () => void;
 }) {
   const storedText = useLearningStore((state) =>
     sectionId ? (state.notesBySection[sectionId]?.text ?? '') : '',
@@ -146,15 +149,22 @@ function NotesPanel({
         <p>Open a course section to write a note.</p>
       )}
       <h3>All notes</h3>
-      <LearningItemGroups course={course} kinds={['note']} compact />
+      <LearningItemGroups
+        course={course}
+        kinds={['note']}
+        compact
+        onNavigate={onSectionNavigate}
+      />
     </div>
   );
 }
 
 function GlossaryPanel({
   entries,
+  onSectionNavigate,
 }: {
   entries: readonly RuntimeGlossaryEntry[];
+  onSectionNavigate?: () => void;
 }) {
   const [query, setQuery] = React.useState('');
   const flushPendingNotes = useFlushPendingNotes();
@@ -192,7 +202,14 @@ function GlossaryPanel({
                   </span>
                 )}
                 {entry.definition}{' '}
-                <a href={entry.route} onClick={flushPendingNotes}>
+                <a
+                  href={entry.route}
+                  onClick={(event) => {
+                    requestSectionAnchorFocus(entry.sectionId, event);
+                    flushPendingNotes();
+                    onSectionNavigate?.();
+                  }}
+                >
                   Open source lesson
                 </a>
               </dd>
@@ -208,10 +225,12 @@ export function StudyDrawer({
   activeSectionId,
   course = getCourse(),
   glossary = GLOSSARY_ENTRIES,
+  onSectionNavigate,
 }: {
   activeSectionId?: string;
   course?: Course;
   glossary?: readonly RuntimeGlossaryEntry[];
+  onSectionNavigate?: () => void;
 }) {
   return (
     <Tabs defaultValue="notes" className="study-tabs">
@@ -225,13 +244,22 @@ export function StudyDrawer({
           key={activeSectionId ?? 'no-section'}
           sectionId={activeSectionId}
           course={course}
+          onSectionNavigate={onSectionNavigate}
         />
       </TabsContent>
       <TabsContent value="bookmarks">
-        <LearningItemGroups course={course} kinds={['bookmark']} compact />
+        <LearningItemGroups
+          course={course}
+          kinds={['bookmark']}
+          compact
+          onNavigate={onSectionNavigate}
+        />
       </TabsContent>
       <TabsContent value="glossary">
-        <GlossaryPanel entries={glossary} />
+        <GlossaryPanel
+          entries={glossary}
+          onSectionNavigate={onSectionNavigate}
+        />
       </TabsContent>
     </Tabs>
   );

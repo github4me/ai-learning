@@ -11,6 +11,7 @@ import { DataTable } from './data-table';
 import { FormulaBlock } from './formula-block';
 import { SourcePageLink } from './source-page-link';
 import { KnowledgeCheck } from '@/src/components/learning/knowledge-check';
+import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
 function assertNever(value: never): never {
   throw new Error(`Unsupported course content: ${JSON.stringify(value)}`);
@@ -45,6 +46,20 @@ function InlineMath({ value }: { value: string }) {
   );
 }
 
+function internalFragment(href: string): string | undefined {
+  const hashIndex = href.indexOf('#');
+  if (hashIndex < 0) return undefined;
+  const path = href.slice(0, hashIndex);
+  if (path && !/^\/?(?:week|appendix)\//u.test(path)) return undefined;
+  const fragment = href.slice(hashIndex + 1);
+  if (!fragment) return undefined;
+  try {
+    return decodeURIComponent(fragment);
+  } catch {
+    return fragment;
+  }
+}
+
 export function renderInline(nodes: InlineNode[]): ReactNode {
   return nodes.map((node, index) => {
     switch (node.type) {
@@ -71,12 +86,18 @@ export function renderInline(nodes: InlineNode[]): ReactNode {
         } catch {
           external = false;
         }
+        const sectionId = external ? undefined : internalFragment(href);
         return (
           <a
             key={index}
             href={href}
             target={external ? '_blank' : undefined}
             rel={external ? 'noreferrer' : undefined}
+            onClick={
+              sectionId
+                ? (event) => requestSectionAnchorFocus(sectionId, event)
+                : undefined
+            }
           >
             {children}
           </a>

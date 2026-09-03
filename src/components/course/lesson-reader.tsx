@@ -26,8 +26,9 @@ import {
 } from '@/src/learning/learning-store';
 import { sectionExcerpt } from '@/src/learning/course-tools';
 import {
-  consumeSearchResultFocus,
-  SEARCH_RESULT_FOCUS_EVENT,
+  consumeSectionFocus,
+  requestSectionAnchorFocus,
+  SECTION_FOCUS_EVENT,
 } from '@/src/search/search-focus';
 import { ContentRenderer } from './content-renderer';
 import { SourcePageLink } from './source-page-link';
@@ -252,6 +253,9 @@ export function LessonReader({ unitId }: { unitId: string }) {
   const currentUnitId = unit.id;
 
   React.useEffect(() => {
+    let outerFocusFrame: number | undefined;
+    let innerFocusFrame: number | undefined;
+
     function resolveHash() {
       const requested = decodeHash(window.location.hash);
       if (!requested) return;
@@ -269,10 +273,14 @@ export function LessonReader({ unitId }: { unitId: string }) {
 
       setActiveSectionId(section.id);
       document.getElementById(section.id)?.scrollIntoView({ block: 'start' });
-      consumeSearchResultFocus(section.id);
+      consumeSectionFocus(requested, section.id);
 
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
+      if (outerFocusFrame !== undefined)
+        window.cancelAnimationFrame(outerFocusFrame);
+      if (innerFocusFrame !== undefined)
+        window.cancelAnimationFrame(innerFocusFrame);
+      outerFocusFrame = window.requestAnimationFrame(() => {
+        innerFocusFrame = window.requestAnimationFrame(() => {
           const heading = document.getElementById(`${section.id}-heading`);
           heading?.focus({ preventScroll: true });
         });
@@ -281,10 +289,14 @@ export function LessonReader({ unitId }: { unitId: string }) {
 
     resolveHash();
     window.addEventListener('hashchange', resolveHash);
-    window.addEventListener(SEARCH_RESULT_FOCUS_EVENT, resolveHash);
+    window.addEventListener(SECTION_FOCUS_EVENT, resolveHash);
     return () => {
+      if (outerFocusFrame !== undefined)
+        window.cancelAnimationFrame(outerFocusFrame);
+      if (innerFocusFrame !== undefined)
+        window.cancelAnimationFrame(innerFocusFrame);
       window.removeEventListener('hashchange', resolveHash);
-      window.removeEventListener(SEARCH_RESULT_FOCUS_EVENT, resolveHash);
+      window.removeEventListener(SECTION_FOCUS_EVENT, resolveHash);
     };
   }, [currentUnitId]);
 
@@ -430,7 +442,10 @@ export function LessonReader({ unitId }: { unitId: string }) {
             <a
               className="lesson-previous"
               href={locationHref(previous, unit.id)}
-              onClick={flushNavigation}
+              onClick={(event) => {
+                requestSectionAnchorFocus(previous.section.id, event);
+                flushNavigation();
+              }}
             >
               <span>Previous lesson</span>
               <strong>Previous: {previous.section.title}</strong>
@@ -442,7 +457,10 @@ export function LessonReader({ unitId }: { unitId: string }) {
             <a
               className="lesson-next"
               href={locationHref(next, unit.id)}
-              onClick={flushNavigation}
+              onClick={(event) => {
+                requestSectionAnchorFocus(next.section.id, event);
+                flushNavigation();
+              }}
             >
               <span>Next lesson</span>
               <strong>Next: {next.section.title}</strong>

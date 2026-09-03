@@ -9,6 +9,7 @@ import { useLearningStore } from '@/src/components/providers';
 import { courseSectionPath } from '@/src/content/course-runtime';
 import type { InlineNode, SourceRef } from '@/src/content/schema';
 import { SourcePageLink } from '@/src/components/course/source-page-link';
+import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
 function formatReviewedDate(value: string): string {
   const date = new Date(value);
@@ -90,7 +91,11 @@ export function KnowledgeCheck({
           )}
         </>
       ) : reviewPath ? (
-        <a className="learning-button" href={reviewPath}>
+        <a
+          className="learning-button"
+          href={reviewPath}
+          onClick={(event) => requestSectionAnchorFocus(reviewSectionId, event)}
+        >
           Review the relevant lesson
         </a>
       ) : (
