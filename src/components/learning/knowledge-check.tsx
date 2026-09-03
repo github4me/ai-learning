@@ -10,6 +10,20 @@ import { courseSectionPath } from '@/src/content/course-runtime';
 import type { InlineNode, SourceRef } from '@/src/content/schema';
 import { SourcePageLink } from '@/src/components/course/source-page-link';
 
+function formatReviewedDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'an unknown date';
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
+  } catch {
+    return 'an unknown date';
+  }
+}
+
 export function KnowledgeCheck({
   questionId,
   prompt,
@@ -45,11 +59,7 @@ export function KnowledgeCheck({
   }
 
   const reviewedDate = attempt
-    ? new Intl.DateTimeFormat('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }).format(new Date(attempt.reviewedAt))
+    ? formatReviewedDate(attempt.reviewedAt)
     : undefined;
 
   return (

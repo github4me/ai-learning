@@ -62,6 +62,7 @@ export function ReadingSettings() {
   }>();
   const [resetOpen, setResetOpen] = React.useState(false);
   const [resetText, setResetText] = React.useState('');
+  const [resetMessage, setResetMessage] = React.useState('');
 
   function changePreference<K extends keyof LearningStateV1['preferences']>(
     key: K,
@@ -125,7 +126,7 @@ export function ReadingSettings() {
       setResetText('');
       setMessage('Learning data reset.');
     } else {
-      setMessage('Could not clear learning data. Nothing was reset.');
+      setResetMessage('Could not clear learning data. Nothing was reset.');
     }
   }
 
@@ -247,7 +248,10 @@ export function ReadingSettings() {
           <button
             type="button"
             className="learning-button danger"
-            onClick={() => setResetOpen(true)}
+            onClick={() => {
+              setResetMessage('');
+              setResetOpen(true);
+            }}
           >
             Reset learning data
           </button>
@@ -290,7 +294,10 @@ export function ReadingSettings() {
         open={resetOpen}
         onOpenChange={(open) => {
           setResetOpen(open);
-          if (!open) setResetText('');
+          if (!open) {
+            setResetText('');
+            setResetMessage('');
+          }
         }}
       >
         <AlertDialogContent>
@@ -305,9 +312,15 @@ export function ReadingSettings() {
           <input
             id="reset-confirmation"
             value={resetText}
-            onChange={(event) => setResetText(event.target.value)}
+            onChange={(event) => {
+              setResetText(event.target.value);
+              setResetMessage('');
+            }}
             autoComplete="off"
           />
+          <output className="learning-live" aria-live="assertive">
+            {resetMessage}
+          </output>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction

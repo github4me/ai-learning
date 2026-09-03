@@ -144,16 +144,30 @@ export function createStorageAdapter(
   };
   const persist = (state: LearningStateV1): PersistResult => {
     load();
+    const supersedesPendingNotes = pending !== undefined;
+    if (supersedesPendingNotes) {
+      clearTimer();
+      pending = undefined;
+    }
     const serialized = validate(state);
-    if (!serialized)
-      return {
+    if (!serialized) {
+      const recoverablePayload = JSON.stringify(state);
+      const result: PersistResult = {
         ok: false,
         reason: 'invalid',
-        recoverablePayload: JSON.stringify(state),
+        recoverablePayload,
       };
+      current = state;
+      recovery = recoverablePayload;
+      if (supersedesPendingNotes)
+        noteListeners.forEach((listener) => listener(result));
+      return result;
+    }
     const result = write(serialized);
     if (!result.ok) recovery = serialized;
     current = state;
+    if (supersedesPendingNotes)
+      noteListeners.forEach((listener) => listener(result));
     return result;
   };
   const queueNotes = (state: LearningStateV1): void => {

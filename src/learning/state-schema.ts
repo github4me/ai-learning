@@ -7,10 +7,12 @@ export const PreferenceSchema = z.object({
   focusMode: z.boolean(),
 }).strict();
 
+const IsoTimestampSchema = z.iso.datetime({ offset: true });
+
 const LocationSchema = z.object({ unitId: z.string(), sectionId: z.string() }).strict();
-const BookmarkSchema = z.object({ id: z.string(), sectionId: z.string(), excerpt: z.string(), createdAt: z.string() }).strict();
-const NoteSchema = z.object({ text: z.string(), updatedAt: z.string() }).strict();
-const QuizAttemptSchema = z.object({ status: z.enum(['understood', 'review']), reviewedAt: z.string() }).strict();
+const BookmarkSchema = z.object({ id: z.string(), sectionId: z.string(), excerpt: z.string(), createdAt: IsoTimestampSchema }).strict();
+const NoteSchema = z.object({ text: z.string(), updatedAt: IsoTimestampSchema }).strict();
+const QuizAttemptSchema = z.object({ status: z.enum(['understood', 'review']), reviewedAt: IsoTimestampSchema }).strict();
 
 export const LearningStateV1Schema = z.object({
   schemaVersion: z.literal(1),
@@ -22,7 +24,7 @@ export const LearningStateV1Schema = z.object({
   notesBySection: z.record(z.string(), NoteSchema),
   quizAttemptsByQuestion: z.record(z.string(), QuizAttemptSchema),
   preferences: PreferenceSchema,
-  updatedAt: z.string(),
+  updatedAt: IsoTimestampSchema,
 }).strict();
 
 export type LearningStateV1 = z.infer<typeof LearningStateV1Schema>;

@@ -19,7 +19,8 @@ import {
 import { CourseNavigation } from './course-navigation';
 import { UtilityBar, type CourseProgress } from './utility-bar';
 
-type ActiveModal = 'none' | 'navigation' | 'study' | 'settings' | 'search';
+type ModalSurface = 'navigation' | 'study' | 'settings' | 'search';
+type ActiveSurface = 'none' | ModalSurface | `compact:${string}`;
 
 const SearchPalette = React.lazy(
   () => import('@/src/components/search/search-palette'),
@@ -71,7 +72,9 @@ export function AppShell({
   studyContent,
 }: AppShellProps) {
   const course = injectedCourse ?? getCourse();
-  const [activeModal, setActiveModal] = React.useState<ActiveModal>('none');
+  const [activeSurface, setActiveSurface] =
+    React.useState<ActiveSurface>('none');
+  const compactReturnFocusRef = React.useRef<HTMLButtonElement>(null);
   const utilitySearchRef = React.useRef<HTMLButtonElement>(null);
   const searchReturnFocusRef = React.useRef<HTMLElement | null>(null);
   const flushPendingNotes = useFlushPendingNotes();
@@ -94,11 +97,14 @@ export function AppShell({
     (learningState
       ? selectCourseProgress(learningState, course)
       : { completed: 0, total: 0, percent: 0 });
-  const closeModal = () => setActiveModal('none');
-  const changeModal = (surface: Exclude<ActiveModal, 'none'>, open: boolean) =>
-    setActiveModal((current) =>
+  const closeSurface = () => setActiveSurface('none');
+  const changeModal = (surface: ModalSurface, open: boolean) =>
+    setActiveSurface((current) =>
       open ? surface : current === surface ? 'none' : current,
     );
+  const compactOpenUnitId = activeSurface.startsWith('compact:')
+    ? activeSurface.slice('compact:'.length)
+    : undefined;
   const handleNavigate = React.useCallback(
     (target: { unitId: string; sectionId?: string }) => {
       flushPendingNotes();
@@ -114,10 +120,10 @@ export function AppShell({
     },
     [flushPendingNotes],
   );
-  const showNavigation = () => setActiveModal('navigation');
-  const showStudy = () => setActiveModal('study');
+  const showNavigation = () => setActiveSurface('navigation');
+  const showStudy = () => setActiveSurface('study');
   const showSettings = () => {
-    setActiveModal('settings');
+    setActiveSurface('settings');
     onOpenSettings?.();
   };
   const showSearch = React.useCallback(() => {
@@ -131,7 +137,7 @@ export function AppShell({
       ? utilitySearchRef.current
       : (activeElement ?? utilitySearchRef.current);
     onOpenSearch?.();
-    setActiveModal('search');
+    setActiveSurface('search');
   }, [onOpenSearch]);
 
   React.useEffect(() => {
@@ -146,7 +152,7 @@ export function AppShell({
       event.preventDefault();
       searchReturnFocusRef.current = utilitySearchRef.current;
       onOpenSearch?.();
-      setActiveModal('search');
+      setActiveSurface('search');
     }
     document.addEventListener('keydown', handleSearchShortcut);
     return () => document.removeEventListener('keydown', handleSearchShortcut);
@@ -169,7 +175,7 @@ export function AppShell({
     function handleFocusEscape(event: KeyboardEvent) {
       if (
         event.key !== 'Escape' ||
-        activeModal !== 'none' ||
+        activeSurface !== 'none' ||
         !learningState?.preferences.focusMode
       )
         return;
@@ -178,7 +184,22 @@ export function AppShell({
     }
     document.addEventListener('keydown', handleFocusEscape);
     return () => document.removeEventListener('keydown', handleFocusEscape);
-  }, [activeModal, exitFocusMode, learningState?.preferences.focusMode]);
+  }, [activeSurface, exitFocusMode, learningState?.preferences.focusMode]);
+
+  React.useEffect(() => {
+    function handleCompactNavigationEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape' || !activeSurface.startsWith('compact:'))
+        return;
+      event.preventDefault();
+      setActiveSurface('none');
+      window.requestAnimationFrame(() =>
+        compactReturnFocusRef.current?.focus(),
+      );
+    }
+    document.addEventListener('keydown', handleCompactNavigationEscape);
+    return () =>
+      document.removeEventListener('keydown', handleCompactNavigationEscape);
+  }, [activeSurface]);
 
   return (
     <div className="app-shell">
@@ -202,13 +223,21 @@ export function AppShell({
         aria-label="Compact course workspace"
       >
         <CourseNavigation
-          key={currentUnitId ?? 'course-overview'}
           course={course}
           mode="compact"
           currentUnitId={currentUnitId}
           currentSectionId={currentSectionId}
           completedSectionIds={resolvedCompleted}
-          onNavigate={handleNavigate}
+          onNavigate={(target) => {
+            handleNavigate(target);
+            setActiveSurface('none');
+          }}
+          compactOpenUnitId={compactOpenUnitId}
+          onCompactOpenChange={(unitId, trigger) => {
+            compactReturnFocusRef.current = trigger;
+            setActiveSurface(unitId ? `compact:${unitId}` : 'none');
+            if (!unitId) window.requestAnimationFrame(() => trigger.focus());
+          }}
         />
       </aside>
       <section className="workspace">
@@ -239,10 +268,10 @@ export function AppShell({
         {focusMessage}
       </output>
       <Sheet
-        open={activeModal === 'navigation'}
+        open={activeSurface === 'navigation'}
         onOpenChange={(open) => changeModal('navigation', open)}
       >
-        {activeModal === 'navigation' && (
+        {activeSurface === 'navigation' && (
           <SheetContent
             side="left"
             className="mobile-sheet"
@@ -259,7 +288,7 @@ export function AppShell({
               completedSectionIds={resolvedCompleted}
               onNavigate={(target) => {
                 handleNavigate(target);
-                closeModal();
+                closeSurface();
               }}
               onBeforeNavigate={flushPendingNotes}
               onOpenSearch={showSearch}
@@ -268,10 +297,10 @@ export function AppShell({
         )}
       </Sheet>
       <Sheet
-        open={activeModal === 'study'}
+        open={activeSurface === 'study'}
         onOpenChange={(open) => changeModal('study', open)}
       >
-        {activeModal === 'study' && (
+        {activeSurface === 'study' && (
           <SheetContent
             side="right"
             className="study-sheet"
@@ -294,10 +323,10 @@ export function AppShell({
         )}
       </Sheet>
       <Sheet
-        open={activeModal === 'settings'}
+        open={activeSurface === 'settings'}
         onOpenChange={(open) => changeModal('settings', open)}
       >
-        {activeModal === 'settings' && (
+        {activeSurface === 'settings' && (
           <SheetContent
             side="right"
             className="study-sheet"
@@ -316,12 +345,12 @@ export function AppShell({
           </SheetContent>
         )}
       </Sheet>
-      {activeModal === 'search' && (
+      {activeSurface === 'search' && (
         <React.Suspense
           fallback={<output className="search-loading">Loading search…</output>}
         >
           <SearchPalette
-            open={activeModal === 'search'}
+            open={activeSurface === 'search'}
             onOpenChange={(open) => changeModal('search', open)}
             returnFocusRef={searchReturnFocusRef}
           />

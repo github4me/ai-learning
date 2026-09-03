@@ -20,6 +20,7 @@ import {
 import { flattenSections } from '@/src/content/load-course';
 import type { CourseUnit, SectionNode } from '@/src/content/schema';
 import {
+  isAppendixReadSection,
   selectCourseProgress,
   selectWeekProgress,
 } from '@/src/learning/learning-store';
@@ -80,7 +81,11 @@ function SectionActions({
   const isBookmarked = bookmarks.some(
     (bookmark) => bookmark.sectionId === section.id,
   );
-  const completable = section.children.length === 0 && section.isCompletable;
+  const completable =
+    (unit.kind === 'week' &&
+      section.children.length === 0 &&
+      section.isCompletable) ||
+    isAppendixReadSection(getCourse(), section.id);
 
   function handleCompletion() {
     const result = isComplete
@@ -227,6 +232,11 @@ export function LessonReader({ unitId }: { unitId: string }) {
   const unitProgress = useLearningStore((state) =>
     unit.kind === 'week' ? selectWeekProgress(state, unit) : undefined,
   );
+  const appendixRead = useLearningStore((state) =>
+    unit.kind === 'appendix'
+      ? state.appendixReadSectionIds.includes(unit.id)
+      : false,
+  );
   const flushPendingNotes = useFlushPendingNotes();
   const currentUnitId = unit.id;
 
@@ -368,7 +378,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
             aria-label={
               unit.kind === 'week'
                 ? `Week progress: ${unitProgress?.completed ?? 0} of ${unitProgress?.total ?? 0} sections (${unitProgress?.percent ?? 0}%). Course progress: ${courseProgress.completed} of ${courseProgress.total} sections (${courseProgress.percent}%).`
-                : 'Appendix reading progress is tracked separately from twelve-week course progress.'
+                : `Appendix status: ${appendixRead ? 'Read' : 'Not read'}. Appendix reading progress is tracked separately from twelve-week course progress.`
             }
           >
             {unit.kind === 'week' ? (
@@ -384,14 +394,22 @@ export function LessonReader({ unitId }: { unitId: string }) {
                 </span>
               </>
             ) : (
-              <strong>
-                Appendix reading is tracked separately from course progress.
-              </strong>
+              <>
+                <strong>
+                  Appendix status: {appendixRead ? 'Read' : 'Not read'}
+                </strong>
+                <span>
+                  Appendix reading is tracked separately from course progress.
+                </span>
+              </>
             )}
           </div>
         </header>
 
         <ContentRenderer blocks={unit.blocks} />
+        {unit.kind === 'appendix' && (
+          <SectionActions section={unit} unit={unit} />
+        )}
         {unit.children.map((section) => (
           <SectionStream key={section.id} section={section} unit={unit} />
         ))}

@@ -67,7 +67,9 @@ export function sectionExcerpt(section: SectionNode, limit = 180): string {
     .replace(/\s+/gu, ' ')
     .trim();
   const points = Array.from(text);
-  return points.length > limit ? `${points.slice(0, limit).join('')}…` : text;
+  return points.length > limit
+    ? `${points.slice(0, Math.max(0, limit - 1)).join('')}…`
+    : text;
 }
 
 export function sectionReferenceMap(

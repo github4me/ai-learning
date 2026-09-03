@@ -65,6 +65,25 @@ function leaves(root: SectionNode): SectionNode[] {
     (section) => section.children.length === 0 && section.isCompletable,
   );
 }
+
+export function appendixReadSections(course: Course): SectionNode[] {
+  return course.units
+    .filter((unit) => unit.kind === 'appendix')
+    .flatMap((unit) =>
+      [...flattenSections(unit)].filter(
+        (section) => section.children.length === 0,
+      ),
+    );
+}
+
+export function isAppendixReadSection(
+  course: Course,
+  sectionId: string,
+): boolean {
+  return appendixReadSections(course).some(
+    (section) => section.id === sectionId,
+  );
+}
 function courseLeaves(
   course: Course,
 ): Array<{ unitId: string; section: SectionNode }> {
@@ -150,7 +169,10 @@ export function createLearningStore({
         updatedAt: timestamp(),
       } as LearningStateV1;
       set(next);
-      return persist(next);
+      const result = persist(next);
+      if (!result.ok && result.recoverablePayload)
+        set({ recoveryPayload: result.recoverablePayload });
+      return result;
     };
     return {
       ...state,
@@ -158,10 +180,7 @@ export function createLearningStore({
       recoveryPayload: adapter.getRecovery(),
       flushPendingNotes: () => adapter.flushPendingNotes(),
       completeSection(sectionId) {
-        const isAppendix = course.units
-          .filter((unit) => unit.kind === 'appendix')
-          .flatMap(leaves)
-          .some((section) => section.id === sectionId);
+        const isAppendix = isAppendixReadSection(course, sectionId);
         return immediate((current) =>
           isAppendix
             ? {
