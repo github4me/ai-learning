@@ -1,7 +1,14 @@
 'use client';
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
 
-import { BookOpenText, FileText, Menu, Search, Settings2 } from 'lucide-react';
+import {
+  BookOpenText,
+  FileText,
+  Menu,
+  Search,
+  Settings2,
+  X,
+} from 'lucide-react';
 import type { Ref } from 'react';
 
 export type CourseProgress = {
@@ -19,6 +26,8 @@ export function UtilityBar({
   onOpenStudy,
   onBeforeNavigate,
   searchTriggerRef,
+  focusMode = false,
+  onExitFocusMode,
 }: {
   currentWeek?: number;
   courseProgress: CourseProgress;
@@ -28,6 +37,8 @@ export function UtilityBar({
   onOpenStudy: () => void;
   onBeforeNavigate?: () => void;
   searchTriggerRef?: Ref<HTMLButtonElement>;
+  focusMode?: boolean;
+  onExitFocusMode?: () => void;
 }) {
   const progressLabel = `Course progress: ${courseProgress.completed} of ${courseProgress.total} sections (${courseProgress.percent}%)`;
   return (
@@ -43,45 +54,55 @@ export function UtilityBar({
       <p className="current-week">
         {currentWeek ? `Current: Week ${currentWeek}` : 'Course overview'}
       </p>
-      <div className="utility-actions">
-        <button
-          ref={searchTriggerRef}
-          type="button"
-          className="utility-button"
-          aria-label="Search course"
-          onClick={onOpenSearch}
-        >
-          <Search aria-hidden="true" />
-        </button>
-        <span className="course-progress" aria-label={progressLabel}>
-          <BookOpenText aria-hidden="true" />
-          {courseProgress.percent}%
-        </span>
-        <a
-          className="utility-button"
-          aria-label="View original PDF"
-          href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf"
-          onClick={onBeforeNavigate}
-        >
-          <FileText aria-hidden="true" />
-        </a>
+      {focusMode ? (
         <button
           type="button"
-          className="utility-button"
-          aria-label="Reading settings"
-          onClick={onOpenSettings}
+          className="utility-button exit-focus-button"
+          onClick={onExitFocusMode}
         >
-          <Settings2 aria-hidden="true" />
+          <X aria-hidden="true" /> Exit focus mode
         </button>
-        <button
-          type="button"
-          className="utility-button"
-          aria-label="Open study tools"
-          onClick={onOpenStudy}
-        >
-          Study
-        </button>
-      </div>
+      ) : (
+        <div className="utility-actions">
+          <button
+            ref={searchTriggerRef}
+            type="button"
+            className="utility-button"
+            aria-label="Search course"
+            onClick={onOpenSearch}
+          >
+            <Search aria-hidden="true" />
+          </button>
+          <span className="course-progress" aria-label={progressLabel}>
+            <BookOpenText aria-hidden="true" />
+            {courseProgress.percent}%
+          </span>
+          <a
+            className="utility-button"
+            aria-label="View original PDF"
+            href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf"
+            onClick={onBeforeNavigate}
+          >
+            <FileText aria-hidden="true" />
+          </a>
+          <button
+            type="button"
+            className="utility-button"
+            aria-label="Reading settings"
+            onClick={onOpenSettings}
+          >
+            <Settings2 aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="utility-button"
+            aria-label="Open study tools"
+            onClick={onOpenStudy}
+          >
+            Study
+          </button>
+        </div>
+      )}
     </header>
   );
 }

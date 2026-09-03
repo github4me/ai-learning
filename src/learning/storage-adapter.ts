@@ -12,19 +12,31 @@ export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
 export type PersistResult =
   | { ok: true }
-  | { ok: false; reason: 'quota' | 'unavailable' | 'invalid'; recoverablePayload?: string };
+  | {
+      ok: false;
+      reason: 'quota' | 'unavailable' | 'invalid';
+      recoverablePayload?: string;
+    };
 export type ImportResult =
   | { ok: true; state: LearningStateV1 }
-  | { ok: false; reason: 'quota' | 'unavailable' | 'invalid'; recoverablePayload: string };
+  | {
+      ok: false;
+      reason: 'quota' | 'unavailable' | 'invalid';
+      recoverablePayload: string;
+    };
 
 export interface StorageAdapter {
   load(): LearningStateV1;
   persist(state: LearningStateV1): PersistResult;
+  previewImport(serialized: string): LearningStateV1;
   import(serialized: string): ImportResult;
   export(state: LearningStateV1): string;
   reset(): PersistResult;
   flushPendingNotes(): PersistResult;
   queueNotes(state: LearningStateV1): void;
+  subscribeNotePersistence(
+    listener: (result: PersistResult) => void,
+  ): () => void;
   getRecovery(): string | undefined;
 }
 
@@ -47,14 +59,19 @@ function isQuota(error: unknown): boolean {
 }
 
 function hasValidNotes(state: LearningStateV1): boolean {
-  return Object.values(state.notesBySection).every((note) => Array.from(note.text).length <= MAX_NOTE_CODE_POINTS);
+  return Object.values(state.notesBySection).every(
+    (note) => Array.from(note.text).length <= MAX_NOTE_CODE_POINTS,
+  );
 }
 
-export function createStorageAdapter(options: Options): HydratableStorageAdapter {
+export function createStorageAdapter(
+  options: Options,
+): HydratableStorageAdapter {
   let storage = options.storage;
   const aliases = options.aliases ?? {};
   let clock = options.clock ?? (() => new Date());
-  const initial = () => createInitialLearningState(options.contentVersion, clock().toISOString());
+  const initial = () =>
+    createInitialLearningState(options.contentVersion, clock().toISOString());
   let current = initial();
   let hydrated = false;
   let available = storage !== undefined;
@@ -62,6 +79,7 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
   let pending: LearningStateV1 | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let listening = false;
+  const noteListeners = new Set<(result: PersistResult) => void>();
 
   const clearTimer = () => {
     if (timer !== undefined) clearTimeout(timer);
@@ -73,12 +91,21 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
     return parsed.success ? JSON.stringify(parsed.data) : undefined;
   };
   const write = (serialized: string): PersistResult => {
-    if (!storage || !available) return { ok: false, reason: 'unavailable', recoverablePayload: serialized };
+    if (!storage || !available)
+      return {
+        ok: false,
+        reason: 'unavailable',
+        recoverablePayload: serialized,
+      };
     try {
       storage.setItem(LEARNING_STATE_KEY, serialized);
       return { ok: true };
     } catch (error) {
-      return { ok: false, reason: isQuota(error) ? 'quota' : 'unavailable', recoverablePayload: serialized };
+      return {
+        ok: false,
+        reason: isQuota(error) ? 'quota' : 'unavailable',
+        recoverablePayload: serialized,
+      };
     }
   };
   const load = (): LearningStateV1 => {
@@ -95,7 +122,11 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
     }
     if (!serialized) return current;
     try {
-      current = parseLearningState(JSON.parse(serialized), options.contentVersion, aliases);
+      current = parseLearningState(
+        JSON.parse(serialized),
+        options.contentVersion,
+        aliases,
+      );
     } catch {
       recovery = serialized;
       current = initial();
@@ -107,12 +138,19 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
     if (!pending) return { ok: true };
     const candidate = pending;
     pending = undefined;
-    return persist(candidate);
+    const result = persist(candidate);
+    noteListeners.forEach((listener) => listener(result));
+    return result;
   };
   const persist = (state: LearningStateV1): PersistResult => {
     load();
     const serialized = validate(state);
-    if (!serialized) return { ok: false, reason: 'invalid', recoverablePayload: JSON.stringify(state) };
+    if (!serialized)
+      return {
+        ok: false,
+        reason: 'invalid',
+        recoverablePayload: JSON.stringify(state),
+      };
     const result = write(serialized);
     if (!result.ok) recovery = serialized;
     current = state;
@@ -121,7 +159,31 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
   const queueNotes = (state: LearningStateV1): void => {
     pending = state;
     clearTimer();
-    timer = setTimeout(() => { flushPendingNotes(); }, 350);
+    timer = setTimeout(() => {
+      flushPendingNotes();
+    }, 350);
+  };
+
+  const previewImport = (serialized: string): LearningStateV1 => {
+    load();
+    if (new TextEncoder().encode(serialized).byteLength > MAX_IMPORT_BYTES)
+      throw new Error('Import exceeds 5 MiB limit');
+    let candidate: LearningStateV1;
+    try {
+      candidate = parseLearningState(
+        JSON.parse(serialized),
+        options.contentVersion,
+        aliases,
+      );
+    } catch (error) {
+      if (error instanceof Error && /unsupported/i.test(error.message))
+        throw error;
+      throw new Error(
+        `Invalid learning-state import: ${error instanceof Error ? error.message : 'unknown error'}`,
+      );
+    }
+    if (!validate(candidate)) throw new Error('Invalid learning-state import');
+    return candidate;
   };
 
   const handleVisibilityChange = () => {
@@ -156,18 +218,10 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
       return load();
     },
     persist,
+    previewImport,
     import(serialized) {
-      load();
-      if (new TextEncoder().encode(serialized).byteLength > MAX_IMPORT_BYTES) throw new Error('Import exceeds 5 MiB limit');
-      let candidate: LearningStateV1;
-      try {
-        candidate = parseLearningState(JSON.parse(serialized), options.contentVersion, aliases);
-      } catch (error) {
-        if (error instanceof Error && /unsupported/i.test(error.message)) throw error;
-        throw new Error(`Invalid learning-state import: ${error instanceof Error ? error.message : 'unknown error'}`);
-      }
-      const canonical = validate(candidate);
-      if (!canonical) throw new Error('Invalid learning-state import');
+      const candidate = previewImport(serialized);
+      const canonical = validate(candidate)!;
       const result = write(canonical);
       if (!result.ok) {
         recovery = canonical;
@@ -198,6 +252,10 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
     },
     flushPendingNotes,
     queueNotes,
+    subscribeNotePersistence(listener) {
+      noteListeners.add(listener);
+      return () => noteListeners.delete(listener);
+    },
     getRecovery: () => recovery,
     dispose,
   };

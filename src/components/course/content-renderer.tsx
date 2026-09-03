@@ -1,7 +1,6 @@
 import katex from 'katex';
 import { memo, type ReactNode } from 'react';
 
-import { courseSectionPath } from '@/src/content/course-runtime';
 import {
   isSafeContentHref,
   type ContentBlock,
@@ -11,6 +10,7 @@ import { CodeBlock } from './code-block';
 import { DataTable } from './data-table';
 import { FormulaBlock } from './formula-block';
 import { SourcePageLink } from './source-page-link';
+import { KnowledgeCheck } from '@/src/components/learning/knowledge-check';
 
 function assertNever(value: never): never {
   throw new Error(`Unsupported course content: ${JSON.stringify(value)}`);
@@ -164,36 +164,18 @@ function renderBlock(block: ContentBlock): ReactNode {
         </figure>
       );
     case 'knowledgeCheck': {
-      const labelId = `${block.id}-label`;
-      const reviewPath = courseSectionPath(block.reviewSectionId);
       return (
-        <section
+        <KnowledgeCheck
           key={block.id}
-          id={block.id}
-          className="content-block knowledge-check"
-          aria-labelledby={labelId}
-        >
-          <p className="knowledge-check-kicker">Knowledge check</p>
-          <p id={labelId} className="knowledge-check-prompt">
-            {renderInline(block.prompt)}
-          </p>
-          {block.answer ? (
-            <details>
-              <summary>Reveal source-grounded answer</summary>
-              <div className="knowledge-check-answer">
-                <ContentRenderer blocks={block.answer} />
-              </div>
-            </details>
-          ) : reviewPath ? (
-            <a href={reviewPath}>Review the relevant lesson</a>
-          ) : (
-            <span>Review the relevant lesson</span>
-          )}
-          <SourcePageLink
-            source={block.source}
-            label="Knowledge check source"
-          />
-        </section>
+          questionId={block.id}
+          prompt={block.prompt}
+          answer={
+            block.answer ? <ContentRenderer blocks={block.answer} /> : undefined
+          }
+          reviewSectionId={block.reviewSectionId}
+          source={block.source}
+          renderPrompt={renderInline}
+        />
       );
     }
     default:

@@ -44,11 +44,32 @@ export function Providers({
 
   React.useEffect(() => {
     if (!learning.adapter) return;
-    learning.store.setState(
-      learning.adapter.hydrateStorage(window.localStorage, () => new Date()),
-    );
+    try {
+      learning.store.setState({
+        ...learning.adapter.hydrateStorage(
+          window.localStorage,
+          () => new Date(),
+        ),
+        recoveryPayload: learning.adapter.getRecovery(),
+      });
+    } catch {
+      // The adapter remains usable in memory when the browser denies storage access.
+    }
     return () => learning.adapter?.dispose();
   }, [learning]);
+
+  React.useEffect(() => {
+    const applyPreferences = () => {
+      const { preferences } = learning.store.getState();
+      const root = document.documentElement;
+      root.dataset.theme = preferences.theme;
+      root.dataset.fontSize = preferences.fontSize;
+      root.dataset.lineWidth = preferences.lineWidth;
+      root.dataset.focusMode = String(preferences.focusMode);
+    };
+    applyPreferences();
+    return learning.store.subscribe(applyPreferences);
+  }, [learning.store]);
 
   return (
     <LearningStoreContext.Provider value={learning.store}>

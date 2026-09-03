@@ -1,4 +1,5 @@
 'use client';
+/* oxlint-disable typescript/unbound-method -- Zustand actions are stable function values. */
 
 import * as React from 'react';
 
@@ -22,6 +23,16 @@ type ActiveModal = 'none' | 'navigation' | 'study' | 'settings' | 'search';
 
 const SearchPalette = React.lazy(
   () => import('@/src/components/search/search-palette'),
+);
+const StudyDrawer = React.lazy(() =>
+  import('@/src/components/learning/study-drawer').then((module) => ({
+    default: module.StudyDrawer,
+  })),
+);
+const ReadingSettings = React.lazy(() =>
+  import('@/src/components/settings/reading-settings').then((module) => ({
+    default: module.ReadingSettings,
+  })),
 );
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -65,9 +76,19 @@ export function AppShell({
   const searchReturnFocusRef = React.useRef<HTMLElement | null>(null);
   const flushPendingNotes = useFlushPendingNotes();
   const learningState = useOptionalLearningStore((state) => state);
+  const setPreference = useOptionalLearningStore(
+    (state) => state.setPreference,
+  );
+  const [focusMessage, setFocusMessage] = React.useState('');
   const activeUnit = course.units.find((unit) => unit.id === currentUnitId);
   const resolvedCompleted =
-    completedSectionIds ?? learningState?.completedSectionIds ?? [];
+    completedSectionIds ??
+    (learningState
+      ? [
+          ...learningState.completedSectionIds,
+          ...learningState.appendixReadSectionIds,
+        ]
+      : []);
   const resolvedProgress =
     courseProgress ??
     (learningState
@@ -87,10 +108,7 @@ export function AppShell({
   );
   const handleContentNavigation = React.useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
-      if (
-        event.target instanceof Element &&
-        event.target.closest('a[href]')
-      ) {
+      if (event.target instanceof Element && event.target.closest('a[href]')) {
         flushPendingNotes();
       }
     },
@@ -133,6 +151,34 @@ export function AppShell({
     document.addEventListener('keydown', handleSearchShortcut);
     return () => document.removeEventListener('keydown', handleSearchShortcut);
   }, [onOpenSearch]);
+
+  const exitFocusMode = React.useCallback(() => {
+    if (!setPreference) return;
+    const result = setPreference('focusMode', false);
+    setFocusMessage(
+      result.ok
+        ? 'Focus mode exited.'
+        : 'Focus mode exited for this session, but the preference could not be saved locally.',
+    );
+    window.requestAnimationFrame(() => {
+      document.getElementById('lesson-content')?.focus();
+    });
+  }, [setPreference]);
+
+  React.useEffect(() => {
+    function handleFocusEscape(event: KeyboardEvent) {
+      if (
+        event.key !== 'Escape' ||
+        activeModal !== 'none' ||
+        !learningState?.preferences.focusMode
+      )
+        return;
+      event.preventDefault();
+      exitFocusMode();
+    }
+    document.addEventListener('keydown', handleFocusEscape);
+    return () => document.removeEventListener('keydown', handleFocusEscape);
+  }, [activeModal, exitFocusMode, learningState?.preferences.focusMode]);
 
   return (
     <div className="app-shell">
@@ -177,6 +223,8 @@ export function AppShell({
           onOpenStudy={showStudy}
           onBeforeNavigate={flushPendingNotes}
           searchTriggerRef={utilitySearchRef}
+          focusMode={learningState?.preferences.focusMode}
+          onExitFocusMode={exitFocusMode}
         />
         <main
           id="lesson-content"
@@ -187,6 +235,9 @@ export function AppShell({
           {children}
         </main>
       </section>
+      <output className="sr-only" aria-live="polite">
+        {focusMessage}
+      </output>
       <Sheet
         open={activeModal === 'navigation'}
         onOpenChange={(open) => changeModal('navigation', open)}
@@ -230,7 +281,14 @@ export function AppShell({
               <SheetTitle>Study tools</SheetTitle>
             </SheetHeader>
             <div className="study-sheet-content">
-              {studyContent ?? <p>Study tools will appear here.</p>}
+              {studyContent ?? (
+                <React.Suspense fallback={<p>Loading study tools…</p>}>
+                  <StudyDrawer
+                    activeSectionId={currentSectionId}
+                    course={course}
+                  />
+                </React.Suspense>
+              )}
             </div>
           </SheetContent>
         )}
@@ -249,18 +307,18 @@ export function AppShell({
               <SheetTitle>Reading settings</SheetTitle>
             </SheetHeader>
             <div className="study-sheet-content">
-              {settingsContent ?? <p>Reading settings will appear here.</p>}
+              {settingsContent ?? (
+                <React.Suspense fallback={<p>Loading reading settings…</p>}>
+                  <ReadingSettings />
+                </React.Suspense>
+              )}
             </div>
           </SheetContent>
         )}
       </Sheet>
       {activeModal === 'search' && (
         <React.Suspense
-          fallback={
-            <output className="search-loading">
-              Loading search…
-            </output>
-          }
+          fallback={<output className="search-loading">Loading search…</output>}
         >
           <SearchPalette
             open={activeModal === 'search'}
