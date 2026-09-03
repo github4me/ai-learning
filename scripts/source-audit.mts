@@ -44,6 +44,8 @@ export type SourceAudit = {
   pages: RawPage[];
 };
 
+export const FORMULA_GEOMETRY_VERSION = 'span-font-size-bbox-origin-v1';
+
 export type DetectedCandidate = {
   candidateId: string;
   pdfPage: number;
@@ -73,6 +75,25 @@ export function spanChecksum(spans: RawSpan[]): string {
         bbox,
       })),
     ),
+  );
+}
+
+export function formulaGeometryChecksum(audit: SourceAudit): string {
+  return sha256(
+    JSON.stringify({
+      version: FORMULA_GEOMETRY_VERSION,
+      pages: audit.pages.map((page) => ({
+        pdfPage: page.pdfPage,
+        spans: page.spans.map(({ id, textRaw, font, size, bbox, origin }) => ({
+          id,
+          textRaw,
+          font,
+          size,
+          bbox,
+          origin,
+        })),
+      })),
+    }),
   );
 }
 

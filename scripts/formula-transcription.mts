@@ -1,3 +1,5 @@
+import katex from 'katex';
+
 import type { RawSpan } from './source-audit.mts';
 
 export type FormulaRendering = {
@@ -111,26 +113,30 @@ function dominantBaseline(spans: readonly RawSpan[]): BaselineGeometry {
     throw new Error('Cannot transcribe an empty one-line formula');
   }
 
-  const mathSpans = visible.filter((span) => span.font.includes('LatinModernMath'));
-  const baselinePool = mathSpans.length > 0 ? mathSpans : visible;
-  const maximumSize = Math.max(...baselinePool.map((span) => span.size));
-  const largest = baselinePool.filter((span) => span.size >= maximumSize * 0.97);
-  const rowTolerance = Math.max(0.75, maximumSize * 0.075);
-  const rows: { originY: number; spans: RawSpan[]; weight: number }[] = [];
+  const maximumSize = Math.max(...visible.map((span) => span.size));
+  // Upright labels are commonly 9.9626pt beside 12.5515pt math operators.
+  // They are base glyphs, while the actual scripts are 8.7861pt or 6.9738pt.
+  const plausibleBaseSpans = visible.filter(
+    (span) => span.size >= maximumSize * 0.74,
+  );
+  const rowTolerance = Math.max(0.9, maximumSize * 0.12);
+  const rows: { glyphCenterY: number; spans: RawSpan[]; weight: number }[] = [];
 
-  for (const span of largest) {
+  for (const span of plausibleBaseSpans) {
+    const glyphCenterY = (span.bbox[1] + span.bbox[3]) / 2;
     const row = rows.find(
-      (candidate) => Math.abs(candidate.originY - span.origin[1]) <= rowTolerance,
+      (candidate) =>
+        Math.abs(candidate.glyphCenterY - glyphCenterY) <= rowTolerance,
     );
-    const weight = visibleCharacterCount(span);
+    const weight = visibleCharacterCount(span) * span.size;
     if (row) {
       const oldWeight = row.weight;
       row.weight += weight;
-      row.originY =
-        (row.originY * oldWeight + span.origin[1] * weight) / row.weight;
+      row.glyphCenterY =
+        (row.glyphCenterY * oldWeight + glyphCenterY * weight) / row.weight;
       row.spans.push(span);
     } else {
-      rows.push({ originY: span.origin[1], spans: [span], weight });
+      rows.push({ glyphCenterY, spans: [span], weight });
     }
   }
 
@@ -138,14 +144,12 @@ function dominantBaseline(spans: readonly RawSpan[]): BaselineGeometry {
     (left, right) =>
       right.weight - left.weight ||
       right.spans.length - left.spans.length ||
-      left.originY - right.originY,
+      left.glyphCenterY - right.glyphCenterY,
   )[0];
   return {
-    fontSize: median(dominant.spans.map((span) => span.size)),
-    glyphCenterY: median(
-      dominant.spans.map((span) => (span.bbox[1] + span.bbox[3]) / 2),
-    ),
-    originY: dominant.originY,
+    fontSize: Math.max(...dominant.spans.map((span) => span.size)),
+    glyphCenterY: dominant.glyphCenterY,
+    originY: median(dominant.spans.map((span) => span.origin[1])),
   };
 }
 
@@ -190,8 +194,9 @@ function renderWord(
   sourceUpright: boolean,
   inScript: boolean,
 ): string {
+  if (word === 'mod') return '\\bmod';
   if (OPERATOR_NAMES.has(word)) return `\\operatorname{${word}}`;
-  if (sourceUpright && (ROMAN_NAMES.has(word) || !inScript)) {
+  if (ROMAN_NAMES.has(word) || (sourceUpright && !inScript)) {
     return `\\mathrm{${word}}`;
   }
   return word;
@@ -222,12 +227,6 @@ function renderText(
       while (characters[predictedIndex] === ' ') predictedIndex += 1;
       const predicted = characters[predictedIndex];
       if (!predicted || !/[A-Za-z]/u.test(predicted)) {
-        // Two source lines contain a terminal combining circumflex after a
-        // numeric result even though no accent is rendered in the PDF. Treat
-        // that extraction-only suffix as a supported no-op, not as a script.
-        if (index === characters.length - 1 && /[0-9]/u.test(characters[index - 1])) {
-          continue;
-        }
         unsupported(character, value);
       }
       const rendered = accentedLetter(predicted);
@@ -244,8 +243,17 @@ function renderText(
       }
       const word = characters.slice(index, end).join('');
       latex.push(renderWord(word, sourceUpright, inScript));
-      accessibleText.push(word);
+      accessibleText.push(word === 'mod' ? ' mod ' : word);
       index = end - 1;
+      continue;
+    }
+    if (
+      (character === ':' || character === '∶') &&
+      characters[index + 1] === '='
+    ) {
+      latex.push('\\mathrel{:=}');
+      accessibleText.push(':=');
+      index += 1;
       continue;
     }
     if (/\p{Script=Han}/u.test(character)) {
@@ -299,31 +307,58 @@ function renderText(
     unsupported(character, value);
   }
 
-  return { latex: latex.join(''), accessibleText: accessibleText.join('') };
+  return {
+    latex: concatenateLatex(latex),
+    accessibleText: accessibleText.join(''),
+  };
+}
+
+function concatenateLatex(fragments: readonly string[]): string {
+  let output = '';
+  for (const fragment of fragments) {
+    if (
+      /\\[A-Za-z]+$/u.test(output) &&
+      (/^[A-Za-z]/u.test(fragment) || /^\\[A-Za-z]/u.test(fragment))
+    ) {
+      output += ' ';
+    }
+    output += fragment;
+  }
+  return output;
 }
 
 function script(marker: '^' | '_', value: string): string {
   return /^[A-Za-z0-9]$/u.test(value) ? `${marker}${value}` : `${marker}{${value}}`;
 }
 
+function endsWithAttachableBase(value: string): boolean | undefined {
+  const visible = [...value].filter((character) => !/\s/u.test(character));
+  if (visible.length === 0) return undefined;
+  return /[\p{L}\p{N})\]}′]/u.test(visible.at(-1)!);
+}
+
 function normalizeLatex(value: string): string {
   return value
+    .replaceAll('\\mathrel{:=}', '\uE000')
     .replace(/\s+/gu, ' ')
     .replace(/\s*=\s*/gu, ' = ')
     .replace(
-      /\s*(\\(?:approx|cdot|ge|in|le|leftarrow|mid|propto|rightarrow|sim|times))\s*/gu,
+      /\s*(\\(?:approx|bmod|cdots|cdot|ge|in|leftarrow|le|mid|propto|rightarrow|sim|times))(?![A-Za-z])\s*/gu,
       ' $1 ',
     )
     .replace(/\(\s+/gu, '(')
     .replace(/\s+\)/gu, ')')
     .replace(/\s+,/gu, ',')
+    .replaceAll('\uE000', '\\mathrel{:=}')
     .trim();
 }
 
 function normalizeAccessibleText(value: string): string {
   return value
     .replace(/\s+/gu, ' ')
+    .replace(/\s*\bmod\b\s*/gu, ' mod ')
     .replace(/\s*([=×⋅≤≥≈→←∈∝∣])\s*/gu, ' $1 ')
+    .replace(/:\s+=/gu, ' :=')
     .replace(/\(\s+/gu, '(')
     .replace(/\s+\)/gu, ')')
     .replace(/\s+,/gu, ',')
@@ -336,6 +371,7 @@ export function transcribeOneLineFormula(
   const baseline = dominantBaseline(spans);
   const latex: string[] = [];
   const accessibleText: string[] = [];
+  let hasAttachableBase = false;
 
   for (let index = 0; index < spans.length; ) {
     const span = spans[index];
@@ -348,8 +384,16 @@ export function transcribeOneLineFormula(
       );
       latex.push(rendered.latex);
       accessibleText.push(rendered.accessibleText);
+      const attachable = endsWithAttachableBase(span.textRaw);
+      if (attachable !== undefined) hasAttachableBase = attachable;
       index += 1;
       continue;
+    }
+
+    if (!hasAttachableBase) {
+      throw new Error(
+        `Unattached ${position} at source span ${JSON.stringify(span.id)}`,
+      );
     }
 
     const marker = position === 'superscript' ? '^' : '_';
@@ -366,7 +410,7 @@ export function transcribeOneLineFormula(
       scriptAccessibleText.push(rendered.accessibleText);
       index += 1;
     }
-    const compactLatex = scriptLatex.join('').trim();
+    const compactLatex = concatenateLatex(scriptLatex).trim();
     const compactAccessibleText = scriptAccessibleText.join('').trim();
     if (compactLatex) latex.push(script(marker, compactLatex));
     if (compactAccessibleText) {
@@ -375,11 +419,22 @@ export function transcribeOneLineFormula(
   }
 
   const rendering = {
-    latex: normalizeLatex(latex.join('')),
+    latex: normalizeLatex(concatenateLatex(latex)),
     accessibleText: normalizeAccessibleText(accessibleText.join('')),
   };
   if (!rendering.latex || !rendering.accessibleText) {
     throw new Error('Cannot transcribe an empty one-line formula');
+  }
+  try {
+    katex.renderToString(rendering.latex, {
+      output: 'mathml',
+      strict: 'error',
+      throwOnError: true,
+    });
+  } catch (error) {
+    throw new Error(
+      `Invalid emitted LaTeX ${JSON.stringify(rendering.latex)}: ${String(error)}`,
+    );
   }
   return rendering;
 }
