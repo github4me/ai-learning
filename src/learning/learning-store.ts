@@ -128,21 +128,31 @@ export function selectWeekProgress(
   );
 }
 
+export function selectSavedContinueLocation(
+  state: Pick<LearningStateV1, 'completedSectionIds' | 'lastLocation'>,
+  course: Course,
+): Location | undefined {
+  if (!state.lastLocation) return undefined;
+  const completed = new Set(state.completedSectionIds);
+  const saved = courseLeaves(course).find(
+    ({ unitId, section }) =>
+      unitId === state.lastLocation?.unitId &&
+      section.id === state.lastLocation.sectionId &&
+      !completed.has(section.id),
+  );
+  return saved
+    ? { unitId: saved.unitId, sectionId: saved.section.id }
+    : undefined;
+}
+
 export function selectContinueLocation(
   state: Pick<LearningStateV1, 'completedSectionIds' | 'lastLocation'>,
   course: Course,
 ): Location {
   const eligible = courseLeaves(course);
   const completed = new Set(state.completedSectionIds);
-  const saved =
-    state.lastLocation &&
-    eligible.find(
-      ({ unitId, section }) =>
-        unitId === state.lastLocation?.unitId &&
-        section.id === state.lastLocation.sectionId &&
-        !completed.has(section.id),
-    );
-  if (saved) return { unitId: saved.unitId, sectionId: saved.section.id };
+  const saved = selectSavedContinueLocation(state, course);
+  if (saved) return saved;
   const next = eligible.find(({ section }) => !completed.has(section.id));
   if (next) return { unitId: next.unitId, sectionId: next.section.id };
   return { unitId: course.overview.id, sectionId: course.overview.id };

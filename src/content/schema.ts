@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 const nonEmptyText = z.string().trim().min(1);
+const nonBlankSourceText = z
+  .string()
+  .refine((value) => value.trim().length > 0, {
+    message: 'Source text must contain a non-whitespace character',
+  });
 const stableId = nonEmptyText;
 const CONTENT_LINK_BASE = new URL('https://course.invalid');
 
@@ -136,7 +141,7 @@ export const ContentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() =>
       id: stableId,
       language: nonEmptyText,
       filename: nonEmptyText.optional(),
-      code: nonEmptyText,
+      code: nonBlankSourceText,
       source: SourceRefSchema,
     }),
     z.object({

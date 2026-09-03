@@ -9,7 +9,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vinext dev",
-    "build": "vinext build",
+    "build": "pnpm validate:content && vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
     "format": "oxfmt",

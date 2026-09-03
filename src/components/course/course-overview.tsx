@@ -12,6 +12,7 @@ import {
 import {
   selectContinueLocation,
   selectCourseProgress,
+  selectSavedContinueLocation,
 } from '@/src/learning/learning-store';
 import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
@@ -35,10 +36,10 @@ export function CourseOverview({
       injectedContinueLocation ??
       (learningSnapshot
         ? selectContinueLocation(learningSnapshot, course)
-        : {
-            unitId: course.units[0]?.id ?? course.overview.id,
-            sectionId: course.units[0]?.id ?? course.overview.id,
-          }),
+        : selectContinueLocation(
+            { completedSectionIds: [], lastLocation: null },
+            course,
+          )),
     [course, injectedContinueLocation, learningSnapshot],
   );
   const courseProgress = React.useMemo(
@@ -52,13 +53,22 @@ export function CourseOverview({
   const unit = course.units.find(
     (candidate) => candidate.id === continueLocation.unitId,
   );
+  const hasSavedContinueLocation = Boolean(
+    selectSavedContinueLocation(
+      learningSnapshot ?? {
+        completedSectionIds: [],
+        lastLocation: injectedContinueLocation ?? null,
+      },
+      course,
+    ),
+  );
   const completed = unit === undefined;
   const destination = unit
     ? `${unit.kind === 'appendix' ? '/appendix/mini-gpt' : `/week/${unit.slug}`}#${continueLocation.sectionId}`
     : '/review';
   const actionLabel = completed
     ? 'Review your learning'
-    : courseProgress.completed > 0
+    : hasSavedContinueLocation
       ? 'Continue learning'
       : 'Start Week 1';
   return (

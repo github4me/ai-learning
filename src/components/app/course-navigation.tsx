@@ -10,7 +10,10 @@ import type {
   SectionNode,
   WeekUnit,
 } from '@/src/content/schema';
-import { requestSectionAnchorFocus } from '@/src/search/search-focus';
+import {
+  isUnmodifiedPrimaryActivation,
+  requestSectionAnchorFocus,
+} from '@/src/search/search-focus';
 
 export type CourseNavigationProps = {
   course: Course;
@@ -30,8 +33,40 @@ export type CourseNavigationProps = {
   ) => void;
 };
 
+type CompletionStatus = {
+  completed: number;
+  total: number;
+  isDirectTarget: boolean;
+};
+
 function unitPath(unit: CourseUnit): string {
   return unit.kind === 'appendix' ? '/appendix/mini-gpt' : `/week/${unit.slug}`;
+}
+
+function completionStatusMap(
+  unit: CourseUnit,
+  completed: ReadonlySet<string>,
+): ReadonlyMap<string, CompletionStatus> {
+  const statuses = new Map<string, CompletionStatus>();
+  const visit = (section: SectionNode): string[] => {
+    const descendantIds = section.children.flatMap(visit);
+    const isDirectTarget =
+      section.children.length === 0 &&
+      (unit.kind === 'appendix' || section.isCompletable);
+    const trackedIds = isDirectTarget
+      ? [section.id, ...descendantIds]
+      : descendantIds;
+    if (trackedIds.length > 0) {
+      statuses.set(section.id, {
+        completed: trackedIds.filter((id) => completed.has(id)).length,
+        total: trackedIds.length,
+        isDirectTarget,
+      });
+    }
+    return trackedIds;
+  };
+  visit(unit);
+  return statuses;
 }
 
 function SectionLinks({
@@ -39,6 +74,7 @@ function SectionLinks({
   unit,
   currentSectionId,
   completed,
+  completionStatuses,
   onNavigate,
   depth = 0,
 }: {
@@ -46,6 +82,7 @@ function SectionLinks({
   unit: CourseUnit;
   currentSectionId?: string;
   completed: ReadonlySet<string>;
+  completionStatuses: ReadonlyMap<string, CompletionStatus>;
   onNavigate?: CourseNavigationProps['onNavigate'];
   depth?: number;
 }) {
@@ -55,7 +92,22 @@ function SectionLinks({
         .filter((node) => node.showInToc)
         .map((node) => {
           const isCurrent = node.id === currentSectionId;
-          const isComplete = completed.has(node.id);
+          const status = completionStatuses.get(node.id);
+          const isComplete =
+            status !== undefined && status.completed === status.total;
+          const statusLabel = status?.isDirectTarget
+            ? unit.kind === 'appendix'
+              ? isComplete
+                ? 'Read'
+                : 'Not read'
+              : isComplete
+                ? 'Completed'
+                : 'Not completed'
+            : status
+              ? unit.kind === 'appendix'
+                ? `${status.completed} of ${status.total} reference sections read`
+                : `${status.completed} of ${status.total} sections completed`
+              : undefined;
           return (
             <li key={node.id}>
               <a
@@ -65,21 +117,21 @@ function SectionLinks({
                 aria-current={isCurrent ? 'location' : undefined}
                 onClick={(event) => {
                   requestSectionAnchorFocus(node.id, event);
-                  onNavigate?.({ unitId: unit.id, sectionId: node.id });
+                  if (isUnmodifiedPrimaryActivation(event))
+                    onNavigate?.({ unitId: unit.id, sectionId: node.id });
                 }}
               >
-                {isComplete ? (
-                  <CheckCircle2 aria-hidden="true" />
-                ) : (
-                  <Circle aria-hidden="true" />
-                )}
+                {status &&
+                  (isComplete ? (
+                    <CheckCircle2 aria-hidden="true" />
+                  ) : (
+                    <Circle aria-hidden="true" />
+                  ))}
                 <span>{node.title}</span>
                 {isCurrent && (
                   <span className="nav-state">Current section</span>
                 )}
-                <span className="sr-only">
-                  {isComplete ? 'Completed' : 'Not completed'}
-                </span>
+                {statusLabel && <span className="sr-only">{statusLabel}</span>}
               </a>
               {node.children.length > 0 && (
                 <MemoSectionLinks
@@ -87,6 +139,7 @@ function SectionLinks({
                   unit={unit}
                   currentSectionId={currentSectionId}
                   completed={completed}
+                  completionStatuses={completionStatuses}
                   onNavigate={onNavigate}
                   depth={depth + 1}
                 />
@@ -116,14 +169,25 @@ function UnitOutline({
   const unitLabel =
     unit.kind === 'week' ? `Week ${unit.weekNumber}` : 'Appendix A';
   const current = unit.id === currentUnitId;
-  const appendixRead = unit.kind === 'appendix' && completed.has(unit.id);
+  const completionStatuses = React.useMemo(
+    () => completionStatusMap(unit, completed),
+    [completed, unit],
+  );
+  const appendixStatus =
+    unit.kind === 'appendix' ? completionStatuses.get(unit.id) : undefined;
+  const appendixRead =
+    appendixStatus !== undefined &&
+    appendixStatus.completed === appendixStatus.total;
   return (
     <div className="course-unit" data-current={current || undefined}>
       <a
         className="course-unit-link"
         href={unitPath(unit)}
         aria-current={current ? 'page' : undefined}
-        onClick={() => onNavigate?.({ unitId: unit.id })}
+        onClick={(event) => {
+          if (isUnmodifiedPrimaryActivation(event))
+            onNavigate?.({ unitId: unit.id });
+        }}
       >
         {unit.kind === 'appendix' &&
           (appendixRead ? (
@@ -134,6 +198,12 @@ function UnitOutline({
         <span className="course-unit-kicker">{unitLabel}</span>
         <span>{unit.title}</span>
         {appendixRead && <span className="nav-state">Read</span>}
+        {appendixStatus && !appendixRead && (
+          <span className="sr-only">
+            {appendixStatus.completed} of {appendixStatus.total} reference
+            sections read
+          </span>
+        )}
         {current && <span className="nav-state">Current unit</span>}
       </a>
       <MemoSectionLinks
@@ -141,6 +211,7 @@ function UnitOutline({
         unit={unit}
         currentSectionId={currentSectionId}
         completed={completed}
+        completionStatuses={completionStatuses}
         onNavigate={onNavigate}
       />
     </div>
@@ -155,6 +226,7 @@ function CompactNavigation({
   currentSectionId,
   completedSectionIds = [],
   onNavigate,
+  onBeforeNavigate,
   compactOpenUnitId,
   onCompactOpenChange,
 }: Pick<
@@ -164,6 +236,7 @@ function CompactNavigation({
   | 'currentSectionId'
   | 'completedSectionIds'
   | 'onNavigate'
+  | 'onBeforeNavigate'
   | 'compactOpenUnitId'
   | 'onCompactOpenChange'
 >) {
@@ -176,10 +249,27 @@ function CompactNavigation({
     [completedSectionIds],
   );
   const panelId = 'compact-week-sections';
+  const appendix = course.units.find((unit) => unit.kind === 'appendix');
   return (
-    <nav aria-label="Week selector" className="compact-course-navigation">
+    <nav aria-label="Course destinations" className="compact-course-navigation">
       <span className="sr-only" data-testid="signal-path" aria-hidden="true" />
       <ol className="compact-week-list">
+        <li>
+          <a
+            className="compact-destination-link"
+            href="/"
+            aria-label="Course overview"
+            onClick={(event) => {
+              if (isUnmodifiedPrimaryActivation(event))
+                onNavigate?.({
+                  unitId: course.overview.id,
+                  sectionId: course.overview.id,
+                });
+            }}
+          >
+            <span aria-hidden="true">⌂</span>
+          </a>
+        </li>
         {course.units
           .filter((unit): unit is WeekUnit => unit.kind === 'week')
           .map((week) => {
@@ -204,6 +294,32 @@ function CompactNavigation({
               </li>
             );
           })}
+        {appendix && (
+          <li>
+            <a
+              className="compact-destination-link"
+              href={unitPath(appendix)}
+              aria-label="Appendix A reference"
+              aria-current={appendix.id === currentUnitId ? 'page' : undefined}
+              onClick={(event) => {
+                if (isUnmodifiedPrimaryActivation(event))
+                  onNavigate?.({ unitId: appendix.id });
+              }}
+            >
+              <span aria-hidden="true">A</span>
+            </a>
+          </li>
+        )}
+        <li>
+          <a
+            className="compact-destination-link"
+            href="/review"
+            aria-label="Review notes and bookmarks"
+            onClick={onBeforeNavigate}
+          >
+            <span aria-hidden="true">R</span>
+          </a>
+        </li>
       </ol>
       {selectedWeek && (
         <section
@@ -217,7 +333,10 @@ function CompactNavigation({
             aria-current={
               selectedWeek.id === currentUnitId ? 'page' : undefined
             }
-            onClick={() => onNavigate?.({ unitId: selectedWeek.id })}
+            onClick={(event) => {
+              if (isUnmodifiedPrimaryActivation(event))
+                onNavigate?.({ unitId: selectedWeek.id });
+            }}
           >
             Week {selectedWeek.weekNumber}: {selectedWeek.title}
             {selectedWeek.id === currentUnitId && (
@@ -229,6 +348,7 @@ function CompactNavigation({
             unit={selectedWeek}
             currentSectionId={currentSectionId}
             completed={completed}
+            completionStatuses={completionStatusMap(selectedWeek, completed)}
             onNavigate={onNavigate}
           />
         </section>
@@ -263,6 +383,7 @@ export const CourseNavigation = React.memo(function CourseNavigation({
         currentSectionId={currentSectionId}
         completedSectionIds={completedSectionIds}
         onNavigate={onNavigate}
+        onBeforeNavigate={onBeforeNavigate}
         compactOpenUnitId={compactOpenUnitId}
         onCompactOpenChange={onCompactOpenChange}
       />
@@ -288,12 +409,13 @@ export const CourseNavigation = React.memo(function CourseNavigation({
       <a
         className="course-identity"
         href="/"
-        onClick={() =>
-          onNavigate?.({
-            unitId: course.overview.id,
-            sectionId: course.overview.id,
-          })
-        }
+        onClick={(event) => {
+          if (isUnmodifiedPrimaryActivation(event))
+            onNavigate?.({
+              unitId: course.overview.id,
+              sectionId: course.overview.id,
+            });
+        }}
       >
         <span>AI First Principles</span>
         <small>核心教程深度扩展版</small>
@@ -380,6 +502,13 @@ export const CourseNavigation = React.memo(function CourseNavigation({
           </button>
         </div>
       )}
+      <a
+        className="review-navigation-link"
+        href="/review"
+        onClick={onBeforeNavigate}
+      >
+        Review notes and bookmarks
+      </a>
       <a
         className="source-pdf-link"
         href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf"

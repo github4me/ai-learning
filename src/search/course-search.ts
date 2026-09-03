@@ -26,6 +26,15 @@ export type CourseSearchIndex = {
   segmenter: boolean;
 };
 
+export type SearchGlossaryEntry = {
+  term: string;
+  definition: string;
+  sectionId: string;
+  aliases?: readonly string[];
+  unitId?: string;
+  route?: string;
+};
+
 function normalize(value: string): string {
   return value.normalize('NFKC').replace(HYPHENS, '-').toLowerCase();
 }
@@ -97,11 +106,18 @@ function plainExcerpt(text: string, query: string): string {
 
 export function createCourseSearch(
   course: Course,
-  options: { segmenter?: boolean } = {},
+  options: {
+    segmenter?: boolean;
+    glossary?: readonly SearchGlossaryEntry[];
+  } = {},
 ): CourseSearchIndex {
   const useSegmenter =
     options.segmenter !== false && typeof Intl.Segmenter !== 'undefined';
   const documents: SearchDocument[] = [];
+  const glossaryEntries: readonly SearchGlossaryEntry[] = [
+    ...(course.glossary ?? []),
+    ...(options.glossary ?? []),
+  ];
   let order = 0;
   // The bespoke overview does not render the generated overview section tree,
   // so only routable lesson and appendix units become selectable results.
@@ -114,12 +130,17 @@ export function createCourseSearch(
     for (const section of flattenSections(root).filter(
       (item) => item.showInToc,
     )) {
-      const glossary = (course.glossary ?? [])
-        .filter((entry) => entry.sectionId === section.id)
+      const glossary = glossaryEntries
+        .filter(
+          (entry) =>
+            entry.sectionId === section.id &&
+            (entry.unitId === undefined || entry.unitId === root.id),
+        )
         .flatMap((entry) => [
           entry.term,
           entry.definition,
           ...(entry.aliases ?? []),
+          ...(entry.route ? [entry.route] : []),
         ])
         .join('\n');
       const rawText = [

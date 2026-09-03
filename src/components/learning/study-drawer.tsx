@@ -17,7 +17,10 @@ import {
 import { getCourse, getSection } from '@/src/content/course-runtime';
 import type { Course } from '@/src/content/schema';
 import { MAX_NOTE_CODE_POINTS } from '@/src/learning/storage-adapter';
-import { requestSectionAnchorFocus } from '@/src/search/search-focus';
+import {
+  isUnmodifiedPrimaryActivation,
+  requestSectionAnchorFocus,
+} from '@/src/search/search-focus';
 import { LearningItemGroups } from './review-workspace';
 
 const UNDO_WINDOW_MS = 8_000;
@@ -207,7 +210,8 @@ function GlossaryPanel({
                   onClick={(event) => {
                     requestSectionAnchorFocus(entry.sectionId, event);
                     flushPendingNotes();
-                    onSectionNavigate?.();
+                    if (isUnmodifiedPrimaryActivation(event))
+                      onSectionNavigate?.();
                   }}
                 >
                   Open source lesson

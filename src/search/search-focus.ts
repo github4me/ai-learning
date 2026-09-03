@@ -5,7 +5,7 @@ let memoryPendingFocus: string | undefined;
 let outerNotificationFrame: number | undefined;
 let innerNotificationFrame: number | undefined;
 
-type AnchorActivation = {
+export type AnchorActivation = {
   defaultPrevented: boolean;
   button: number;
   altKey: boolean;
@@ -13,6 +13,19 @@ type AnchorActivation = {
   metaKey: boolean;
   shiftKey: boolean;
 };
+
+export function isUnmodifiedPrimaryActivation(
+  activation: AnchorActivation,
+): boolean {
+  return (
+    !activation.defaultPrevented &&
+    activation.button === 0 &&
+    !activation.altKey &&
+    !activation.ctrlKey &&
+    !activation.metaKey &&
+    !activation.shiftKey
+  );
+}
 
 function decodeFragment(hash: string): string {
   const fragment = hash.startsWith('#') ? hash.slice(1) : hash;
@@ -58,16 +71,7 @@ export function requestSectionAnchorFocus(
   sectionId: string,
   activation?: AnchorActivation,
 ): void {
-  if (
-    activation?.defaultPrevented ||
-    (activation &&
-      (activation.button !== 0 ||
-        activation.altKey ||
-        activation.ctrlKey ||
-        activation.metaKey ||
-        activation.shiftKey))
-  )
-    return;
+  if (activation && !isUnmodifiedPrimaryActivation(activation)) return;
   if (outerNotificationFrame !== undefined)
     window.cancelAnimationFrame(outerNotificationFrame);
   if (innerNotificationFrame !== undefined)

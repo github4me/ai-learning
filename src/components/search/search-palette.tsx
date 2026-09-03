@@ -18,6 +18,7 @@ import {
   getCourse,
   getUnit,
 } from '@/src/content/course-runtime';
+import { GLOSSARY_ENTRIES } from '@/src/content/glossary';
 import {
   createCourseSearch,
   searchCourse,
@@ -30,7 +31,9 @@ import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 let cachedSearchIndex: CourseSearchIndex | undefined;
 
 function getSearchIndex(): CourseSearchIndex {
-  cachedSearchIndex ??= createCourseSearch(getCourse());
+  cachedSearchIndex ??= createCourseSearch(getCourse(), {
+    glossary: GLOSSARY_ENTRIES,
+  });
   return cachedSearchIndex;
 }
 

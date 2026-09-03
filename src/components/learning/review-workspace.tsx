@@ -12,7 +12,10 @@ import { getCourse } from '@/src/content/course-runtime';
 import type { Course } from '@/src/content/schema';
 import { sectionReferenceMap } from '@/src/learning/course-tools';
 import type { LearningStore } from '@/src/learning/learning-store';
-import { requestSectionAnchorFocus } from '@/src/search/search-focus';
+import {
+  isUnmodifiedPrimaryActivation,
+  requestSectionAnchorFocus,
+} from '@/src/search/search-focus';
 
 type ReviewItem = {
   key: string;
@@ -142,7 +145,7 @@ export function LearningItemGroups({
                     onClick={(event) => {
                       requestSectionAnchorFocus(item.sectionId, event);
                       flushPendingNotes();
-                      onNavigate?.();
+                      if (isUnmodifiedPrimaryActivation(event)) onNavigate?.();
                     }}
                   >
                     {item.title}

@@ -20,6 +20,7 @@ import {
 import { flattenSections } from '@/src/content/load-course';
 import type { CourseUnit, SectionNode } from '@/src/content/schema';
 import {
+  appendixReadSections,
   isAppendixReadSection,
   selectCourseProgress,
   selectWeekProgress,
@@ -47,6 +48,22 @@ function readingOrder(): ReadingLocation[] {
   return getCourse().units.flatMap((unit) =>
     unitLeaves(unit).map((section) => ({ unit, section })),
   );
+}
+
+function continueTargetMap(unit: CourseUnit): ReadonlyMap<string, string> {
+  const targets = new Map<string, string>();
+  if (unit.kind !== 'week') return targets;
+  const visit = (section: SectionNode): string[] => {
+    const descendants = section.children.flatMap(visit);
+    const eligible =
+      section.children.length === 0 && section.isCompletable
+        ? [section.id]
+        : descendants;
+    if (eligible[0]) targets.set(section.id, eligible[0]);
+    return eligible;
+  };
+  visit(unit);
+  return targets;
 }
 
 function aliases(section: SectionNode) {
@@ -171,7 +188,7 @@ function SectionStream({
   section: SectionNode;
   unit: CourseUnit;
 }) {
-  const level = Math.min(6, Math.max(2, section.navDepth + 1));
+  const level = Math.min(6, Math.max(2, section.navDepth));
   const Heading = `h${level}` as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   const headingId = `${section.id}-heading`;
 
@@ -244,13 +261,21 @@ export function LessonReader({ unitId }: { unitId: string }) {
         : undefined,
     [completedSectionIds, unit],
   );
-  const appendixRead = useLearningStore((state) =>
-    unit.kind === 'appendix'
-      ? state.appendixReadSectionIds.includes(unit.id)
-      : false,
+  const appendixReadSectionIds = useLearningStore(
+    (state) => state.appendixReadSectionIds,
   );
+  const appendixProgress = React.useMemo(() => {
+    if (unit.kind !== 'appendix') return undefined;
+    const targets = appendixReadSections(course);
+    const completed = new Set(appendixReadSectionIds);
+    return {
+      completed: targets.filter((section) => completed.has(section.id)).length,
+      total: targets.length,
+    };
+  }, [appendixReadSectionIds, course, unit]);
   const flushPendingNotes = useFlushPendingNotes();
   const currentUnitId = unit.id;
+  const continueTargets = React.useMemo(() => continueTargetMap(unit), [unit]);
 
   React.useEffect(() => {
     let outerFocusFrame: number | undefined;
@@ -322,9 +347,6 @@ export function LessonReader({ unitId }: { unitId: string }) {
         if (!closest) return;
         const sectionId = closest[0];
         setActiveSectionId(sectionId);
-        const visitKey = `${unit.id}:${sectionId}`;
-        if (lastVisited.current === visitKey) return;
-        lastVisited.current = visitKey;
         if (window.location.hash !== `#${sectionId}`) {
           window.history.replaceState(
             window.history.state,
@@ -332,7 +354,12 @@ export function LessonReader({ unitId }: { unitId: string }) {
             `${window.location.pathname}${window.location.search}#${sectionId}`,
           );
         }
-        visitSection(unit.id, sectionId);
+        const continueSectionId = continueTargets.get(sectionId);
+        if (!continueSectionId) return;
+        const visitKey = `${unit.id}:${continueSectionId}`;
+        if (lastVisited.current === visitKey) return;
+        lastVisited.current = visitKey;
+        visitSection(unit.id, continueSectionId);
       },
       { rootMargin: '-64px 0px -55% 0px', threshold: [0, 0.2, 0.65] },
     );
@@ -343,7 +370,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
       observer.disconnect();
       visible.clear();
     };
-  }, [unit.id, visitSection]);
+  }, [continueTargets, unit.id, visitSection]);
 
   const order = React.useMemo(() => readingOrder(), []);
   const unitStart = order.findIndex((entry) => entry.unit.id === unit.id);
@@ -401,7 +428,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
             aria-label={
               unit.kind === 'week'
                 ? `Week progress: ${unitProgress?.completed ?? 0} of ${unitProgress?.total ?? 0} sections (${unitProgress?.percent ?? 0}%). Course progress: ${courseProgress.completed} of ${courseProgress.total} sections (${courseProgress.percent}%).`
-                : `Appendix status: ${appendixRead ? 'Read' : 'Not read'}. Appendix reading progress is tracked separately from twelve-week course progress.`
+                : `Appendix reading: ${appendixProgress?.completed ?? 0} of ${appendixProgress?.total ?? 0} sections read. Appendix reading progress is tracked separately from twelve-week course progress.`
             }
           >
             {unit.kind === 'week' ? (
@@ -419,7 +446,8 @@ export function LessonReader({ unitId }: { unitId: string }) {
             ) : (
               <>
                 <strong>
-                  Appendix status: {appendixRead ? 'Read' : 'Not read'}
+                  Appendix reading: {appendixProgress?.completed ?? 0} of{' '}
+                  {appendixProgress?.total ?? 0} sections read
                 </strong>
                 <span>
                   Appendix reading is tracked separately from course progress.

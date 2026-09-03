@@ -2,6 +2,7 @@
 /* oxlint-disable typescript/unbound-method -- Zustand actions are stable function values. */
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 
 import {
   Sheet,
@@ -11,7 +12,9 @@ import {
 } from '@/components/ui/sheet';
 import type { Course } from '@/src/content/schema';
 import { getCourse } from '@/src/content/course-runtime';
+import { findSection } from '@/src/content/load-course';
 import { selectCourseProgress } from '@/src/learning/learning-store';
+import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 import {
   useFlushPendingNotes,
   useOptionalLearningStore,
@@ -66,6 +69,24 @@ function isEditableTarget(target: EventTarget | null): boolean {
   );
 }
 
+function isApplicationRoute(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    pathname === '/review' ||
+    pathname === '/appendix/mini-gpt' ||
+    /^\/week\/[^/]+\/?$/u.test(pathname)
+  );
+}
+
+function decodeFragment(hash: string): string | undefined {
+  if (!hash.startsWith('#') || hash.length === 1) return undefined;
+  try {
+    return decodeURIComponent(hash.slice(1));
+  } catch {
+    return hash.slice(1);
+  }
+}
+
 export type AppShellProps = {
   course?: Course;
   children: React.ReactNode;
@@ -95,12 +116,16 @@ export function AppShell({
   studyContent,
   currentContextLabel: injectedContextLabel,
 }: AppShellProps) {
+  const router = useRouter();
   const course = injectedCourse ?? getCourse();
   const [activeSurface, setActiveSurface] =
     React.useState<ActiveSurface>('none');
   const compactReturnFocusRef = React.useRef<HTMLButtonElement>(null);
+  const mobileNavigationTriggerRef = React.useRef<HTMLButtonElement>(null);
   const utilitySearchRef = React.useRef<HTMLButtonElement>(null);
+  const utilitySettingsRef = React.useRef<HTMLButtonElement>(null);
   const searchReturnFocusRef = React.useRef<HTMLElement | null>(null);
+  const settingsReturnFocusRef = React.useRef<HTMLElement | null>(null);
   const flushPendingNotes = useFlushPendingNotes();
   const learningSnapshot = useOptionalLearningStore((state) => ({
     completedSectionIds: state.completedSectionIds,
@@ -157,14 +182,63 @@ export function AppShell({
     },
     [flushPendingNotes, onNavigate],
   );
-  const handleContentNavigation = React.useCallback(
-    (event: React.MouseEvent<HTMLElement>) => {
-      if (event.target instanceof Element && event.target.closest('a[href]')) {
-        flushPendingNotes();
+  const handleApplicationNavigation = React.useCallback(
+    (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        !(event.target instanceof Element)
+      )
+        return;
+      const anchor = event.target.closest('a[href]');
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      if (
+        anchor.hasAttribute('download') ||
+        (anchor.target && anchor.target.toLowerCase() !== '_self')
+      )
+        return;
+
+      let destination: URL;
+      try {
+        destination = new URL(anchor.href, window.location.href);
+      } catch {
+        return;
       }
+      if (
+        destination.origin !== window.location.origin ||
+        !isApplicationRoute(destination.pathname)
+      )
+        return;
+
+      flushPendingNotes();
+      const current = window.location;
+      if (
+        destination.pathname === current.pathname &&
+        destination.search === current.search &&
+        destination.hash === current.hash
+      )
+        return;
+
+      const requested = decodeFragment(destination.hash);
+      const section = requested ? findSection(course, requested) : undefined;
+      if (section) requestSectionAnchorFocus(section.id, event);
+      event.preventDefault();
+      setActiveSurface('none');
+      router.push(
+        `${destination.pathname}${destination.search}${destination.hash}`,
+      );
     },
-    [flushPendingNotes],
+    [course, flushPendingNotes, router],
   );
+  React.useEffect(() => {
+    document.addEventListener('click', handleApplicationNavigation);
+    return () =>
+      document.removeEventListener('click', handleApplicationNavigation);
+  }, [handleApplicationNavigation]);
   const showNavigation = React.useCallback(
     () => setActiveSurface('navigation'),
     [],
@@ -175,22 +249,26 @@ export function AppShell({
   );
   const showStudy = React.useCallback(() => setActiveSurface('study'), []);
   const showSettings = React.useCallback(() => {
+    settingsReturnFocusRef.current =
+      navigationMode === 'mobile'
+        ? mobileNavigationTriggerRef.current
+        : utilitySettingsRef.current;
     setActiveSurface('settings');
     onOpenSettings?.();
-  }, [onOpenSettings]);
+  }, [navigationMode, onOpenSettings]);
   const showSearch = React.useCallback(() => {
     const activeElement =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : undefined;
-    searchReturnFocusRef.current = activeElement?.closest(
-      '[data-slot="sheet-content"]',
-    )
-      ? utilitySearchRef.current
-      : (activeElement ?? utilitySearchRef.current);
+    searchReturnFocusRef.current =
+      navigationMode === 'mobile' ||
+      activeElement?.closest('[data-slot="sheet-content"]')
+        ? mobileNavigationTriggerRef.current
+        : (activeElement ?? utilitySearchRef.current);
     onOpenSearch?.();
     setActiveSurface('search');
-  }, [onOpenSearch]);
+  }, [navigationMode, onOpenSearch]);
 
   React.useEffect(() => {
     function handleSearchShortcut(event: KeyboardEvent) {
@@ -202,13 +280,16 @@ export function AppShell({
       )
         return;
       event.preventDefault();
-      searchReturnFocusRef.current = utilitySearchRef.current;
+      searchReturnFocusRef.current =
+        navigationMode === 'mobile'
+          ? mobileNavigationTriggerRef.current
+          : utilitySearchRef.current;
       onOpenSearch?.();
       setActiveSurface('search');
     }
     document.addEventListener('keydown', handleSearchShortcut);
     return () => document.removeEventListener('keydown', handleSearchShortcut);
-  }, [onOpenSearch]);
+  }, [navigationMode, onOpenSearch]);
 
   const exitFocusMode = React.useCallback(() => {
     if (!setPreference) return;
@@ -310,6 +391,7 @@ export function AppShell({
             currentSectionId={currentSectionId}
             completedSectionIds={resolvedCompleted}
             onNavigate={handleCompactNavigate}
+            onBeforeNavigate={flushPendingNotes}
             compactOpenUnitId={compactOpenUnitId}
             onCompactOpenChange={handleCompactOpenChange}
           />
@@ -330,13 +412,10 @@ export function AppShell({
           searchTriggerRef={utilitySearchRef}
           focusMode={learningSnapshot?.focusMode}
           onExitFocusMode={exitFocusMode}
+          navigationTriggerRef={mobileNavigationTriggerRef}
+          settingsTriggerRef={utilitySettingsRef}
         />
-        <main
-          id="lesson-content"
-          tabIndex={-1}
-          className="lesson-content"
-          onClickCapture={handleContentNavigation}
-        >
+        <main id="lesson-content" tabIndex={-1} className="lesson-content">
           {children}
         </main>
       </section>
@@ -352,6 +431,7 @@ export function AppShell({
             side="left"
             className="mobile-sheet"
             aria-label="Course contents"
+            finalFocus={mobileNavigationTriggerRef}
           >
             <SheetHeader>
               <SheetTitle>Course contents</SheetTitle>
@@ -406,6 +486,7 @@ export function AppShell({
             side="right"
             className="study-sheet"
             aria-label="Reading settings"
+            finalFocus={settingsReturnFocusRef}
           >
             <SheetHeader>
               <SheetTitle>Reading settings</SheetTitle>

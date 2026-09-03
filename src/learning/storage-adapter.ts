@@ -239,7 +239,13 @@ export function createStorageAdapter(
     if (document.visibilityState === 'hidden') flushPendingNotes();
   };
   const startListening = () => {
-    if (listening || typeof window === 'undefined') return;
+    if (
+      !storage ||
+      listening ||
+      typeof window === 'undefined' ||
+      typeof document === 'undefined'
+    )
+      return;
     window.addEventListener('pagehide', flushPendingNotes);
     window.addEventListener('blur', flushPendingNotes);
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -255,6 +261,8 @@ export function createStorageAdapter(
     }
     clearTimer();
   };
+
+  startListening();
 
   return {
     load,

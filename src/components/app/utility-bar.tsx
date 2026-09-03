@@ -27,6 +27,8 @@ export function UtilityBar({
   onOpenStudy,
   onBeforeNavigate,
   searchTriggerRef,
+  navigationTriggerRef,
+  settingsTriggerRef,
   focusMode = false,
   onExitFocusMode,
 }: {
@@ -39,6 +41,8 @@ export function UtilityBar({
   onOpenStudy: () => void;
   onBeforeNavigate?: () => void;
   searchTriggerRef?: Ref<HTMLButtonElement>;
+  navigationTriggerRef?: Ref<HTMLButtonElement>;
+  settingsTriggerRef?: Ref<HTMLButtonElement>;
   focusMode?: boolean;
   onExitFocusMode?: () => void;
 }) {
@@ -46,6 +50,7 @@ export function UtilityBar({
   return (
     <header className="utility-bar" aria-label="Course utilities">
       <button
+        ref={navigationTriggerRef}
         type="button"
         className="utility-button mobile-navigation-trigger"
         aria-label="Open course navigation"
@@ -90,6 +95,7 @@ export function UtilityBar({
             <FileText aria-hidden="true" />
           </a>
           <button
+            ref={settingsTriggerRef}
             type="button"
             className="utility-button"
             aria-label="Reading settings"
