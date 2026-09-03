@@ -40,7 +40,3 @@ export function courseSectionPath(
   if (!section || !unit) return undefined;
   return `${courseUnitPath(unit)}#${section.id}`;
 }
-
-export function sourcePageHref(pdfPage: number): string {
-  return `/${course.sourceFilename}#page=${pdfPage}`;
-}

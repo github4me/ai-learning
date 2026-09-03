@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 
 import type { InlineNode, SourceRef } from '@/src/content/schema';
-import { SourcePageLink } from './source-page-link';
 
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- The labelled table scroller must be keyboard-focusable. */
 
@@ -19,11 +18,9 @@ export function DataTable({
   caption,
   headers,
   rows,
-  source,
   renderInline,
 }: DataTableProps) {
-  const accessibleCaption =
-    caption ?? `Data table from PDF page ${source.pdfPage}`;
+  const accessibleCaption = caption ?? 'Course data table';
 
   return (
     <figure id={id} className="data-table-block content-block">
@@ -59,7 +56,6 @@ export function DataTable({
           </tbody>
         </table>
       </section>
-      <SourcePageLink source={source} label="Table source" />
     </figure>
   );
 }

@@ -407,7 +407,6 @@ export function AppShell({
           onOpenSearch={showSearch}
           onOpenSettings={showSettings}
           onOpenStudy={showStudy}
-          onBeforeNavigate={flushPendingNotes}
           searchTriggerRef={utilitySearchRef}
           focusMode={learningSnapshot?.focusMode}
           onExitFocusMode={exitFocusMode}

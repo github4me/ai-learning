@@ -1,7 +1,7 @@
 'use client';
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
 
-import { CheckCircle2, Circle, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle } from 'lucide-react';
 import * as React from 'react';
 
 import type {
@@ -508,13 +508,6 @@ export const CourseNavigation = React.memo(function CourseNavigation({
         onClick={onBeforeNavigate}
       >
         Review notes and bookmarks
-      </a>
-      <a
-        className="source-pdf-link"
-        href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf"
-        onClick={onBeforeNavigate}
-      >
-        View original PDF <ChevronRight aria-hidden="true" />
       </a>
     </nav>
   );

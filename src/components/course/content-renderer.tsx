@@ -9,7 +9,6 @@ import {
 import { CodeBlock } from './code-block';
 import { DataTable } from './data-table';
 import { FormulaBlock } from './formula-block';
-import { SourcePageLink } from './source-page-link';
 import { KnowledgeCheck } from '@/src/components/learning/knowledge-check';
 import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
@@ -115,7 +114,6 @@ function renderBlock(block: ContentBlock): ReactNode {
       return (
         <div key={block.id} className="content-block content-paragraph">
           <p id={block.id}>{renderInline(block.children)}</p>
-          <SourcePageLink source={block.source} />
         </div>
       );
     case 'list': {
@@ -127,7 +125,6 @@ function renderBlock(block: ContentBlock): ReactNode {
               <li key={index}>{renderInline(item)}</li>
             ))}
           </List>
-          <SourcePageLink source={block.source} />
         </div>
       );
     }
@@ -157,7 +154,6 @@ function renderBlock(block: ContentBlock): ReactNode {
             {block.title ?? labels[block.tone]}
           </p>
           <ContentRenderer blocks={block.blocks} />
-          <SourcePageLink source={block.source} label="Callout source" />
         </aside>
       );
     }
@@ -181,7 +177,6 @@ function renderBlock(block: ContentBlock): ReactNode {
               </li>
             ))}
           </ol>
-          <SourcePageLink source={block.source} label="Concept chain source" />
         </figure>
       );
     case 'knowledgeCheck': {
@@ -194,7 +189,6 @@ function renderBlock(block: ContentBlock): ReactNode {
             block.answer ? <ContentRenderer blocks={block.answer} /> : undefined
           }
           reviewSectionId={block.reviewSectionId}
-          source={block.source}
           renderPrompt={renderInline}
         />
       );

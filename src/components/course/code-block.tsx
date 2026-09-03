@@ -5,7 +5,6 @@ import { Check, Clipboard, TriangleAlert } from 'lucide-react';
 import { Highlight, Prism, themes } from 'prism-react-renderer';
 
 import type { SourceRef } from '@/src/content/schema';
-import { SourcePageLink } from './source-page-link';
 
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- The labelled code scroller must be keyboard-focusable. */
 
@@ -22,7 +21,6 @@ export function CodeBlock({
   language,
   filename,
   code,
-  source,
 }: CodeBlockProps) {
   const [copyState, setCopyState] = React.useState<
     'idle' | 'copied' | 'failed'
@@ -108,7 +106,6 @@ export function CodeBlock({
             ? 'Copy failed. Select and copy the code manually.'
             : ''}
       </p>
-      <SourcePageLink source={source} label="Code source" />
     </figure>
   );
 }

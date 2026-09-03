@@ -60,15 +60,10 @@ The canonical course source is
 - Appendix A: 472 lines; SHA-256
   `0c1a22f8927a94f0101b4bbcf3b9d256e37c31fb91c6f92bb9b0b2d71195cdfd`
 
-The PDF remains canonical; the web course is its structured presentation.
-Source citations always use a one-based **physical** page number:
-
-```text
-/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf#page=<pdfPage>
-```
-
-Do not substitute a printed page label in that URL. For example, printed page
-1 is physical PDF page 10; printed labels are display metadata only.
+The PDF remains the canonical conversion source; the learner-facing course is
+rendered entirely as structured HTML text, formulas, tables, and code. Physical
+and printed page labels remain internal provenance metadata for content audits
+and are not shown as PDF links in the reading interface.
 
 At runtime, the app reads the checked-in normalized JSON and does not parse the
 PDF in the browser. `pnpm normalize:content` is a Node/tsx maintainer operation
@@ -89,12 +84,12 @@ local preview need only the Node/pnpm prerequisites above.
 - `/appendix/mini-gpt` — Appendix A Mini GPT reference
 - `/review` — notes and bookmarks grouped for review
 
-The reader provides PDF-source links, searchable Chinese/English headings,
-explanations, formulae, glossary terms, and code labels; semantic formulas,
-tables, and code; source-grounded knowledge checks; progress and last-location
-continuity; bookmarks; plain-text notes; review; light/dark/system theme; font
-size, line width, and focus-mode controls. Press `Ctrl+K` (Windows/Linux) or
-`Cmd+K` (macOS) to open search.
+The reader provides searchable Chinese/English headings, explanations,
+formulae, glossary terms, and code labels; semantic formulas, tables, and code;
+source-grounded knowledge checks; progress and last-location continuity;
+bookmarks; plain-text notes; review; light/dark/system theme; font size, line
+width, and focus-mode controls. Press `Ctrl+K` (Windows/Linux) or `Cmd+K`
+(macOS) to open search.
 
 The navigation is responsive: a full 304 px rail at `>=1280px`, a compact
 week rail from `1024px` through `1279px`, and an accessible mobile drawer below

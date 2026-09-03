@@ -1,7 +1,6 @@
 import katex from 'katex';
 
 import type { SourceRef } from '@/src/content/schema';
-import { SourcePageLink } from './source-page-link';
 
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- KaTeX HTML+MathML needs one labelled ARIA math wrapper. */
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- The labelled formula scroller must be keyboard-focusable. */
@@ -17,7 +16,6 @@ export function FormulaBlock({
   id,
   latex,
   accessibleText,
-  source,
 }: FormulaBlockProps) {
   let rendered: string | undefined;
 
@@ -50,7 +48,6 @@ export function FormulaBlock({
           )}
         </div>
       </div>
-      <SourcePageLink source={source} label="Formula source" />
     </figure>
   );
 }

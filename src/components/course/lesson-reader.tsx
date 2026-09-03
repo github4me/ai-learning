@@ -32,7 +32,6 @@ import {
   SECTION_FOCUS_EVENT,
 } from '@/src/search/search-focus';
 import { ContentRenderer } from './content-renderer';
-import { SourcePageLink } from './source-page-link';
 
 type ReadingLocation = { unit: CourseUnit; section: SectionNode };
 
@@ -204,7 +203,6 @@ function SectionStream({
         <Heading id={headingId} tabIndex={-1}>
           {section.title}
         </Heading>
-        <SourcePageLink source={section.source} label="Section source" />
       </header>
       <ContentRenderer blocks={section.blocks} />
       <SectionActions section={section} unit={unit} />
@@ -422,7 +420,6 @@ export function LessonReader({ unitId }: { unitId: string }) {
               </section>
             </>
           )}
-          <SourcePageLink source={unit.source} label="Unit source" />
           <div
             className="reader-progress"
             aria-label={

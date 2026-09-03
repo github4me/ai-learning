@@ -1,9 +1,7 @@
 'use client';
-/* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
 
 import {
   BookOpenText,
-  FileText,
   Menu,
   Search,
   Settings2,
@@ -25,7 +23,6 @@ export function UtilityBar({
   onOpenSearch,
   onOpenSettings,
   onOpenStudy,
-  onBeforeNavigate,
   searchTriggerRef,
   navigationTriggerRef,
   settingsTriggerRef,
@@ -39,7 +36,6 @@ export function UtilityBar({
   onOpenSearch?: () => void;
   onOpenSettings?: () => void;
   onOpenStudy: () => void;
-  onBeforeNavigate?: () => void;
   searchTriggerRef?: Ref<HTMLButtonElement>;
   navigationTriggerRef?: Ref<HTMLButtonElement>;
   settingsTriggerRef?: Ref<HTMLButtonElement>;
@@ -86,14 +82,6 @@ export function UtilityBar({
             <BookOpenText aria-hidden="true" />
             {courseProgress.percent}%
           </span>
-          <a
-            className="utility-button"
-            aria-label="View original PDF"
-            href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf"
-            onClick={onBeforeNavigate}
-          >
-            <FileText aria-hidden="true" />
-          </a>
           <button
             ref={settingsTriggerRef}
             type="button"

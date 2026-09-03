@@ -7,8 +7,7 @@ import { Check, RotateCcw } from 'lucide-react';
 
 import { useLearningStore } from '@/src/components/providers';
 import { courseSectionPath } from '@/src/content/course-runtime';
-import type { InlineNode, SourceRef } from '@/src/content/schema';
-import { SourcePageLink } from '@/src/components/course/source-page-link';
+import type { InlineNode } from '@/src/content/schema';
 import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
 function formatReviewedDate(value: string): string {
@@ -30,14 +29,12 @@ export function KnowledgeCheck({
   prompt,
   answer,
   reviewSectionId,
-  source,
   renderPrompt,
 }: {
   questionId: string;
   prompt: InlineNode[];
   answer?: React.ReactNode;
   reviewSectionId: string;
-  source: SourceRef;
   renderPrompt: (nodes: InlineNode[]) => React.ReactNode;
 }) {
   const attempt = useLearningStore(
@@ -86,7 +83,6 @@ export function KnowledgeCheck({
           {revealed && (
             <div className="knowledge-check-answer">
               {answer}
-              <SourcePageLink source={source} label="Answer source" />
             </div>
           )}
         </>
@@ -128,7 +124,6 @@ export function KnowledgeCheck({
       <output className="learning-live" aria-live="polite">
         {message}
       </output>
-      <SourcePageLink source={source} label="Knowledge check source" />
     </section>
   );
 }
