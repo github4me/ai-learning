@@ -47,6 +47,7 @@ export function Providers({
     learning.store.setState(
       learning.adapter.hydrateStorage(window.localStorage, () => new Date()),
     );
+    return () => learning.adapter?.dispose();
   }, [learning]);
 
   return (
@@ -75,4 +76,11 @@ export function useOptionalLearningStore<T>(
     () => (store ? selector(store.getState()) : undefined),
     () => (store ? selector(store.getState()) : undefined),
   );
+}
+
+export function useFlushPendingNotes(): () => void {
+  const store = React.useContext(LearningStoreContext);
+  return React.useCallback(() => {
+    store?.getState().flushPendingNotes();
+  }, [store]);
 }

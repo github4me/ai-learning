@@ -8,6 +8,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource-variable/noto-sans-sc/wght.css';
 import 'katex/dist/katex.min.css';
 import './globals.css';
+import { Providers } from '@/src/components/providers';
 
 export const metadata: Metadata = {
   title: 'AI First Principles · 核心教程深度扩展版',
@@ -21,7 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

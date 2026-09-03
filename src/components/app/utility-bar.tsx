@@ -17,6 +17,7 @@ export function UtilityBar({
   onOpenSearch,
   onOpenSettings,
   onOpenStudy,
+  onBeforeNavigate,
   searchTriggerRef,
 }: {
   currentWeek?: number;
@@ -25,6 +26,7 @@ export function UtilityBar({
   onOpenSearch?: () => void;
   onOpenSettings?: () => void;
   onOpenStudy: () => void;
+  onBeforeNavigate?: () => void;
   searchTriggerRef?: Ref<HTMLButtonElement>;
 }) {
   const progressLabel = `Course progress: ${courseProgress.completed} of ${courseProgress.total} sections (${courseProgress.percent}%)`;
@@ -59,6 +61,7 @@ export function UtilityBar({
           className="utility-button"
           aria-label="View original PDF"
           href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf"
+          onClick={onBeforeNavigate}
         >
           <FileText aria-hidden="true" />
         </a>

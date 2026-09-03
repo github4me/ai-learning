@@ -2,14 +2,36 @@ import { z } from 'zod';
 
 const nonEmptyText = z.string().trim().min(1);
 const stableId = nonEmptyText;
+const CONTENT_LINK_BASE = new URL('https://course.invalid');
+
+function hasControlCharacters(value: string): boolean {
+  return Array.from(value).some((character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return codePoint <= 0x1f || codePoint === 0x7f;
+  });
+}
 
 export function isSafeContentHref(href: string): boolean {
   const value = href.trim();
+  if (
+    value.includes('\\') ||
+    hasControlCharacters(value) ||
+    /%(?:2f|5c)/iu.test(value)
+  )
+    return false;
   if (value.startsWith('#')) return value.length > 1;
-  if (value.startsWith('/') && !value.startsWith('//')) return true;
+  if (value.startsWith('/')) {
+    if (/^\/[\\/]/u.test(value)) return false;
+    try {
+      const url = new URL(value, CONTENT_LINK_BASE);
+      return url.origin === CONTENT_LINK_BASE.origin;
+    } catch {
+      return false;
+    }
+  }
   if (!/^https?:\/\//i.test(value)) return false;
   try {
-    const url = new URL(value);
+    const url = new URL(value, CONTENT_LINK_BASE);
     return (
       (url.protocol === 'http:' || url.protocol === 'https:') &&
       Boolean(url.hostname)

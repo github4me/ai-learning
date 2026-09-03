@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 
 import { LessonReader } from '@/src/components/course/lesson-reader';
-import { Providers } from '@/src/components/providers';
 import { getCourse } from '@/src/content/course-runtime';
 
 export default function MiniGptAppendixPage() {
@@ -10,9 +9,5 @@ export default function MiniGptAppendixPage() {
   );
   if (!appendix) notFound();
 
-  return (
-    <Providers>
-      <LessonReader unitId={appendix.id} />
-    </Providers>
-  );
+  return <LessonReader unitId={appendix.id} />;
 }

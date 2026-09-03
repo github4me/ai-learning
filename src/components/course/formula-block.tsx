@@ -3,6 +3,8 @@ import katex from 'katex';
 import type { SourceRef } from '@/src/content/schema';
 import { SourcePageLink } from './source-page-link';
 
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- KaTeX HTML+MathML needs one labelled ARIA math wrapper. */
+
 export type FormulaBlockProps = {
   id: string;
   latex: string;
@@ -29,24 +31,20 @@ export function FormulaBlock({
   }
 
   return (
-    <figure
-      id={id}
-      className="formula-block content-block"
-      aria-label={`Formula: ${accessibleText}`}
-    >
-      {rendered ? (
-        <div
-          className="formula-scroll"
-          dangerouslySetInnerHTML={{ __html: rendered }}
-        />
-      ) : (
-        <div className="formula-fallback">
-          <span>Formula:</span>{' '}
-          <math aria-label={accessibleText}>
-            <mtext>{accessibleText}</mtext>
-          </math>
-        </div>
-      )}
+    <figure id={id} className="formula-block content-block">
+      <div className="formula-math" role="math" aria-label={accessibleText}>
+        {rendered ? (
+          <div
+            className="formula-scroll"
+            dangerouslySetInnerHTML={{ __html: rendered }}
+          />
+        ) : (
+          <div className="formula-fallback">
+            <span aria-hidden="true">Formula:</span>{' '}
+            <code>{accessibleText}</code>
+          </div>
+        )}
+      </div>
       <SourcePageLink source={source} label="Formula source" />
     </figure>
   );

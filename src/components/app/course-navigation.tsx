@@ -14,6 +14,7 @@ export type CourseNavigationProps = {
   courseProgress?: { completed: number; total: number; percent: number }
   mode?: 'full' | 'compact' | 'mobile'
   onNavigate?: (target: { unitId: string; sectionId?: string }) => void
+  onBeforeNavigate?: () => void
   onOpenSearch?: () => void
 }
 
@@ -177,6 +178,7 @@ export function CourseNavigation({
   courseProgress,
   mode = 'full',
   onNavigate,
+  onBeforeNavigate,
   onOpenSearch,
 }: CourseNavigationProps) {
   if (mode === 'compact') {
@@ -202,10 +204,24 @@ export function CourseNavigation({
       <div className="signal-path" data-testid="signal-path" aria-hidden="true">
         <span /><span /><span /><span />
       </div>
-      <a className="course-identity" href="/">
+      <a
+        className="course-identity"
+        href="/"
+        onClick={() => onNavigate?.({ unitId: course.overview.id, sectionId: course.overview.id })}
+      >
         <span>AI First Principles</span>
         <small>核心教程深度扩展版</small>
       </a>
+      {mode === 'mobile' && (
+        <button
+          type="button"
+          className="rail-search-button mobile-search-button"
+          onClick={onOpenSearch}
+          aria-label="Search course"
+        >
+          Search course / 搜索课程
+        </button>
+      )}
       {monthGroups.map(({ label, weeks }) => (
         <section key={label} className="course-month" aria-labelledby={`${label.toLowerCase().replace(' ', '-')}-heading`}>
           <p id={`${label.toLowerCase().replace(' ', '-')}-heading`} className="course-group-label">{label}</p>
@@ -241,7 +257,11 @@ export function CourseNavigation({
           <button type="button" className="rail-search-button" onClick={onOpenSearch}>Open search</button>
         </div>
       )}
-      <a className="source-pdf-link" href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf">View original PDF <ChevronRight aria-hidden="true" /></a>
+      <a
+        className="source-pdf-link"
+        href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf"
+        onClick={onBeforeNavigate}
+      >View original PDF <ChevronRight aria-hidden="true" /></a>
     </nav>
   )
 }

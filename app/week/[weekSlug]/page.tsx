@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 
-import { Providers } from '@/src/components/providers';
 import { LessonReader } from '@/src/components/course/lesson-reader';
 import { getCourse } from '@/src/content/course-runtime';
 
@@ -21,9 +20,5 @@ export default async function WeekPage({
   );
   if (!unit) notFound();
 
-  return (
-    <Providers>
-      <LessonReader unitId={unit.id} />
-    </Providers>
-  );
+  return <LessonReader unitId={unit.id} />;
 }

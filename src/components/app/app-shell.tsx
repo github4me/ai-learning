@@ -11,11 +11,14 @@ import {
 import type { Course } from '@/src/content/schema';
 import { getCourse } from '@/src/content/course-runtime';
 import { selectCourseProgress } from '@/src/learning/learning-store';
-import { useOptionalLearningStore } from '@/src/components/providers';
+import {
+  useFlushPendingNotes,
+  useOptionalLearningStore,
+} from '@/src/components/providers';
 import { CourseNavigation } from './course-navigation';
 import { UtilityBar, type CourseProgress } from './utility-bar';
 
-type ActiveModal = 'none' | 'navigation' | 'study' | 'settings';
+type ActiveModal = 'none' | 'navigation' | 'study' | 'settings' | 'search';
 
 const SearchPalette = React.lazy(
   () => import('@/src/components/search/search-palette'),
@@ -58,9 +61,9 @@ export function AppShell({
 }: AppShellProps) {
   const course = injectedCourse ?? getCourse();
   const [activeModal, setActiveModal] = React.useState<ActiveModal>('none');
-  const [searchOpen, setSearchOpen] = React.useState(false);
   const utilitySearchRef = React.useRef<HTMLButtonElement>(null);
   const searchReturnFocusRef = React.useRef<HTMLElement | null>(null);
+  const flushPendingNotes = useFlushPendingNotes();
   const learningState = useOptionalLearningStore((state) => state);
   const activeUnit = course.units.find((unit) => unit.id === currentUnitId);
   const resolvedCompleted =
@@ -71,6 +74,28 @@ export function AppShell({
       ? selectCourseProgress(learningState, course)
       : { completed: 0, total: 0, percent: 0 });
   const closeModal = () => setActiveModal('none');
+  const changeModal = (surface: Exclude<ActiveModal, 'none'>, open: boolean) =>
+    setActiveModal((current) =>
+      open ? surface : current === surface ? 'none' : current,
+    );
+  const handleNavigate = React.useCallback(
+    (target: { unitId: string; sectionId?: string }) => {
+      flushPendingNotes();
+      onNavigate?.(target);
+    },
+    [flushPendingNotes, onNavigate],
+  );
+  const handleContentNavigation = React.useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest('a[href]')
+      ) {
+        flushPendingNotes();
+      }
+    },
+    [flushPendingNotes],
+  );
   const showNavigation = () => setActiveModal('navigation');
   const showStudy = () => setActiveModal('study');
   const showSettings = () => {
@@ -78,12 +103,17 @@ export function AppShell({
     onOpenSettings?.();
   };
   const showSearch = React.useCallback(() => {
-    searchReturnFocusRef.current =
+    const activeElement =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
-        : utilitySearchRef.current;
+        : undefined;
+    searchReturnFocusRef.current = activeElement?.closest(
+      '[data-slot="sheet-content"]',
+    )
+      ? utilitySearchRef.current
+      : (activeElement ?? utilitySearchRef.current);
     onOpenSearch?.();
-    setSearchOpen(true);
+    setActiveModal('search');
   }, [onOpenSearch]);
 
   React.useEffect(() => {
@@ -98,7 +128,7 @@ export function AppShell({
       event.preventDefault();
       searchReturnFocusRef.current = utilitySearchRef.current;
       onOpenSearch?.();
-      setSearchOpen(true);
+      setActiveModal('search');
     }
     document.addEventListener('keydown', handleSearchShortcut);
     return () => document.removeEventListener('keydown', handleSearchShortcut);
@@ -116,7 +146,8 @@ export function AppShell({
           currentSectionId={currentSectionId}
           completedSectionIds={resolvedCompleted}
           courseProgress={resolvedProgress}
-          onNavigate={onNavigate}
+          onNavigate={handleNavigate}
+          onBeforeNavigate={flushPendingNotes}
           onOpenSearch={showSearch}
         />
       </aside>
@@ -131,7 +162,7 @@ export function AppShell({
           currentUnitId={currentUnitId}
           currentSectionId={currentSectionId}
           completedSectionIds={resolvedCompleted}
-          onNavigate={onNavigate}
+          onNavigate={handleNavigate}
         />
       </aside>
       <section className="workspace">
@@ -144,15 +175,21 @@ export function AppShell({
           onOpenSearch={showSearch}
           onOpenSettings={showSettings}
           onOpenStudy={showStudy}
+          onBeforeNavigate={flushPendingNotes}
           searchTriggerRef={utilitySearchRef}
         />
-        <main id="lesson-content" tabIndex={-1} className="lesson-content">
+        <main
+          id="lesson-content"
+          tabIndex={-1}
+          className="lesson-content"
+          onClickCapture={handleContentNavigation}
+        >
           {children}
         </main>
       </section>
       <Sheet
         open={activeModal === 'navigation'}
-        onOpenChange={(open) => setActiveModal(open ? 'navigation' : 'none')}
+        onOpenChange={(open) => changeModal('navigation', open)}
       >
         {activeModal === 'navigation' && (
           <SheetContent
@@ -170,16 +207,18 @@ export function AppShell({
               currentSectionId={currentSectionId}
               completedSectionIds={resolvedCompleted}
               onNavigate={(target) => {
-                onNavigate?.(target);
+                handleNavigate(target);
                 closeModal();
               }}
+              onBeforeNavigate={flushPendingNotes}
+              onOpenSearch={showSearch}
             />
           </SheetContent>
         )}
       </Sheet>
       <Sheet
         open={activeModal === 'study'}
-        onOpenChange={(open) => setActiveModal(open ? 'study' : 'none')}
+        onOpenChange={(open) => changeModal('study', open)}
       >
         {activeModal === 'study' && (
           <SheetContent
@@ -198,7 +237,7 @@ export function AppShell({
       </Sheet>
       <Sheet
         open={activeModal === 'settings'}
-        onOpenChange={(open) => setActiveModal(open ? 'settings' : 'none')}
+        onOpenChange={(open) => changeModal('settings', open)}
       >
         {activeModal === 'settings' && (
           <SheetContent
@@ -215,7 +254,7 @@ export function AppShell({
           </SheetContent>
         )}
       </Sheet>
-      {searchOpen && (
+      {activeModal === 'search' && (
         <React.Suspense
           fallback={
             <output className="search-loading">
@@ -224,8 +263,8 @@ export function AppShell({
           }
         >
           <SearchPalette
-            open={searchOpen}
-            onOpenChange={setSearchOpen}
+            open={activeModal === 'search'}
+            onOpenChange={(open) => changeModal('search', open)}
             returnFocusRef={searchReturnFocusRef}
           />
         </React.Suspense>

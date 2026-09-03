@@ -103,7 +103,9 @@ export function createCourseSearch(
     options.segmenter !== false && typeof Intl.Segmenter !== 'undefined';
   const documents: SearchDocument[] = [];
   let order = 0;
-  const roots = [course.overview, ...course.units];
+  // The bespoke overview does not render the generated overview section tree,
+  // so only routable lesson and appendix units become selectable results.
+  const roots = course.units;
   for (const root of roots) {
     const unit = root as typeof root & {
       kind?: 'week' | 'appendix';

@@ -66,29 +66,40 @@ export function CodeBlock({
         code={code}
         language={highlightedLanguage}
       >
-        {({ className, style, tokens, getLineProps, getTokenProps }) => (
-          <pre
-            id={id}
-            className={`${className} code-scroll`}
-            style={style}
-            tabIndex={0}
-            aria-label={codeLabel}
-            data-language={language}
-          >
-            <code>
-              {tokens.map((line, lineIndex) => (
-                <React.Fragment key={lineIndex}>
-                  <span {...getLineProps({ line })}>
-                    {line.map((token, tokenIndex) => (
-                      <span key={tokenIndex} {...getTokenProps({ token })} />
-                    ))}
-                  </span>
-                  {lineIndex < tokens.length - 1 ? '\n' : null}
-                </React.Fragment>
-              ))}
-            </code>
-          </pre>
-        )}
+        {({ className, style, tokens, getLineProps, getTokenProps }) => {
+          const tokenText = tokens
+            .map((line) => line.map((token) => token.content).join(''))
+            .join('\n');
+          const exactHighlight = tokenText === code;
+          return (
+            <pre
+              id={id}
+              className={`${className} code-scroll`}
+              style={style}
+              tabIndex={0}
+              aria-label={codeLabel}
+              data-language={language}
+            >
+              <code>
+                {exactHighlight
+                  ? tokens.map((line, lineIndex) => (
+                      <React.Fragment key={lineIndex}>
+                        <span {...getLineProps({ line })}>
+                          {line.map((token, tokenIndex) => (
+                            <span
+                              key={tokenIndex}
+                              {...getTokenProps({ token })}
+                            />
+                          ))}
+                        </span>
+                        {lineIndex < tokens.length - 1 ? '\n' : null}
+                      </React.Fragment>
+                    ))
+                  : code}
+              </code>
+            </pre>
+          );
+        }}
       </Highlight>
       <p className="copy-status" aria-live="polite" aria-atomic="true">
         {copyState === 'copied'

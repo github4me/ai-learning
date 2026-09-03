@@ -1,5 +1,4 @@
 'use client';
-/* oxlint-disable typescript/unbound-method -- Zustand stores actions as stable function values. */
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,7 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { useOptionalLearningStore } from '@/src/components/providers';
+import { useFlushPendingNotes } from '@/src/components/providers';
 import {
   courseUnitPath,
   getCourse,
@@ -38,9 +37,10 @@ function getSearchIndex(): CourseSearchIndex {
   return cachedSearchIndex;
 }
 
-function destinationFor(result: SearchResult): string | undefined {
+function destinationFor(result: SearchResult): string {
   const unit = getUnit(result.unitId);
-  if (!unit) return undefined;
+  if (!unit)
+    throw new Error(`Search result has no routable unit: ${result.unitId}`);
   return `${courseUnitPath(unit)}#${result.sectionId}`;
 }
 
@@ -60,9 +60,7 @@ export default function SearchPalette({
   const [activeValue, setActiveValue] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
   const navigating = React.useRef(false);
-  const flushPendingNotes = useOptionalLearningStore(
-    (state) => state.flushPendingNotes,
-  );
+  const flushPendingNotes = useFlushPendingNotes();
   const index = React.useMemo(() => getSearchIndex(), []);
   const results = React.useMemo(
     () => searchCourse(index, query),
@@ -103,8 +101,7 @@ export default function SearchPalette({
 
   function selectResult(result: SearchResult) {
     const destination = destinationFor(result);
-    if (!destination) return;
-    flushPendingNotes?.();
+    flushPendingNotes();
     requestSearchResultFocus(result.sectionId);
     navigating.current = true;
     onOpenChange(false);

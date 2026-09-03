@@ -5,7 +5,10 @@
 import * as React from 'react';
 
 import { AppShell } from '@/src/components/app/app-shell';
-import { useLearningStore } from '@/src/components/providers';
+import {
+  useFlushPendingNotes,
+  useLearningStore,
+} from '@/src/components/providers';
 import {
   courseUnitPath,
   getCourse,
@@ -80,7 +83,8 @@ function decodeHash(hash: string): string {
   }
 }
 
-function locationHref(location: ReadingLocation): string {
+function locationHref(location: ReadingLocation, currentUnitId: string): string {
+  if (location.unit.id === currentUnitId) return `#${location.section.id}`;
   return `${courseUnitPath(location.unit)}#${location.section.id}`;
 }
 
@@ -96,9 +100,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
   const visibleSections = React.useRef(new Map<string, DOMRectReadOnly>());
   const lastVisited = React.useRef('');
   const visitSection = useLearningStore((state) => state.visitSection);
-  const flushPendingNotes = useLearningStore(
-    (state) => state.flushPendingNotes,
-  );
+  const flushPendingNotes = useFlushPendingNotes();
   const currentUnitId = unit.id;
 
   React.useEffect(() => {
@@ -200,7 +202,6 @@ export function LessonReader({ unitId }: { unitId: string }) {
     <AppShell
       currentUnitId={unit.id}
       currentSectionId={activeSectionId}
-      onNavigate={flushNavigation}
     >
       <article
         ref={articleRef}
@@ -249,7 +250,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
           {previous ? (
             <a
               className="lesson-previous"
-              href={locationHref(previous)}
+              href={locationHref(previous, unit.id)}
               onClick={flushNavigation}
             >
               <span>Previous lesson</span>
@@ -261,7 +262,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
           {next ? (
             <a
               className="lesson-next"
-              href={locationHref(next)}
+              href={locationHref(next, unit.id)}
               onClick={flushNavigation}
             >
               <span>Next lesson</span>

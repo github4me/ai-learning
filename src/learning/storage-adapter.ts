@@ -30,6 +30,7 @@ export interface StorageAdapter {
 
 export interface HydratableStorageAdapter extends StorageAdapter {
   hydrateStorage(storage: Storage, clock?: () => Date): LearningStateV1;
+  dispose(): void;
 }
 
 type Options = {
@@ -60,6 +61,7 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
   let recovery: string | undefined;
   let pending: LearningStateV1 | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let listening = false;
 
   const clearTimer = () => {
     if (timer !== undefined) clearTimeout(timer);
@@ -122,13 +124,26 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
     timer = setTimeout(() => { flushPendingNotes(); }, 350);
   };
 
-  if (typeof window !== 'undefined') {
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') flushPendingNotes();
+  };
+  const startListening = () => {
+    if (listening || typeof window === 'undefined') return;
     window.addEventListener('pagehide', flushPendingNotes);
     window.addEventListener('blur', flushPendingNotes);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') flushPendingNotes();
-    });
-  }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    listening = true;
+  };
+  const dispose = () => {
+    flushPendingNotes();
+    if (listening) {
+      window.removeEventListener('pagehide', flushPendingNotes);
+      window.removeEventListener('blur', flushPendingNotes);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      listening = false;
+    }
+    clearTimer();
+  };
 
   return {
     load,
@@ -137,6 +152,7 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
       clock = nextClock ?? clock;
       available = true;
       hydrated = false;
+      startListening();
       return load();
     },
     persist,
@@ -183,5 +199,6 @@ export function createStorageAdapter(options: Options): HydratableStorageAdapter
     flushPendingNotes,
     queueNotes,
     getRecovery: () => recovery,
+    dispose,
   };
 }

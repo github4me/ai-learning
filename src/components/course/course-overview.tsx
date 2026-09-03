@@ -3,7 +3,10 @@
 
 import type { Course } from '@/src/content/schema';
 import { getCourse } from '@/src/content/course-runtime';
-import { useOptionalLearningStore } from '@/src/components/providers';
+import {
+  useFlushPendingNotes,
+  useOptionalLearningStore,
+} from '@/src/components/providers';
 import {
   selectContinueLocation,
   selectCourseProgress,
@@ -19,6 +22,7 @@ export function CourseOverview({
   courseProgress?: { completed: number; total: number; percent: number };
 }) {
   const course = injectedCourse ?? getCourse();
+  const flushPendingNotes = useFlushPendingNotes();
   const learningState = useOptionalLearningStore((state) => state);
   const continueLocation =
     injectedContinueLocation ??
@@ -63,11 +67,19 @@ export function CourseOverview({
           sections
         </span>
       </div>
-      <a className="primary-action" href={destination}>
+      <a
+        className="primary-action"
+        href={destination}
+        onClick={flushPendingNotes}
+      >
         {actionLabel}
       </a>
       {completed && (
-        <a className="review-link" href="/review">
+        <a
+          className="review-link"
+          href="/review"
+          onClick={flushPendingNotes}
+        >
           Review notes and bookmarks
         </a>
       )}
@@ -81,7 +93,7 @@ export function CourseOverview({
             .filter((unit) => unit.kind === 'week')
             .map((week) => (
               <li key={week.id}>
-                <a href={`/week/${week.slug}`}>
+                <a href={`/week/${week.slug}`} onClick={flushPendingNotes}>
                   <span>Week {week.weekNumber}</span>
                   {week.title}
                 </a>
