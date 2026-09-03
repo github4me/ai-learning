@@ -218,8 +218,7 @@ export function AppShell({
       const current = window.location;
       if (
         destination.pathname === current.pathname &&
-        destination.search === current.search &&
-        destination.hash === current.hash
+        destination.search === current.search
       )
         return;
 
