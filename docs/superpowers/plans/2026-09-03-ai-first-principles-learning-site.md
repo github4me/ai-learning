@@ -23,7 +23,7 @@
 - All controls are keyboard accessible, have visible focus, meet WCAG AA contrast, and use at least 44 by 44 px touch targets.
 - The interface works without page overflow at 375 px, 768 px, 1024 px, and 1440 px.
 - Respect `prefers-reduced-motion`; do not animate lesson content on scroll.
-- Required runtime floor: Node.js 20.19 or newer and pnpm 10 or newer.
+- Required runtime floor: Node.js 22.13 or newer and pnpm 10 or newer.
 - These commands must succeed from a clean checkout: `pnpm install`, `pnpm dev`, `pnpm validate:content`, `pnpm test`, `pnpm test:e2e`, and `pnpm build`.
 
 ## File map

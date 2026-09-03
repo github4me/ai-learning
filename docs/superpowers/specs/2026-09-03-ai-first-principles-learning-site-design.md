@@ -336,7 +336,7 @@ Course content can be replaced by a new validated version without coupling it to
 
 ### Clean-checkout commands
 
-The README requires Node.js 20.19 or newer and pnpm 10 or newer, and documents these exact commands:
+The README requires Node.js 22.13 or newer and pnpm 10 or newer, and documents these exact commands:
 
 ```text
 pnpm install
