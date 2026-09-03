@@ -44,11 +44,23 @@ function blockText(block: ContentBlock): string {
   }
 }
 
+function nestedBlocks(block: ContentBlock): ContentBlock[] {
+  if (block.type === 'callout')
+    return [block, ...block.blocks.flatMap(nestedBlocks)];
+  if (block.type === 'knowledgeCheck')
+    return [block, ...(block.answer ?? []).flatMap(nestedBlocks)];
+  return [block];
+}
+
 describe('complete generated course content', () => {
   const course = loadCourse(courseData);
   const manifest = PageManifestSchema.parse(manifestData);
   const report = reportData;
   const allSections = course.units.flatMap((unit) => flattenSections(unit));
+  const allBlocks = [course.overview, ...course.units]
+    .flatMap((root) => flattenSections(root))
+    .flatMap((section) => section.blocks)
+    .flatMap(nestedBlocks);
   const allText = allSections
     .flatMap((section) => section.blocks)
     .map(blockText)
@@ -78,8 +90,87 @@ describe('complete generated course content', () => {
     expect(allText).toContain(
       'Data → Parameters → Prediction → Error → Loss → Gradient → Update → Better Prediction',
     );
-    expect(allText).toContain('Neural Network 本质上只是把 Week 2 的：');
+    expect(allText).toContain('Neural Network 本质上只是把Week 2 的：');
     expect(allText).toContain('从一个计算单元，扩展成大量相互连接的计算单元。');
+  });
+
+  it('groups the physical-page-12 vector into one structured formula', () => {
+    const vectorFormulas = allBlocks.filter(
+      (block) =>
+        block.type === 'formula' &&
+        block.source.pdfPage === 12 &&
+        block.accessibleText.includes('100') &&
+        block.accessibleText.includes('3') &&
+        block.accessibleText.includes('8'),
+    );
+
+    expect(vectorFormulas).toHaveLength(1);
+    expect(vectorFormulas[0]).toMatchObject({ type: 'formula' });
+  });
+
+  it('joins wrapped Chinese and mixed-language prose into semantic paragraphs', () => {
+    const paragraphs = allBlocks
+      .filter((block) => block.type === 'paragraph')
+      .map(blockText);
+
+    expect(paragraphs).toContain(
+      '为什么必须做representation？因为现实概念没有统一的机器运算接口。“离CBD 很近”“房屋较新”“用户很喜欢”都需要先变成可比较、可组合的数值。Representation 决定模型能够看见什么：如果输入里从未表达“距离”，再复杂的模型也无法直接利用这个信息。',
+    );
+    expect(paragraphs).toContain(
+      '以后你会经常看到一个训练batch 最后产生一个scalar loss。因为只有一个最终Loss，才能方便地从它开始向后计算所有参数的gradient。',
+    );
+    expect(paragraphs).toContain(
+      '这三个数字的组合才是完整representation。Vector 的dimension 表示模型用多少个数描述对象；dimension 越多不一定越好，关键是每个维度能否通过training 承载有用信息。',
+    );
+    expect(paragraphs).toContain(
+      '只要这条链真正理解了，后面的Neural Network、Backpropagation，甚至Transformer / GPT 的训练都会顺很多。',
+    );
+  });
+
+  it('retains grouped bullets as semantic lists', () => {
+    const lists = allBlocks.filter((block) => block.type === 'list');
+    const overviewList = lists.find((block) => block.source.pdfPage === 10);
+    const weekTwoList = lists.find(
+      (block) =>
+        block.source.pdfPage === 21 &&
+        blockText(block).includes('Feature，输入特征'),
+    );
+
+    expect(overviewList).toMatchObject({ type: 'list', ordered: false });
+    expect(overviewList && blockText(overviewList)).toContain(
+      'Week 3：保留指定邮件原文，公式仅转换为专业数学排版；',
+    );
+    expect(weekTwoList).toMatchObject({ type: 'list', ordered: false });
+  });
+
+  it('retains arrow pipelines and their source region as semantic blocks', () => {
+    const weekTwoChain = allBlocks.find(
+      (block) =>
+        block.type === 'conceptChain' &&
+        block.source.pdfPage === 21 &&
+        block.steps[0] === 'Data',
+    );
+    const weekTwoCallout = allBlocks.find(
+      (block) =>
+        block.type === 'callout' &&
+        block.source.pdfPage === 21 &&
+        block.blocks.some((child) => child.id === weekTwoChain?.id),
+    );
+
+    expect(weekTwoChain).toMatchObject({
+      type: 'conceptChain',
+      steps: [
+        'Data',
+        'Parameters',
+        'Prediction',
+        'Error',
+        'Loss',
+        'Gradient',
+        'Update',
+        'Better Prediction',
+      ],
+    });
+    expect(weekTwoCallout).toMatchObject({ type: 'callout', tone: 'concept' });
   });
 
   it('keeps links on one-based physical PDF pages', () => {

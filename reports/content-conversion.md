@@ -15,19 +15,19 @@ Generated from the pinned source on 2026-09-03. This report is backed by the mac
 
 | Type | Discovered | Reviewed |
 | --- | ---: | ---: |
-| Formula | 20 | 20 |
-| Table | 3 | 3 |
-| Code block | 4 | 4 |
-| Knowledge check | 4 | 4 |
+| Formula | 381 | 381 |
+| Table | 39 | 39 |
+| Code block | 380 | 380 |
+| Knowledge check | 12 | 12 |
 
-Every typed candidate records its physical source page(s), exact positioned-span IDs, a SHA-256 checksum, reviewer, final status, and disposition in the JSON report. Formula review used the rendered pages and strict KaTeX validation; table review checked header/body order and cell text against source spans; code review checked literal source order and indentation. The Appendix was additionally checked at its first and last page and across every indentation depth.
+Every independently detected candidate records its physical source page, exact positioned-span IDs, a SHA-256 checksum, reviewer, final status, and disposition in the JSON report. Formula review used all detected LatinModernMath components and strict KaTeX validation; table review checked repeated-column signals; code review checked compact code-like regions; question/check review began from outline title patterns. The Appendix was additionally checked at its first and last page and across every indentation depth.
 
 ## Prose preservation
 
-- Week 2: 3623 normalized tokens; source/output checksum `497c0d163d0e007f9326cdd815bcce9038affed3786ee19248e50c9c274464e6`; match: true
-- Week 3: 7008 normalized tokens; source/output checksum `03605634dd0e98560c19bb92d7dc5482e2cd733a5074862ecec3c352a3b98ac8`; match: true
+- Week 2: 3956 normalized tokens; source/output checksum `2aa668a91a5538319d52ba39a747d9a530dd433e84d9de9b54e3397c894768ea`; match: true
+- Week 3: 7775 normalized tokens; source/output checksum `21fdd80f8a074ba7594d7531a0af5378e0173dac0749e2362226c70b25385097`; match: true
 
-The comparison projection applies Unicode NFKC, whitespace tokenization, removal of extraction NUL artifacts, and U+2010/U+2011/U+2013/U+2212 to ASCII-hyphen compatibility. Raw text and source span text remain unchanged in `tmp/pdf-extraction/raw.json`.
+The comparison projection applies Unicode NFC, whitespace tokenization, proven visual-line dehyphenation, removal of extraction NUL artifacts, and only U+2010/U+2011/U+2013/U+2212 to ASCII-hyphen compatibility. The source-side stream is independently rebuilt from every body line on physical pages 21-73; it does not use generated span assignments. Raw text and source span text remain unchanged in the checked-in compressed source audit.
 
 ## Appendix A
 

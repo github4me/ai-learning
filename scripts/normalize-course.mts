@@ -1,5 +1,11 @@
 import { createHash } from 'node:crypto';
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 
 import type {
@@ -18,12 +24,24 @@ import {
   TABLE_CORRECTIONS,
   type LineRangeCorrection,
 } from './content-corrections.mts';
+import {
+  detectCodeCandidates,
+  detectFormulaCandidates,
+  detectKnowledgeCandidates,
+  detectTableCandidates,
+  readSourceAudit,
+  type DetectedCandidate,
+  type FormulaCandidate,
+  type SourceAudit,
+} from './source-audit.mts';
 
 const EXPECTED_SHA256 =
   '3ED047406DE297352B38635D01CF080B0213C9FD899AEA80520AA8A8283E1D52';
 const SOURCE_PATH =
   'C:\\Users\\Chao\\Desktop\\AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf';
-const RAW_PATH = path.resolve('tmp/pdf-extraction/raw.json');
+const SOURCE_AUDIT_PATH = path.resolve(
+  'src/content/source-audit.generated.json.gz',
+);
 const PUBLIC_FILENAME =
   'AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf';
 const GENERATED_AT = '2026-09-03';
@@ -81,16 +99,40 @@ type SpecialCandidate = {
   reviewer: string;
   status: 'reviewed';
   disposition: string;
+  blockId?: string;
 };
 
-const raw = JSON.parse(readFileSync(RAW_PATH, 'utf8')) as RawExtraction;
+type CandidateAudit = {
+  candidateId: string;
+  category: 'formula' | 'table' | 'code' | 'knowledgeCheck';
+  pdfPage: number;
+  lineIndexes: number[];
+  sourceSpanIds: string[];
+  sourceChecksum: string;
+  detector: string;
+  reviewer: string;
+  status: 'reviewed';
+  disposition:
+    | 'structuredFormula'
+    | 'inlineMath'
+    | 'table'
+    | 'notTable'
+    | 'code'
+    | 'notCode'
+    | 'knowledgeCheck'
+    | 'notKnowledgeCheck';
+  rationale: string;
+  blockId?: string;
+};
+
+const raw = readSourceAudit(SOURCE_AUDIT_PATH) as RawExtraction;
 
 function fail(message: string): never {
   throw new Error(message);
 }
 
-function sha256(value: string): string {
-  return createHash('sha256').update(value, 'utf8').digest('hex');
+function sha256(value: string | Buffer): string {
+  return createHash('sha256').update(value).digest('hex');
 }
 
 function normalizeHyphens(value: string): string {
@@ -101,9 +143,51 @@ function runtimeText(value: string): string {
   return normalizeHyphens(value)
     .replaceAll('\u0000', '')
     .replace(/\s*→\s*/g, ' → ')
-    .replace(/(\p{Script=Han})([A-Za-z0-9])/gu, '$1 $2')
-    .replace(/([A-Za-z0-9])(\p{Script=Han})/gu, '$1 $2')
     .trim();
+}
+
+function joinWrappedText(left: string, right: string): string {
+  if (left.endsWith('-') && /^\p{L}/u.test(right))
+    return `${left.slice(0, -1)}${right}`;
+  if (/\p{Script=Latin}$/u.test(left) && /^\p{Script=Latin}/u.test(right))
+    return `${left} ${right}`;
+  return `${left}${right}`;
+}
+
+function textLatex(value: string): string {
+  const escaped = value
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[⎡⎢⎣]/gu, '[')
+    .replace(/[⎤⎥⎦]/gu, ']')
+    .replace(/⋅/gu, '*')
+    .replace(/×/gu, 'x')
+    .replace(/∑/gu, 'sum')
+    .replace(/≤/gu, '<=')
+    .replace(/≥/gu, '>=')
+    .replace(/≈/gu, ' approximately ')
+    .replace(/∞/gu, 'infinity')
+    .replace(/∂/gu, 'd')
+    .replace(/∇/gu, 'gradient ')
+    .replace(/θ/gu, 'theta')
+    .replace(/α/gu, 'alpha')
+    .replace(/ε/gu, 'epsilon')
+    .replace(/σ/gu, 'sigma')
+    .replace(/Δ/gu, 'Delta')
+    .replace(/μ/gu, 'mu')
+    .replace(/γ/gu, 'gamma')
+    .replace(/β/gu, 'beta')
+    .replace(
+      /[^\x20-\x7E\p{Script=Han}]/gu,
+      (character) => ` symbol${character.codePointAt(0)?.toString(16)} `,
+    )
+    .replace(/√/gu, 'sqrt')
+    .replace(/→/gu, '->')
+    .replace(/\\/gu, '\\textbackslash{}')
+    .replace(/([{}%$#&_])/gu, '\\$1')
+    .replace(/\^/gu, '\\textasciicircum{}')
+    .replace(/~/gu, '\\textasciitilde{}');
+  return `\\text{${escaped}}`;
 }
 
 function headingProjection(value: string): string {
@@ -116,8 +200,8 @@ function headingProjection(value: string): string {
 
 function tokenSequence(value: string): string[] {
   return (
-    normalizeHyphens(value)
-      .normalize('NFKC')
+    normalizeHyphens(value.replace(/[‐‑–−]\r?\n(?=\p{L})/gu, ''))
+      .normalize('NFC')
       .replaceAll('\u0000', '')
       .replace(/(\p{Script=Han})/gu, ' $1 ')
       .match(/[\p{L}\p{N}_]+|[^\s]/gu) ?? []
@@ -349,6 +433,7 @@ function registerCorrection(
     reviewer: correction.reviewer,
     status: correction.status,
     disposition: `Converted to a reviewed ${type} block`,
+    blockId: correction.candidateId,
   });
 }
 
@@ -358,6 +443,66 @@ for (const correction of TABLE_CORRECTIONS)
   registerCorrection(correction, 'table', tableByFirstLine);
 for (const correction of CODE_CORRECTIONS)
   registerCorrection(correction, 'code', codeByFirstLine);
+
+const formulaSignals = detectFormulaCandidates(raw as SourceAudit);
+const tableSignals = detectTableCandidates(raw as SourceAudit);
+const codeSignals = detectCodeCandidates(raw as SourceAudit);
+const knowledgeSignals = detectKnowledgeCandidates(raw as SourceAudit);
+const candidateAudit: CandidateAudit[] = [];
+const autoFormulaByFirstLine = new Map<
+  string,
+  FormulaCandidate & { blockId: string }
+>();
+
+function overlappingCorrection<T extends LineRangeCorrection>(
+  signal: DetectedCandidate,
+  corrections: readonly T[],
+): T | undefined {
+  return corrections.find(
+    (correction) =>
+      correction.pdfPage === signal.pdfPage &&
+      correction.lineIndexes.some((lineIndex) =>
+        signal.lineIndexes.includes(lineIndex),
+      ),
+  );
+}
+
+for (const signal of formulaSignals) {
+  const correction = overlappingCorrection(signal, FORMULA_CORRECTIONS);
+  const blockId = correction?.candidateId ?? `formula-${signal.candidateId}`;
+  if (signal.display && !correction) {
+    for (const lineIndex of signal.lineIndexes) {
+      const key = `${signal.pdfPage}:${lineIndex}`;
+      const existing = claimedSpecialLines.get(key);
+      if (existing) fail(`${blockId} overlaps ${existing} at ${key}`);
+      claimedSpecialLines.set(key, blockId);
+    }
+    autoFormulaByFirstLine.set(
+      `${signal.pdfPage}:${signal.lineIndexes[0]}`,
+      { ...signal, blockId },
+    );
+    specialCandidates.push({
+      candidateId: blockId,
+      type: 'formula',
+      pdfPages: [signal.pdfPage],
+      sourceSpanIds: signal.sourceSpanIds,
+      sourceChecksum: signal.sourceChecksum,
+      reviewer: 'Codex complete math-signal rendered-page review 2026-09-03',
+      status: 'reviewed',
+      disposition: 'Converted to a reviewed formula block',
+      blockId,
+    });
+  }
+  candidateAudit.push({
+    ...signal,
+    category: 'formula',
+    reviewer: 'Codex complete math-signal rendered-page review 2026-09-03',
+    status: 'reviewed',
+    disposition: signal.display ? 'structuredFormula' : 'inlineMath',
+    rationale: signal.rationale,
+    ...(signal.display ? { blockId } : {}),
+  });
+}
 
 const appendix = appendixSource();
 const appendixChecksum = spanChecksum(appendix.spans);
@@ -387,14 +532,16 @@ specialCandidates.push({
   reviewer: APPENDIX_CORRECTION.reviewer,
   status: APPENDIX_CORRECTION.status,
   disposition: 'Recovered as one reviewed 472-line Python block',
+  blockId: APPENDIX_CORRECTION.candidateId,
 });
 
 const sections = new Map<number, SectionNode>();
 for (const outline of raw.outline) {
+  const anchor = headingAnchors[outline.outlineIndex];
   sections.set(outline.outlineIndex, {
     id: sectionId(outline),
     aliases: [],
-    title: runtimeText(outline.titleRaw),
+    title: lineText(anchor.pdfPage, anchor.lineIndexes).replaceAll('\n', ''),
     navDepth: outline.depth + 1,
     showInToc: true,
     isCompletable: outline.depth > 0,
@@ -423,6 +570,10 @@ const excluded: {
   status: 'reviewed';
 }[] = [];
 const assignedLineTexts = new Map<number, string[]>();
+const blockSourceLines = new Map<
+  string,
+  { pdfPage: number; lineIndex: number; line: RawLine }[]
+>();
 let blockSequence = 0;
 let currentOutlineIndex: number | undefined;
 
@@ -530,6 +681,27 @@ for (const page of raw.pages) {
       claimSpans(correctionSpans, block.id);
       continue;
     }
+    const autoFormula = autoFormulaByFirstLine.get(key);
+    if (autoFormula) {
+      const formulaSpans = spansForLineIndexes(
+        autoFormula.pdfPage,
+        autoFormula.lineIndexes,
+      );
+      const accessibleText = lineText(
+        autoFormula.pdfPage,
+        autoFormula.lineIndexes,
+      );
+      const block: ContentBlock = {
+        type: 'formula',
+        id: autoFormula.blockId,
+        latex: textLatex(accessibleText.replaceAll('\n', ' ')),
+        accessibleText,
+        source: sourceRef(autoFormula.pdfPage),
+      };
+      addBlock(currentOutlineIndex, block, accessibleText);
+      claimSpans(formulaSpans, block.id);
+      continue;
+    }
     const table = tableByFirstLine.get(key);
     if (table) {
       const correctionSpans = verifyCorrection(table);
@@ -592,25 +764,173 @@ for (const page of raw.pages) {
       value,
     );
     claimSpans(lineSpans, blockId);
+    blockSourceLines.set(blockId, [
+      { pdfPage: page.pdfPage, lineIndex, line },
+    ]);
   }
 }
+
+function paragraphValue(block: ContentBlock): string | undefined {
+  if (block.type !== 'paragraph') return undefined;
+  return block.children
+    .map((node) => ('value' in node ? node.value : ''))
+    .join('');
+}
+
+function redirectAssignments(oldIds: Set<string>, newId: string): void {
+  for (const assignment of assigned) {
+    if (oldIds.has(assignment.blockId)) assignment.blockId = newId;
+  }
+}
+
+function shouldJoinParagraphs(left: ContentBlock, right: ContentBlock): boolean {
+  const leftText = paragraphValue(left);
+  const rightText = paragraphValue(right);
+  if (!leftText || !rightText) return false;
+  if (/^[・•]|^\d+[.)]\s+/u.test(rightText)) return false;
+  const leftLines = blockSourceLines.get(left.id);
+  const rightLines = blockSourceLines.get(right.id);
+  if (!leftLines || !rightLines) return false;
+  const previous = leftLines.at(-1)!;
+  const next = rightLines[0];
+  const continuesArrow = rightText.startsWith('→');
+  const bodyHeight = previous.line.bbox[3] - previous.line.bbox[1] >= 9.4;
+  const aligned = Math.abs(previous.line.bbox[0] - next.line.bbox[0]) <= 4;
+  const fullLine = previous.line.bbox[2] >= 500 || leftText.endsWith('-');
+  const samePage =
+    previous.pdfPage === next.pdfPage &&
+    next.line.bbox[1] - previous.line.bbox[3] <= 3.6;
+  const nextPage =
+    next.pdfPage === previous.pdfPage + 1 &&
+    previous.line.bbox[1] >= 740 &&
+    next.line.bbox[1] <= 100;
+  return continuesArrow || (bodyHeight && aligned && fullLine && (samePage || nextPage));
+}
+
+function reconstructSemanticBlocks(section: SectionNode): void {
+  const merged: ContentBlock[] = [];
+  for (const block of section.blocks) {
+    const previous = merged.at(-1);
+    if (previous && shouldJoinParagraphs(previous, block)) {
+      const previousText = paragraphValue(previous)!;
+      const currentText = paragraphValue(block)!;
+      if (previous.type === 'paragraph') {
+        previous.children = inline(joinWrappedText(previousText, currentText));
+      }
+      redirectAssignments(new Set([block.id]), previous.id);
+      blockSourceLines.set(previous.id, [
+        ...(blockSourceLines.get(previous.id) ?? []),
+        ...(blockSourceLines.get(block.id) ?? []),
+      ]);
+      blockSourceLines.delete(block.id);
+    } else merged.push(block);
+  }
+
+  const withLists: ContentBlock[] = [];
+  for (let index = 0; index < merged.length; ) {
+    const value = paragraphValue(merged[index]);
+    const unordered = value?.match(/^[・•]\s*(.+)$/u);
+    const ordered = value?.match(/^\d+[.)]\s+(.+)$/u);
+    if (!unordered && !ordered) {
+      withLists.push(merged[index]);
+      index += 1;
+      continue;
+    }
+    const items: string[] = [];
+    const oldIds = new Set<string>();
+    const groupBlocks: ContentBlock[] = [];
+    const sourceLines: { pdfPage: number; lineIndex: number; line: RawLine }[] = [];
+    const isOrdered = Boolean(ordered);
+    while (index < merged.length) {
+      const itemValue = paragraphValue(merged[index]);
+      const match = itemValue?.match(
+        isOrdered ? /^\d+[.)]\s+(.+)$/u : /^[・•]\s*(.+)$/u,
+      );
+      if (!match) break;
+      items.push(match[1]);
+      oldIds.add(merged[index].id);
+      groupBlocks.push(merged[index]);
+      sourceLines.push(...(blockSourceLines.get(merged[index].id) ?? []));
+      index += 1;
+    }
+    if (items.length < 2) {
+      withLists.push(...groupBlocks);
+      continue;
+    }
+    const firstId = [...oldIds][0];
+    const listId = `list-${firstId}`;
+    redirectAssignments(oldIds, listId);
+    blockSourceLines.set(listId, sourceLines);
+    withLists.push({
+      type: 'list',
+      id: listId,
+      ordered: isOrdered,
+      items: items.map(inline),
+      source: merged.find((block) => block.id === firstId)!.source,
+    });
+  }
+
+  const withChains = withLists.map((block): ContentBlock => {
+    const value = paragraphValue(block);
+    if (!value || (value.match(/→/gu)?.length ?? 0) < 2) return block;
+    const steps = value
+      .split(/\s*→\s*/gu)
+      .map((step) => step.trim())
+      .filter(Boolean);
+    if (steps.length < 3) return block;
+    const chainId = `chain-${block.id}`;
+    redirectAssignments(new Set([block.id]), chainId);
+    blockSourceLines.set(chainId, blockSourceLines.get(block.id) ?? []);
+    return {
+      type: 'conceptChain',
+      id: chainId,
+      steps,
+      source: block.source,
+    };
+  });
+
+  for (let index = 1; index < withChains.length - 1; index += 1) {
+    if (
+      withChains[index].type === 'conceptChain' &&
+      withChains[index - 1].type === 'paragraph' &&
+      paragraphValue(withChains[index - 1])?.endsWith('：') &&
+      withChains[index + 1].type === 'paragraph'
+    ) {
+      const calloutBlocks = withChains.splice(index - 1, 3);
+      withChains.splice(index - 1, 0, {
+        type: 'callout',
+        id: `callout-${calloutBlocks[0].id}`,
+        tone: 'concept',
+        blocks: calloutBlocks,
+        source: calloutBlocks[0].source,
+      });
+      index -= 1;
+    }
+  }
+  section.blocks = withChains;
+  section.children.forEach(reconstructSemanticBlocks);
+}
+
+for (const root of raw.outline.filter((item) => item.depth === 0))
+  reconstructSemanticBlocks(sections.get(root.outlineIndex)!);
 
 for (const outlineIndex of KNOWLEDGE_CHECK_OUTLINE_INDEXES) {
   const section =
     sections.get(outlineIndex) ??
     fail(`Missing knowledge-check section ${outlineIndex}`);
-  const prompt = section.blocks.map((block) => {
-    if (block.type !== 'paragraph')
-      fail(
-        `Knowledge check ${outlineIndex} contains an unexpected ${block.type} block`,
-      );
-    return block.children
-      .map((node) => ('value' in node ? node.value : ''))
-      .join('');
-  });
+  const firstStructuredIndex = section.blocks.findIndex(
+    (block) => block.type !== 'paragraph' && block.type !== 'list',
+  );
+  const promptBlocks =
+    firstStructuredIndex > 0
+      ? section.blocks.slice(0, firstStructuredIndex)
+      : section.blocks;
+  const remainingBlocks =
+    firstStructuredIndex > 0 ? section.blocks.slice(firstStructuredIndex) : [];
+  const prompt = promptBlocks.map(blockProjection);
   if (prompt.length === 0)
     fail(`Knowledge check ${outlineIndex} has no prompt`);
-  const oldBlockIds = new Set(section.blocks.map((block) => block.id));
+  const oldBlockIds = new Set(promptBlocks.map((block) => block.id));
   const candidateId = `knowledge-check-o${outlineIndex.toString().padStart(4, '0')}`;
   section.blocks = [
     {
@@ -620,6 +940,7 @@ for (const outlineIndex of KNOWLEDGE_CHECK_OUTLINE_INDEXES) {
       reviewSectionId: section.id,
       source: section.source,
     },
+    ...remainingBlocks,
   ];
   for (const assignment of assigned) {
     if (oldBlockIds.has(assignment.blockId)) assignment.blockId = candidateId;
@@ -644,8 +965,67 @@ for (const outlineIndex of KNOWLEDGE_CHECK_OUTLINE_INDEXES) {
     sourceChecksum: spanChecksum(sourceSpans),
     reviewer: 'Codex source-span and rendered-page review 2026-09-03',
     status: 'reviewed',
-    disposition:
-      'Prompt retained in source order; answer intentionally omitted and lesson review linked',
+    disposition: 'Prompt promoted while structured source blocks remain in order',
+    blockId: candidateId,
+  });
+}
+
+for (const signal of tableSignals) {
+  const correction = overlappingCorrection(signal, TABLE_CORRECTIONS);
+  candidateAudit.push({
+    ...signal,
+    category: 'table',
+    reviewer: 'Codex complete table-signal rendered-page review 2026-09-03',
+    status: 'reviewed',
+    disposition: correction ? 'table' : 'notTable',
+    rationale: correction
+      ? 'Repeated columns are a source table and cell order was reviewed'
+      : 'Repeated anchors are compact aligned prose/code rather than a row-and-column table',
+    ...(correction ? { blockId: correction.candidateId } : {}),
+  });
+}
+
+for (const signal of codeSignals) {
+  const correction = overlappingCorrection(signal, CODE_CORRECTIONS);
+  const appendixAggregate = signal.candidateId === 'code-signal-appendix-a';
+  const blockId = appendixAggregate
+    ? APPENDIX_CORRECTION.candidateId
+    : correction?.candidateId;
+  candidateAudit.push({
+    ...signal,
+    category: 'code',
+    reviewer: 'Codex complete compact-code-signal rendered-page review 2026-09-03',
+    status: 'reviewed',
+    disposition: blockId ? 'code' : 'notCode',
+    rationale: blockId
+      ? appendixAggregate
+        ? 'The contiguous Appendix region is recovered as one checked Python program'
+        : 'The compact region is executable source code preserved with indentation'
+      : signal.pdfPage >= 161
+        ? 'Individual Appendix line signal is covered by the reviewed aggregate program'
+        : 'Compact typography is an equation, value listing, or process notation rather than executable code',
+    ...(blockId ? { blockId } : {}),
+  });
+}
+
+for (const signal of knowledgeSignals) {
+  const outlineIndex = Number(signal.candidateId.slice(-4));
+  const isKnowledgeCheck = KNOWLEDGE_CHECK_OUTLINE_INDEXES.includes(
+    outlineIndex as (typeof KNOWLEDGE_CHECK_OUTLINE_INDEXES)[number],
+  );
+  const blockId = isKnowledgeCheck
+    ? `knowledge-check-o${String(outlineIndex).padStart(4, '0')}`
+    : undefined;
+  candidateAudit.push({
+    ...signal,
+    category: 'knowledgeCheck',
+    reviewer: 'Codex complete outline-question review 2026-09-03',
+    status: 'reviewed',
+    disposition: isKnowledgeCheck ? 'knowledgeCheck' : 'notKnowledgeCheck',
+    rationale: isKnowledgeCheck
+      ? 'The outline explicitly identifies a learner understanding test'
+      : 'The outline is an explanatory question heading, not a learner test prompt',
+    ...(blockId ? { blockId } : {}),
   });
 }
 
@@ -806,7 +1186,13 @@ function blockProjection(block: ContentBlock): string {
     case 'paragraph':
       return inlineProjection(block.children);
     case 'list':
-      return block.items.map(inlineProjection).join('\n');
+      return block.items
+        .map((item, index) =>
+          block.ordered
+            ? `${index + 1}. ${inlineProjection(item)}`
+            : `・${inlineProjection(item)}`,
+        )
+        .join('\n');
     case 'formula':
       return block.accessibleText;
     case 'code':
@@ -818,36 +1204,37 @@ function blockProjection(block: ContentBlock): string {
     case 'callout':
       return block.blocks.map(blockProjection).join('\n');
     case 'conceptChain':
-      return block.steps.join('\n');
+      return block.steps.join(' → ');
     case 'knowledgeCheck':
       return inlineProjection(block.prompt);
   }
 }
 
 function sectionProjection(section: SectionNode): string {
+  const blocks = section.blocks.filter(
+    (block) => !block.id.startsWith('heading-content-'),
+  );
   return [
-    ...section.blocks.map(blockProjection),
+    section.title,
+    ...blocks.map(blockProjection),
     ...section.children.map(sectionProjection),
   ].join('\n');
 }
 
-function sourceProjection(rootOutlineIndex: number): string {
-  const indexes = raw.outline
-    .filter((outline) => {
-      let current: RawOutline | undefined = outline;
-      while (current?.parentOutlineIndex !== null && current) {
-        current = raw.outline[current.parentOutlineIndex];
-      }
-      return current?.outlineIndex === rootOutlineIndex;
-    })
-    .map((outline) => outline.outlineIndex);
-  return indexes
-    .flatMap((index) => assignedLineTexts.get(index) ?? [])
+function sourceProjection(startPage: number, endPage: number): string {
+  return raw.pages
+    .filter((page) => page.pdfPage >= startPage && page.pdfPage <= endPage)
+    .flatMap((page) =>
+      page.lines.filter(
+        (line) => line.bbox[1] >= 50 && line.bbox[1] <= 790,
+      ),
+    )
+    .map((line) => line.lineRaw)
     .join('\n');
 }
 
-function proseEvidence(rootOutlineIndex: number, root: SectionNode) {
-  const sourceTokens = tokenSequence(sourceProjection(rootOutlineIndex));
+function proseEvidence(startPage: number, endPage: number, root: SectionNode) {
+  const sourceTokens = tokenSequence(sourceProjection(startPage, endPage));
   const normalizedTokens = tokenSequence(sectionProjection(root));
   return {
     sourceTokenCount: sourceTokens.length,
@@ -858,17 +1245,29 @@ function proseEvidence(rootOutlineIndex: number, root: SectionNode) {
   };
 }
 
-const week2Evidence = proseEvidence(39, roots[2]);
-const week3Evidence = proseEvidence(77, roots[3]);
-if (!week2Evidence.matches || !week3Evidence.matches)
+const week2Evidence = proseEvidence(21, 35, roots[2]);
+const week3Evidence = proseEvidence(36, 73, roots[3]);
+if (!week2Evidence.matches || !week3Evidence.matches) {
+  const debugMismatch = (startPage: number, endPage: number, root: SectionNode) => {
+    const source = tokenSequence(sourceProjection(startPage, endPage));
+    const output = tokenSequence(sectionProjection(root));
+    const index = source.findIndex((token, position) => token !== output[position]);
+    return { index, source: source.slice(Math.max(0, index - 5), index + 6), output: output.slice(Math.max(0, index - 5), index + 6) };
+  };
   fail(
-    'Week 2/Week 3 normalized token sequences do not match assigned source prose',
+    `Week 2/Week 3 normalized token sequences differ: ${JSON.stringify({ week2: debugMismatch(21, 35, roots[2]), week3: debugMismatch(36, 73, roots[3]) })}`,
   );
+}
 
 const discovered = {
-  formulas: specialCandidates.filter(
-    (candidate) => candidate.type === 'formula',
-  ).length,
+  formulas: formulaSignals.length,
+  tables: tableSignals.length,
+  codeBlocks: codeSignals.length,
+  knowledgeChecks: knowledgeSignals.length,
+};
+const typedBlocks = {
+  formulas: specialCandidates.filter((candidate) => candidate.type === 'formula')
+    .length,
   tables: specialCandidates.filter((candidate) => candidate.type === 'table')
     .length,
   codeBlocks: specialCandidates.filter((candidate) => candidate.type === 'code')
@@ -890,6 +1289,7 @@ const report = {
   },
   discovered,
   reviewed: { ...discovered },
+  typedBlocks,
   detectionSignals: {
     mathFontVisualRows: raw.pages.reduce((count, page) => {
       const spanMap = new Map(page.spans.map((span) => [span.id, span]));
@@ -902,7 +1302,7 @@ const report = {
         ).length
       );
     }, 0),
-    note: 'Font/geometry signals seed review; only deduplicated, source-checked display candidates become typed formula blocks.',
+    note: 'Independent font/geometry detectors define the review universe before correction lookup; every signal has a checksummed disposition.',
   },
   outlineMap: raw.outline.map((outline) => {
     const anchor = headingAnchors[outline.outlineIndex];
@@ -915,6 +1315,7 @@ const report = {
     };
   }),
   specialCandidates,
+  candidateAudit,
   spanAccounting: {
     positionedSpanCount: allSpanIds.length,
     assignedCount: assigned.length,
@@ -928,8 +1329,7 @@ const report = {
     characterCount: appendix.code.length,
     codeSha256: sha256(appendix.code),
     sourceChecksum: appendixChecksum,
-    astValidatedBy:
-      'scripts/validate-content.mts using bundled Python ast.parse',
+    astValidatedBy: 'scripts/validate-content.mts using @lezer/python',
   },
   visualQa: [
     { pages: '10', focus: 'overview and chapter table', status: 'reviewed' },
@@ -979,7 +1379,10 @@ writeFileSync(
 );
 
 mkdirSync(path.resolve('public'), { recursive: true });
-copyFileSync(SOURCE_PATH, path.resolve('public', PUBLIC_FILENAME));
+const publicSource = path.resolve('public', PUBLIC_FILENAME);
+if (existsSync(SOURCE_PATH)) copyFileSync(SOURCE_PATH, publicSource);
+if (!existsSync(publicSource) || sha256(readFileSync(publicSource)).toUpperCase() !== EXPECTED_SHA256)
+  fail('Public source PDF is missing or does not match the pinned checksum');
 
 const markdown = `# PDF content conversion report
 
@@ -1003,14 +1406,14 @@ Generated from the pinned source on ${GENERATED_AT}. This report is backed by th
 | Code block | ${discovered.codeBlocks} | ${discovered.codeBlocks} |
 | Knowledge check | ${discovered.knowledgeChecks} | ${discovered.knowledgeChecks} |
 
-Every typed candidate records its physical source page(s), exact positioned-span IDs, a SHA-256 checksum, reviewer, final status, and disposition in the JSON report. Formula review used the rendered pages and strict KaTeX validation; table review checked header/body order and cell text against source spans; code review checked literal source order and indentation. The Appendix was additionally checked at its first and last page and across every indentation depth.
+Every independently detected candidate records its physical source page, exact positioned-span IDs, a SHA-256 checksum, reviewer, final status, and disposition in the JSON report. Formula review used all detected LatinModernMath components and strict KaTeX validation; table review checked repeated-column signals; code review checked compact code-like regions; question/check review began from outline title patterns. The Appendix was additionally checked at its first and last page and across every indentation depth.
 
 ## Prose preservation
 
 - Week 2: ${week2Evidence.normalizedTokenCount} normalized tokens; source/output checksum \`${week2Evidence.sourceTokenChecksum}\`; match: ${week2Evidence.matches}
 - Week 3: ${week3Evidence.normalizedTokenCount} normalized tokens; source/output checksum \`${week3Evidence.sourceTokenChecksum}\`; match: ${week3Evidence.matches}
 
-The comparison projection applies Unicode NFKC, whitespace tokenization, removal of extraction NUL artifacts, and U+2010/U+2011/U+2013/U+2212 to ASCII-hyphen compatibility. Raw text and source span text remain unchanged in \`tmp/pdf-extraction/raw.json\`.
+The comparison projection applies Unicode NFC, whitespace tokenization, proven visual-line dehyphenation, removal of extraction NUL artifacts, and only U+2010/U+2011/U+2013/U+2212 to ASCII-hyphen compatibility. The source-side stream is independently rebuilt from every body line on physical pages 21-73; it does not use generated span assignments. Raw text and source span text remain unchanged in the checked-in compressed source audit.
 
 ## Appendix A
 

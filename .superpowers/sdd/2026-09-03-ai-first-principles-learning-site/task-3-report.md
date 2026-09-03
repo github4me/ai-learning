@@ -41,7 +41,7 @@ Successful extraction summary:
 }
 ```
 
-The raw extraction is regeneration-only and remains under ignored `tmp/`; runtime and builds consume only the checked-in JSON.
+The full raw extraction is regeneration-only and remains under ignored `tmp/`. A deterministic 1,336,369-byte `src/content/source-audit.generated.json.gz` contains the source outline, pages, lines, spans, coordinates, fonts, and checksums needed for independent clean-checkout validation. Runtime and builds consume checked-in JSON only.
 
 ## Implementation
 
@@ -70,18 +70,21 @@ All 42,408 positioned spans have exactly one disposition: 10,762 are assigned to
 
 `scripts/content-corrections.mts` is the checked, source-critical correction map. Every entry contains its physical page, exact line indexes, source-span checksum, final typed value, and review disposition. Any source checksum change is fatal.
 
-The final course contains 461 sections and 5,109 blocks:
+The final course contains 461 sections and 4,354 blocks when nested callout/check blocks are counted recursively:
 
 | Runtime block type |     Count |
 | ------------------ | --------: |
-| Paragraph          |     5,078 |
-| Formula            |        20 |
+| Paragraph          |     3,869 |
+| List               |        62 |
+| Callout             |        15 |
+| Concept chain       |        26 |
+| Formula            |       371 |
 | Table              |         3 |
 | Code               |         4 |
 | Knowledge check    |         4 |
-| **Total**          | **5,109** |
+| **Total**          | **4,354** |
 
-The 20 deliberately structured display-formula candidates are not a raw math-font count; other inline/source math remains preserved in prose. Every structured candidate is tied to positioned source spans and strict validation.
+Formula discovery is independent of corrections: 605 LatinModernMath rows are grouped by raw span geometry into 381 candidates. Rendered review classified 371 as display formulas and 10 as inline math. Corrections resolve known formulas but do not create the discovery universe. Every independently discovered formula/table/code/check candidate has checksummed source evidence and a reviewed disposition.
 
 ### Appendix A recovery
 
@@ -90,7 +93,7 @@ Appendix A is reconstructed from positioned lines on physical pages 161-170 usin
 - 472 visual lines
 - 18,411 characters
 - SHA-256 `0c1a22f8927a94f0101b4bbcf3b9d256e37c31fb91c6f92bb9b0b2d71195cdfd`
-- a successful Python `ast.parse` gate using the bundled Python executable
+- successful extraction-time Python `ast.parse` evidence using the bundled Python executable
 
 The validator hashes the raw JSON code value rather than the schema-trimmed runtime string so the exact final newline and line count are audited.
 
@@ -122,11 +125,11 @@ Page 10 and the top-level `阅读说明` outline root cannot be placed in the in
 4. `tests/content/content-validator.test.ts` — expected RED: `scripts/validate-content.mts` did not exist.
 5. First validator GREEN attempt correctly failed on a Week 3 token mismatch. Root cause: the canonical tokenizer did not isolate Han characters adjacent to Latin text. The projection was corrected, then the validator exposed table source-line concatenation and the schema-trimmed Appendix final newline. Both validators were corrected at the comparison boundary, not suppressed.
 6. Overview selector test — expected RED: `findSection` searched units only; GREEN after overview traversal was added.
-7. Current targeted results: course schema 9/9, generated content 4/4, validator 1/1.
+7. Current targeted results after fix round 1: generated-content semantics 8/8 and validator/mutation coverage 9/9.
 
 ## Prose and fidelity validation
 
-`scripts/validate-content.mts` independently rereads raw extraction plus generated artifacts and recomputes every gate. It does not trust the report's summary counters. It validates:
+`scripts/validate-content.mts` independently reads the checked compressed source audit plus generated artifacts and recomputes every gate. It does not read ignored `tmp/` data and does not trust the report's summary counters. It validates:
 
 - pinned source and public-copy checksums;
 - 170 physical pages and printed-label mapping;
@@ -134,18 +137,19 @@ Page 10 and the top-level `阅读说明` outline root cannot be placed in the in
 - exactly 12 sequential weeks plus Appendix A, with a separate page-10 overview;
 - global uniqueness of runtime section/block IDs and source-span dispositions;
 - exact Week 2 and Week 3 normalized token sequences and independently recomputed checksums;
+- the independently detected candidate universe, candidate checksums, reviewed dispositions, and block links;
 - correction-map source span checksums and reviewed status;
-- strict KaTeX rendering of all 20 formulas;
+- strict KaTeX rendering of all 371 display formulas;
 - table cell order/text against source line spans;
-- literal code source order and Appendix hash/line count/AST;
+- literal code source order and Appendix hash/line count plus portable `@lezer/python` grammar parsing;
 - absence of replacement glyphs and forbidden control characters;
 - zero unresolved warnings.
 
-Week 2 has 3,623 normalized tokens and Week 3 has 7,008. In both cases, source and output token sequences are identical after only Unicode NFKC, whitespace tokenization, extraction-NUL removal, Han-character token separation, and U+2010/U+2011/U+2013/U+2212 compatibility normalization.
+Week 2 has 3,956 normalized tokens and Week 3 has 7,775. In both cases, the source stream is rebuilt independently from all body spans and structural headings on physical pages 21-73, and source/output token sequences are identical after only Unicode NFC, whitespace tokenization, proven visual-line dehyphenation, extraction-NUL removal, Han-character token separation, and the explicitly permitted U+2010/U+2011/U+2013/U+2212-to-ASCII-hyphen mappings. Compatibility-character changes therefore remain detectable.
 
 ## Reviewed rendered-source evidence
 
-Source pages were rendered with bundled Poppler at 100 dpi. Individual pages and 2x2 contact sheets were compared against the exact correction values and report span references.
+Source pages were rendered with bundled Poppler at 100 dpi. Category-colored audit overlays were produced for all 148 pages containing at least one independently discovered candidate and inspected across 13 contact sheets against the exact audit spans and report dispositions.
 
 - p10: overview and complete 12-row chapter table.
 - p20, p69, p84, p159: all four knowledge-check prompts and review targets.
@@ -157,7 +161,7 @@ Source pages were rendered with bundled Poppler at 100 dpi. Individual pages and
 - p150-160: Week 12 integration and final check.
 - p161-170: every Appendix page, including first/last endpoints and all visible indentation depths.
 
-The review found no discrepancy between the checked correction values and rendered source pages. All 20 formulas, 3 tables, 4 code blocks, and 4 knowledge checks are marked reviewed because their value/order/page and source-span evidence were actually compared. The machine-readable candidate records retain reviewer, status, physical page, span IDs, and source checksum.
+The review found no discrepancy between the candidate geometry/dispositions and rendered source pages. The complete reviewed universe is 381 formula candidates (371 structured, 10 inline), 39 table candidates (4 mapped to 3 tables, 35 not-table), 380 code candidates (13 mapped to 4 code blocks, 367 not-code), and 12 check candidates (4 structured, 8 not-check). The machine-readable candidate records retain reviewer, status, physical page, line indexes, span IDs, source checksum, rationale, disposition, and block ID where applicable.
 
 ## Commands and observed results
 
@@ -165,11 +169,11 @@ Node/pnpm commands prepended the bundled Node and pnpm fallback directories to `
 
 | Command                                                    | Result                                                                                                                                                                                                               |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm normalize:content`                                   | PASS — 170/170 pages, 461/461 outline, 10,762 assigned + 31,646 excluded spans, 472 Appendix lines, 0 warnings                                                                                                       |
+| `pnpm normalize:content`                                   | PASS — 170/170 pages, 461/461 outline, 381/39/380/12 independent candidates, 10,762 assigned + 31,646 excluded spans, 472 Appendix lines, 0 warnings                                                                 |
 | hash generated artifacts → normalize again → hash again    | PASS — all four emitted files byte-identical                                                                                                                                                                         |
-| `pnpm validate:content`                                    | PASS — 170 pages, 461 outline/sections, 5,109 blocks, 20 formulas, 3 tables, 4 code blocks, 4 knowledge checks, 472 Appendix lines, 0 warnings                                                                       |
-| `pnpm test -- tests/content/course-content.test.ts`        | PASS — 5 files, 16 tests (the package runner treats the arguments after `--` as Vitest filters/options and executes the full current suite)                                                                          |
-| `pnpm test`                                                | PASS — 5 files, 16 tests                                                                                                                                                                                             |
+| `pnpm validate:content`                                    | PASS — 170 pages, 461 outline/sections, 4,354 recursive blocks, 371 formulas, 3 tables, 4 code blocks, 4 knowledge checks, 472 Appendix lines, 0 warnings                                                            |
+| `pnpm test -- tests/content/course-content.test.ts`        | PASS — earlier baseline run, before fix-round additions                                                                                                                                                              |
+| `pnpm test`                                                | PASS — 5 files, 28 tests                                                                                                                                                                                             |
 | `pnpm exec vitest run tests/content/course-schema.test.ts` | PASS — 1 file, 9 tests                                                                                                                                                                                               |
 | `pnpm exec tsc --noEmit`                                   | PASS                                                                                                                                                                                                                 |
 | `pnpm exec oxlint scripts src/content tests/content`       | PASS                                                                                                                                                                                                                 |
@@ -181,10 +185,12 @@ Node/pnpm commands prepended the bundled Node and pnpm fallback directories to `
 - `scripts/extract_pdf.py`
 - `scripts/content-corrections.mts`
 - `scripts/normalize-course.mts`
+- `scripts/source-audit.mts`
 - `scripts/validate-content.mts`
 - `src/content/course.generated.json`
 - `src/content/page-manifest.generated.json`
 - `src/content/conversion-report.generated.json`
+- `src/content/source-audit.generated.json.gz`
 - `src/content/schema.ts`
 - `src/content/load-course.ts`
 - `tests/content/course-content.test.ts`
@@ -193,6 +199,7 @@ Node/pnpm commands prepended the bundled Node and pnpm fallback directories to `
 - `reports/content-conversion.md`
 - `public/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf`
 - `package.json`
+- `pnpm-lock.yaml`
 - `tsconfig.json`
 
 ## Self-review
@@ -200,13 +207,46 @@ Node/pnpm commands prepended the bundled Node and pnpm fallback directories to `
 - The runtime/build path has no Python or PDF parsing dependency; all content is checked-in JSON.
 - Source identity is checked at extraction and validation, including the public copy.
 - The direct outline map, stable IDs, manifest page mapping, and span accounting are recomputed rather than accepted from summary counts.
-- Structured corrections fail closed when source geometry/text changes.
+- Independent candidate detection is source-derived; structured corrections fail closed when source geometry/text changes.
 - Generated output is deterministic and contains no timestamps that vary per run.
 - The approved overview and page-manifest interface changes remain minimal and preserve the 13-unit invariant.
 - No manual-review claim was made before the relevant rendered page/span comparison was completed.
 
 ## Concerns and follow-up
 
-1. The bundled Python interpreter includes pypdf but not PyMuPDF on this host. Raw regeneration therefore currently needs the recorded Python 3.12 `PYTHONPATH`; runtime/build/test do not. A future reproducible-tooling task should place the pinned PyMuPDF version in the workspace bundle or project-managed regeneration environment.
+1. The bundled Python interpreter includes pypdf but not PyMuPDF on this host. Full PDF re-extraction therefore currently needs the recorded Python 3.12 `PYTHONPATH`; clean validation, normalization, runtime, build, and Appendix syntax validation do not.
 2. The repository-wide lint command is not green because of existing UI/component violations outside Task 3. Task 3-owned scripts, content runtime, and tests pass scoped oxlint.
-3. Formula typing is deliberately conservative: 20 display candidates are explicit structured formula blocks, while other mathematical source text remains losslessly preserved as paragraph text. Expanding semantic formula coverage should add reviewed correction entries rather than infer LaTeX silently.
+3. Reviewed formula candidates without a hand-authored correction use a safe KaTeX text representation backed by exact accessible source text and span checksums. This preserves source content and display structure, but hand-authoring normalized mathematical LaTeX for all 371 formulas would be a separate editorial enhancement.
+
+## Fix round 1/5 — independent discovery and semantic reconstruction
+
+The first Task 3 review correctly identified circular formula discovery, visual-line paragraphs, flattened semantic blocks, report-trusting validation, overly broad NFKC prose checks, ignored raw-audit dependency, host-specific Python parsing, and insufficient negative coverage. All findings were addressed without narrowing the candidate universe.
+
+### Genuine RED evidence
+
+- `pnpm exec vitest run tests/content/course-content.test.ts` — RED, 4/8 failed: page-12 vector had 0 structured formulas; the cited Week 1 wrapped paragraph was split; representative overview/Week 2 lists were missing; the Week 2 concept chain/callout was flattened.
+- `pnpm exec vitest run tests/content/content-validator.test.ts` — corrected RED, 7 failed/1 passed: clean fixture failed without `raw.json`; omitted formula candidate, altered outline evidence, fabricated exclusion, invalid disposition, NFKC compatibility mutation, and excluded Week 2 prose were all incorrectly accepted. The malformed Appendix mutation was already rejected by the existing hash/line gate.
+- After the first validator GREEN, a final required semantic-regression test split the cited Week 2 joined paragraph back into two visual-line paragraphs while preserving its source text and report accounting. Genuine RED was 1 failed/8 passed because the validator accepted the split. The independent paragraph-to-ordered-source-line projection was then added; focused GREEN is 9/9.
+
+### GREEN implementation evidence
+
+- Independent detector starts from all 605 math-font rows and geometry-groups 381 candidates before consulting corrections. Physical page 12 is one candidate and one runtime formula.
+- Semantic line joining uses outline boundaries, body font geometry, vertical spacing, indentation/alignment, punctuation/full-line wrapping, explicit arrow continuation, and page-edge continuity. It preserves source token equality. Representative Chinese, English, and mixed-language regressions pass.
+- Consecutive source bullets become 62 lists; explicit arrow pipelines become 26 concept chains recursively; source regions wrapping chains become 15 callouts. Source span ordering and checksums remain auditable.
+- The validator independently derives all 461 outline title/page/parent/depth mappings and one-to-one section IDs, candidate universes, allowed exclusions, Week 2/3 source streams, and exact candidate dispositions. Removing a candidate from both report collections still fails against the source-derived universe.
+- Every paragraph must independently reproduce the token stream of its ordered assigned audit lines after the same evidence-based visual-wrap projection. An unassigned, split, or text-altered paragraph now fails with a semantic-paragraph error.
+- `src/content/source-audit.generated.json.gz` makes clean-checkout validation self-contained. Its SHA-256 is `F26C0033C8CD4B7A6B47459281F1C6887037A84685312D2565DFC01FD4A23DFD`; two independent writes reproduced that byte hash.
+- Appendix validation uses `@lezer/python` in Node plus exact 472-line, 18,411-character, and SHA-256 gates. A direct malformed-Python parser assertion and a malformed Appendix mutation both fail without invoking host Python.
+
+### Fix-round verification performed
+
+- `pnpm exec vitest run tests/content/course-content.test.ts` — PASS, 8/8.
+- `pnpm exec vitest run tests/content/content-validator.test.ts` — PASS, 9/9, including omitted candidate, altered outline title/page/parent, unjustified exclusion, invalid disposition, compatibility character, excluded prose, semantic paragraph regression, and malformed Appendix mutations.
+- Raw-absence proof: `tmp/pdf-extraction/raw.json` was renamed out of place; `pnpm validate:content` and `pnpm normalize:content` both passed; all three generated JSON hashes remained unchanged; the raw file was restored in `finally`.
+- Deterministic audit proof: two regenerated gzip artifacts and the checked artifact all hashed to `F26C0033C8CD4B7A6B47459281F1C6887037A84685312D2565DFC01FD4A23DFD`.
+- `pnpm exec tsc --noEmit` — PASS.
+- `pnpm exec oxlint scripts/source-audit.mts scripts/normalize-course.mts scripts/validate-content.mts tests/content/course-content.test.ts tests/content/content-validator.test.ts` — PASS.
+- `pnpm exec oxlint scripts src/content tests/content` — PASS.
+- `pnpm test` — PASS, 5 files and 28 tests.
+- `pnpm validate:content` — PASS with 170 pages, 461 source-equal outline mappings/sections, 4,354 recursive blocks, 381/39/380/12 independent candidates, 10,762 assigned spans, 31,646 justified exclusions, 472 Appendix lines, and zero warnings.
+- `pnpm build` — PASS, all five vinext stages completed.
