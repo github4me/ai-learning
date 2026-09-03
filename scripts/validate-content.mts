@@ -1282,6 +1282,10 @@ export function validateGeneratedContent(repositoryRoot = process.cwd()) {
         formula.accessibleText.trim().length > 0,
       `${formula.id} formula content is empty`,
     );
+    invariant(
+      !/\bsymbol[0-9a-f]+\b/iu.test(formula.latex),
+      `${formula.id} contains an unresolved formula symbol placeholder`,
+    );
     katex.renderToString(formula.latex, {
       throwOnError: true,
       strict: 'error',

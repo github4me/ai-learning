@@ -168,40 +168,78 @@ function joinWrappedText(left: string, right: string): string {
   return `${left}${right}`;
 }
 
-function textLatex(value: string): string {
-  const escaped = value
-    .normalize('NFKD')
-    .replace(/\p{M}/gu, '')
-    .replace(/[⎡⎢⎣]/gu, '[')
-    .replace(/[⎤⎥⎦]/gu, ']')
-    .replace(/⋅/gu, '*')
-    .replace(/×/gu, 'x')
-    .replace(/∑/gu, 'sum')
-    .replace(/≤/gu, '<=')
-    .replace(/≥/gu, '>=')
-    .replace(/≈/gu, ' approximately ')
-    .replace(/∞/gu, 'infinity')
-    .replace(/∂/gu, 'd')
-    .replace(/∇/gu, 'gradient ')
-    .replace(/θ/gu, 'theta')
-    .replace(/α/gu, 'alpha')
-    .replace(/ε/gu, 'epsilon')
-    .replace(/σ/gu, 'sigma')
-    .replace(/Δ/gu, 'Delta')
-    .replace(/μ/gu, 'mu')
-    .replace(/γ/gu, 'gamma')
-    .replace(/β/gu, 'beta')
-    .replace(
-      /[^\x20-\x7E\p{Script=Han}]/gu,
-      (character) => ` symbol${character.codePointAt(0)?.toString(16)} `,
-    )
-    .replace(/√/gu, 'sqrt')
-    .replace(/→/gu, '->')
+const TEXT_LATEX_SYMBOLS: Readonly<Record<string, string>> = {
+  '⋅': '\\cdot',
+  '×': '\\times',
+  '∑': '\\sum',
+  '≤': '\\le',
+  '≥': '\\ge',
+  '≈': '\\approx',
+  '∞': '\\infty',
+  '∂': '\\partial',
+  '∇': '\\nabla',
+  θ: '\\theta',
+  α: '\\alpha',
+  ε: '\\varepsilon',
+  σ: '\\sigma',
+  Δ: '\\Delta',
+  μ: '\\mu',
+  γ: '\\gamma',
+  β: '\\beta',
+  '√': '\\surd',
+  '→': '\\rightarrow',
+  '←': '\\leftarrow',
+  '′': "'",
+  '∼': '\\sim',
+  '∶': ':',
+  '∈': '\\in',
+  '∣': '\\mid',
+  '∏': '\\prod',
+  '∝': '\\propto',
+  '⋯': '\\cdots',
+  '…': '\\ldots',
+};
+
+function escapeLatexText(value: string): string {
+  return value
     .replace(/\\/gu, '\\textbackslash{}')
     .replace(/([{}%$#&_])/gu, '\\$1')
     .replace(/\^/gu, '\\textasciicircum{}')
     .replace(/~/gu, '\\textasciitilde{}');
-  return `\\text{${escaped}}`;
+}
+
+function textLatex(value: string): string {
+  const normalized = value
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[⎡⎢⎣]/gu, '[')
+    .replace(/[⎤⎥⎦]/gu, ']');
+  const fragments: string[] = [];
+  let text = '';
+
+  function flushText(): void {
+    if (!text) return;
+    fragments.push(`\\text{${escapeLatexText(text)}}`);
+    text = '';
+  }
+
+  for (const character of normalized) {
+    const symbolLatex = TEXT_LATEX_SYMBOLS[character];
+    if (symbolLatex) {
+      flushText();
+      fragments.push(symbolLatex);
+      continue;
+    }
+    if (!/[\x20-\x7E\p{Script=Han}]/u.test(character)) {
+      const codePoint = character.codePointAt(0)?.toString(16).toUpperCase();
+      fail(
+        `Unsupported formula symbol U+${codePoint ?? 'UNKNOWN'} in ${JSON.stringify(value)}`,
+      );
+    }
+    text += character;
+  }
+  flushText();
+  return fragments.join(' ');
 }
 
 function tokenSequence(value: string): string[] {
