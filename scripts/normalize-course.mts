@@ -33,7 +33,11 @@ import {
 } from './candidate-review-ledger.mts';
 import { CONTENT_REVIEW_TRUST_ROOT } from './content-review-trust-root.mts';
 import { deriveSourceHeadingAnchors } from './source-heading-anchors.mts';
-import { transcribeOneLineFormula } from './formula-transcription.mts';
+import {
+  assertFormulaReviewLedger,
+  formulaReviewMaps,
+  readFormulaReviewLedger,
+} from './formula-review-ledger.mts';
 import {
   detectCodeCandidates,
   detectFormulaCandidates,
@@ -57,67 +61,14 @@ const SOURCE_AUDIT_PATH = path.resolve(
 const REVIEW_LEDGER_PATH = path.resolve(
   'src/content/candidate-review-ledger.json',
 );
+const FORMULA_REVIEW_LEDGER_PATH = path.resolve(
+  'src/content/formula-review-ledger.json',
+);
 const PUBLIC_FILENAME =
   'AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf';
 const GENERATED_AT = '2026-09-03';
 const EXPECTED_FORMULA_GEOMETRY_SHA256 =
   '822e96785d8609335a71ac79501f3eec23194cb744f786601443698e3e7ce5ba';
-
-const MISSING_HAT_SOURCE_CHECKSUMS: Readonly<Record<string, string>> = {
-  'math-p020-g003':
-    '86da7c2fa2cd49ca43c42fd35562519b3bd0b893182569f86396d77aa5d2879f',
-  'math-p022-g000':
-    '41b3040e84fc65e64fa952982b46371aa0295adbd369ed9a08e6558c1df9c618',
-  'math-p025-g000':
-    'c7389e27311bac8bfdfd383fa7b43d4eaaa3abb849002a86893ca7f41c475a1a',
-  'math-p025-g001':
-    'd991f8afea4d54adeba0df3e88d627f21e285c8d7dd58ba718003f7f1e407313',
-  'math-p025-g004':
-    'b8dc53a6ddf1420313e82df95d00d8d7c8d383e8d88558d14851386e3d1f554a',
-  'math-p026-g002':
-    'dd87a5e819a5d01350486454c0245cc8ee71b4fd89ea8af2551b25afb2fe797f',
-  'math-p026-g003':
-    'e71b9e8f571c16a58ab7c2b82fcf45e332b7a90c63b77d61e14bd3dfb4b462ef',
-  'math-p027-g002':
-    '2f208956ae31a394434f8e8ee84f6d85cf599afdb03c90fad9cf271756fdc16c',
-  'math-p029-g001':
-    '343c5f513edbf182bea79c0193bc4d589b5502507999d5d8c24faf47b2deb169',
-  'math-p029-g002':
-    '4734e3392dc6a5bea06d2d0af1f7dc298734c685bb6379d002178a2f2cd1e50e',
-  'math-p030-g000':
-    '80d8dd044a4fb4976287a770977891ab5a7c20df082209b369f52ea21f77f785',
-  'math-p036-g001':
-    '92c5bc400056210756d1adbe85a1f5c82a2341bdb952a370c88695e647309ab5',
-  'math-p037-g000':
-    '8193a0d169abde92b5d6f9474b5505f9ab6a0445ce0bd0fb6a75db6540cf0193',
-  'math-p052-g001':
-    '67157c3e841b0caa60f0c045389ba62a2c3be931a764ad1ff5dda4e13a2e7677',
-  'math-p054-g000':
-    'a05f25ca993aa8b7e07346f02f89b264b6d92fab4a3efc09195be565dc60d9fc',
-  'math-p062-g000':
-    '494ef46a1c61184fb5c0fe5c943a9d8d70aaceeb66727949ecf0e36ee3e20305',
-  'math-p062-g002':
-    '8fb0fa230909119eedd0cd658771a846c058a31083b93c907cb56b728bf978b5',
-  'math-p075-g000':
-    '6ae7109c858ccd86db060454a33d05a7594663fb3ee393a5b8d3623c38efe3ee',
-  'math-p076-g002':
-    'a19391f2ef7d30aefc679b0e131bcc2e9cebc9dc79c1e45deee25f38165b0657',
-  'math-p079-g002':
-    '245e59c1a49d62ca29f8a285e13c6f94605d12e9631f410abeaa1b9772ed5832',
-  'math-p081-g005':
-    'fa39f1a2f220351fdde28f0ecb97ded138ae1e49451717151cfc497674689080',
-  'math-p088-g001':
-    'e5b65e9449743f8de88eb4c424eddb39b07fd725a4ebcd87f8f219434d62b72c',
-  'math-p137-g000':
-    'cc54429c0875086f246c239d2cd8ca481d0bda1acdc014de67caa4a07ae2483b',
-};
-
-const TRAILING_CIRCUMFLEX_SOURCE_CHECKSUMS: Readonly<Record<string, string>> = {
-  'math-p076-g001':
-    'a1c073d285c9697cb3ccb695de31899f58e04ae04a94b2a3133a47b7a1b082d4',
-  'math-p081-g004':
-    '4b0b410ec71d9b864dac2dfdd61b49d66ddb07fc655bee9c71e141917fe5b196',
-};
 
 type RawLine = {
   id: string;
@@ -192,6 +143,7 @@ if (
   fail('Pinned review ledger bytes changed');
 }
 const reviewLedger = readCandidateReviewLedger(REVIEW_LEDGER_PATH);
+const formulaReviewLedger = readFormulaReviewLedger(FORMULA_REVIEW_LEDGER_PATH);
 
 function fail(message: string): never {
   throw new Error(message);
@@ -218,80 +170,6 @@ function joinWrappedText(left: string, right: string): string {
   if (/\p{Script=Latin}$/u.test(left) && /^\p{Script=Latin}/u.test(right))
     return `${left} ${right}`;
   return `${left}${right}`;
-}
-
-const TEXT_LATEX_SYMBOLS: Readonly<Record<string, string>> = {
-  '⋅': '\\cdot',
-  '×': '\\times',
-  '∑': '\\sum',
-  '≤': '\\le',
-  '≥': '\\ge',
-  '≈': '\\approx',
-  '∞': '\\infty',
-  '∂': '\\partial',
-  '∇': '\\nabla',
-  θ: '\\theta',
-  α: '\\alpha',
-  ε: '\\varepsilon',
-  σ: '\\sigma',
-  Δ: '\\Delta',
-  μ: '\\mu',
-  γ: '\\gamma',
-  β: '\\beta',
-  '√': '\\surd',
-  '→': '\\rightarrow',
-  '←': '\\leftarrow',
-  '′': "'",
-  '∼': '\\sim',
-  '∶': ':',
-  '∈': '\\in',
-  '∣': '\\mid',
-  '∏': '\\prod',
-  '∝': '\\propto',
-  '⋯': '\\cdots',
-  '…': '\\ldots',
-};
-
-function escapeLatexText(value: string): string {
-  return value
-    .replace(/\\/gu, '\\textbackslash{}')
-    .replace(/([{}%$#&_])/gu, '\\$1')
-    .replace(/\^/gu, '\\textasciicircum{}')
-    .replace(/~/gu, '\\textasciitilde{}');
-}
-
-function textLatex(value: string): string {
-  const normalized = value
-    .normalize('NFKD')
-    .replace(/\p{M}/gu, '')
-    .replace(/[⎡⎢⎣]/gu, '[')
-    .replace(/[⎤⎥⎦]/gu, ']');
-  const fragments: string[] = [];
-  let text = '';
-
-  function flushText(): void {
-    if (!text) return;
-    fragments.push(`\\text{${escapeLatexText(text)}}`);
-    text = '';
-  }
-
-  for (const character of normalized) {
-    const symbolLatex = TEXT_LATEX_SYMBOLS[character];
-    if (symbolLatex) {
-      flushText();
-      fragments.push(symbolLatex);
-      continue;
-    }
-    if (!/[\x20-\x7E\p{Script=Han}]/u.test(character)) {
-      const codePoint = character.codePointAt(0)?.toString(16).toUpperCase();
-      fail(
-        `Unsupported formula symbol U+${codePoint ?? 'UNKNOWN'} in ${JSON.stringify(value)}`,
-      );
-    }
-    text += character;
-  }
-  flushText();
-  return fragments.join(' ');
 }
 
 function tokenSequence(value: string): string[] {
@@ -358,91 +236,6 @@ function spansForLineIndexes(
       (spanId) => spans.get(spanId) ?? fail(`Missing source span ${spanId}`),
     );
   });
-}
-
-function matchesPinnedCandidate(
-  signal: FormulaCandidate,
-  pins: Readonly<Record<string, string>>,
-  reason: string,
-): boolean {
-  const expectedChecksum = pins[signal.candidateId];
-  if (!expectedChecksum) return false;
-  if (signal.sourceChecksum !== expectedChecksum) {
-    fail(
-      `${signal.candidateId} ${reason} checksum mismatch: expected ${expectedChecksum}, got ${signal.sourceChecksum}`,
-    );
-  }
-  return true;
-}
-
-function hasAdjacentStackedRows(signal: FormulaCandidate): boolean {
-  if (signal.lineIndexes.length !== 1) return true;
-  const page = pageByNumber(signal.pdfPage);
-  const lineIndex = signal.lineIndexes[0];
-  const formulaLine = page.lines[lineIndex];
-  const formulaHeight = formulaLine.bbox[3] - formulaLine.bbox[1];
-  const formulaCenterY = (formulaLine.bbox[1] + formulaLine.bbox[3]) / 2;
-  const nearby = page.lines
-    .map((line, index) => ({ line, index }))
-    .filter(({ line, index }) => {
-      if (index === lineIndex) return false;
-      const centerY = (line.bbox[1] + line.bbox[3]) / 2;
-      const horizontalGap = Math.max(
-        0,
-        formulaLine.bbox[0] - line.bbox[2],
-        line.bbox[0] - formulaLine.bbox[2],
-      );
-      return (
-        Math.abs(centerY - formulaCenterY) <= formulaHeight * 0.8 &&
-        horizontalGap <= formulaHeight
-      );
-    });
-
-  for (const upper of nearby) {
-    const upperCenterY = (upper.line.bbox[1] + upper.line.bbox[3]) / 2;
-    if (upperCenterY >= formulaCenterY - formulaHeight * 0.15) continue;
-    for (const lower of nearby) {
-      const lowerCenterY = (lower.line.bbox[1] + lower.line.bbox[3]) / 2;
-      if (lowerCenterY <= formulaCenterY + formulaHeight * 0.15) continue;
-      const overlap =
-        Math.min(upper.line.bbox[2], lower.line.bbox[2]) -
-        Math.max(upper.line.bbox[0], lower.line.bbox[0]);
-      const narrowerWidth = Math.min(
-        upper.line.bbox[2] - upper.line.bbox[0],
-        lower.line.bbox[2] - lower.line.bbox[0],
-      );
-      if (overlap >= narrowerWidth * 0.7) return true;
-    }
-  }
-  return false;
-}
-
-function transcriptionSpans(
-  signal: FormulaCandidate,
-  spans: readonly RawSpan[],
-): readonly RawSpan[] {
-  if (
-    !matchesPinnedCandidate(
-      signal,
-      TRAILING_CIRCUMFLEX_SOURCE_CHECKSUMS,
-      'trailing-circumflex artifact',
-    )
-  ) {
-    return spans;
-  }
-  const circumflexCount = spans.reduce(
-    (count, span) => count + [...span.textRaw].filter((character) => character === '\u0302').length,
-    0,
-  );
-  const finalSpan = spans.at(-1);
-  if (circumflexCount !== 1 || !finalSpan?.textRaw.endsWith('\u0302')) {
-    fail(`${signal.candidateId} trailing-circumflex artifact shape changed`);
-  }
-  return spans.map((span, index) =>
-    index === spans.length - 1
-      ? { ...span, textRaw: span.textRaw.slice(0, -1) }
-      : span,
-  );
 }
 
 function verifyCorrection(correction: LineRangeCorrection): RawSpan[] {
@@ -531,7 +324,10 @@ if (raw.source.pageCount !== 170 || raw.pages.length !== 170)
   fail(`Expected 170 physical pages, got ${raw.pages.length}`);
 if (raw.outline.length !== 461)
   fail(`Expected 461 outline destinations, got ${raw.outline.length}`);
-if (formulaGeometryChecksum(raw as SourceAudit) !== EXPECTED_FORMULA_GEOMETRY_SHA256)
+if (
+  formulaGeometryChecksum(raw as SourceAudit) !==
+  EXPECTED_FORMULA_GEOMETRY_SHA256
+)
   fail('Pinned formula span geometry changed');
 
 const headingAnchors = deriveSourceHeadingAnchors(raw as SourceAudit);
@@ -635,6 +431,14 @@ if (
 ) {
   fail('Immutable candidate review ledger does not cover the source universe');
 }
+assertFormulaReviewLedger(
+  formulaReviewLedger,
+  raw as SourceAudit,
+  formulaSignals,
+  reviewLedger.decisions,
+);
+const { byBlockId: reviewedFormulaByBlock } =
+  formulaReviewMaps(formulaReviewLedger);
 
 function reviewedDecision(
   category: CandidateCategory,
@@ -876,15 +680,17 @@ for (const page of raw.pages) {
     const formula = formulaByFirstLine.get(key);
     if (formula) {
       const correctionSpans = verifyCorrection(formula);
-      const accessibleText = lineText(formula.pdfPage, formula.lineIndexes);
+      const reviewedFormula =
+        reviewedFormulaByBlock.get(formula.candidateId) ??
+        fail(`Missing reviewed formula payload for ${formula.candidateId}`);
       const block: ContentBlock = {
         type: 'formula',
         id: formula.candidateId,
-        latex: formula.latex,
-        accessibleText,
+        latex: reviewedFormula.latex,
+        accessibleText: reviewedFormula.accessibleText,
         source: sourceRef(formula.pdfPage),
       };
-      addBlock(currentOutlineIndex, block, accessibleText);
+      addBlock(currentOutlineIndex, block, reviewedFormula.accessibleText);
       claimSpans(correctionSpans, block.id);
       continue;
     }
@@ -894,36 +700,17 @@ for (const page of raw.pages) {
         autoFormula.pdfPage,
         autoFormula.lineIndexes,
       );
-      const sourceText = lineText(autoFormula.pdfPage, autoFormula.lineIndexes);
-      const visuallyOneLine = !hasAdjacentStackedRows(autoFormula);
-      if (
-        visuallyOneLine &&
-        matchesPinnedCandidate(
-          autoFormula,
-          MISSING_HAT_SOURCE_CHECKSUMS,
-          'missing-hat extraction',
-        )
-      ) {
-        fail(
-          `${autoFormula.candidateId} omits a reviewed PDF-visible hat and requires an explicit correction`,
-        );
-      }
-      const rendering = visuallyOneLine
-        ? transcribeOneLineFormula(
-            transcriptionSpans(autoFormula, formulaSpans),
-          )
-        : {
-            latex: textLatex(sourceText.replaceAll('\n', ' ')),
-            accessibleText: sourceText,
-          };
+      const reviewedFormula =
+        reviewedFormulaByBlock.get(autoFormula.blockId) ??
+        fail(`Missing reviewed formula payload for ${autoFormula.blockId}`);
       const block: ContentBlock = {
         type: 'formula',
         id: autoFormula.blockId,
-        latex: rendering.latex,
-        accessibleText: rendering.accessibleText,
+        latex: reviewedFormula.latex,
+        accessibleText: reviewedFormula.accessibleText,
         source: sourceRef(autoFormula.pdfPage),
       };
-      addBlock(currentOutlineIndex, block, rendering.accessibleText);
+      addBlock(currentOutlineIndex, block, reviewedFormula.accessibleText);
       claimSpans(formulaSpans, block.id);
       continue;
     }
