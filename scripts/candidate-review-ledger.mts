@@ -87,6 +87,33 @@ export function correctionFingerprint(
   );
 }
 
+export function assertCorrectionBackedDecision(
+  category: Exclude<CandidateCategory, 'knowledgeCheck'>,
+  decision: CandidateReviewDecision,
+  correction: LineRangeCorrection | undefined,
+): void {
+  if (decision.correctionFingerprint) {
+    if (!correction) {
+      throw new Error(
+        `Reviewed structured ${category} correction is missing for ${decision.candidateId}`,
+      );
+    }
+    if (
+      decision.targetBlockId !== correction.candidateId ||
+      decision.correctionFingerprint !==
+        correctionFingerprint(category, correction)
+    ) {
+      throw new Error(
+        `Reviewed structured ${category} correction mismatch for ${decision.candidateId}`,
+      );
+    }
+  } else if (correction) {
+    throw new Error(
+      `Unexpected unreviewed ${category} correction for ${decision.candidateId}`,
+    );
+  }
+}
+
 export function readCandidateReviewLedger(
   filename: string,
 ): CandidateReviewLedger {

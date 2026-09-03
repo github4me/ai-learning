@@ -18,20 +18,21 @@ import {
   APPENDIX_CORRECTION,
   CODE_CORRECTIONS,
   FORMULA_CORRECTIONS,
-  HEADING_LINE_CORRECTIONS,
   KNOWLEDGE_CHECK_OUTLINE_INDEXES,
   TABLE_CORRECTIONS,
   type LineRangeCorrection,
 } from './content-corrections.mts';
 import {
+  assertCorrectionBackedDecision,
   candidateFingerprint,
   correctionFingerprint,
   decisionMap,
-  readCandidateReviewLedger,
   type CandidateCategory,
   type CandidateDisposition,
   type CandidateReviewLedger,
 } from './candidate-review-ledger.mts';
+import { CONTENT_REVIEW_TRUST_ROOT } from './content-review-trust-root.mts';
+import { deriveSourceHeadingAnchors } from './source-heading-anchors.mts';
 import {
   detectCodeCandidates,
   detectFormulaCandidates,
@@ -43,6 +44,8 @@ import {
   type RawSpan,
   type SourceAudit,
 } from './source-audit.mts';
+
+export { deriveSourceHeadingAnchors } from './source-heading-anchors.mts';
 
 const EXPECTED_SHA256 =
   '3ED047406DE297352B38635D01CF080B0213C9FD899AEA80520AA8A8283E1D52';
@@ -123,6 +126,27 @@ type ConversionReport = {
     astValidatedBy: string;
   };
   unresolvedWarnings: unknown[];
+};
+
+type VisualReviewIndex = {
+  version: number;
+  sourceSha256: string;
+  candidateLedgerSha256: string;
+  reviewer: string;
+  reviewedPageCount: number;
+  sheetColumns: number;
+  sheetRows: number;
+  sheets: {
+    file: string;
+    sha256: string;
+    cells: {
+      pdfPage: number;
+      row: number;
+      column: number;
+      candidateIds: string[];
+      candidateFingerprintChecksum: string;
+    }[];
+  }[];
 };
 
 function invariant(condition: unknown, message: string): asserts condition {
@@ -238,14 +262,6 @@ function sourceBodyText(
     .join('\n');
 }
 
-function headingProjection(value: string): string {
-  return normalizeHyphens(value)
-    .normalize('NFKC')
-    .replace(/[“”]/gu, '"')
-    .replace(/\s+/gu, '')
-    .toLocaleLowerCase('en');
-}
-
 function sourceRuntimeText(value: string): string {
   return normalizeHyphens(value)
     .replaceAll('\u0000', '')
@@ -275,49 +291,12 @@ function sourceSectionId(outline: SourceAudit['outline'][number]): string {
 
 function sourceHeadingTitle(
   audit: SourceAudit,
-  anchor: ReturnType<typeof deriveHeadingAnchors>[number],
+  anchor: ReturnType<typeof deriveSourceHeadingAnchors>[number],
 ): string {
   const page = audit.pages[anchor.pdfPage - 1];
   return anchor.lineIndexes
     .map((lineIndex) => sourceRuntimeText(page.lines[lineIndex].lineRaw))
     .join('');
-}
-
-function deriveHeadingAnchors(audit: SourceAudit) {
-  return audit.outline.map((outline) => {
-    const correction = HEADING_LINE_CORRECTIONS[outline.outlineIndex];
-    if (correction)
-      return {
-        outlineIndex: outline.outlineIndex,
-        pdfPage: correction.pdfPage,
-        lineIndexes: [correction.lineIndex],
-      };
-    const page = audit.pages[outline.pdfPage - 1];
-    const target = headingProjection(outline.titleRaw);
-    const matches: number[][] = [];
-    for (let start = 0; start < page.lines.length; start += 1) {
-      let projection = '';
-      for (let length = 1; length <= 4; length += 1) {
-        const line = page.lines[start + length - 1];
-        if (!line) break;
-        projection += headingProjection(line.lineRaw);
-        if (projection === target) {
-          matches.push(Array.from({ length }, (_, offset) => start + offset));
-          break;
-        }
-        if (projection.length > target.length) break;
-      }
-    }
-    invariant(
-      matches.length === 1,
-      `outline source heading ${outline.outlineIndex} is ambiguous`,
-    );
-    return {
-      outlineIndex: outline.outlineIndex,
-      pdfPage: outline.pdfPage,
-      lineIndexes: matches[0],
-    };
-  });
 }
 
 function overlappingCorrection<T extends LineRangeCorrection>(
@@ -386,55 +365,55 @@ function expectedCandidateAudits(
             ? overlappingCorrection(signal, CODE_CORRECTIONS)
             : undefined;
     if (category !== 'knowledgeCheck') {
-      invariant(
-        review.correctionFingerprint
-          ? Boolean(correction) &&
-              review.correctionFingerprint ===
-                correctionFingerprint(category, correction!)
-          : !correction,
-        `candidate review ledger correction mismatch for ${signal.candidateId}`,
-      );
+      assertCorrectionBackedDecision(category, review, correction);
     }
 
-    let expectedDisposition: CandidateDisposition;
-    let expectedTarget: string | undefined;
     if (category === 'formula') {
-      expectedDisposition =
-        'display' in signal && signal.display
-          ? 'structuredFormula'
-          : 'inlineMath';
-      expectedTarget =
-        expectedDisposition === 'structuredFormula'
-          ? (correction?.candidateId ?? `formula-${signal.candidateId}`)
-          : undefined;
-    } else if (category === 'table') {
-      expectedDisposition = correction ? 'table' : 'notTable';
-      expectedTarget = correction?.candidateId;
-    } else if (category === 'code') {
-      expectedTarget =
-        signal.candidateId === 'code-signal-appendix-a'
-          ? APPENDIX_CORRECTION.candidateId
-          : correction?.candidateId;
-      expectedDisposition = expectedTarget ? 'code' : 'notCode';
-    } else {
-      const outlineIndex = Number(signal.candidateId.slice(-4));
-      const selected = KNOWLEDGE_CHECK_OUTLINE_INDEXES.some(
-        (index) => index === outlineIndex,
-      );
-      expectedDisposition = selected ? 'knowledgeCheck' : 'notKnowledgeCheck';
-      expectedTarget = selected
-        ? `knowledge-check-o${String(outlineIndex).padStart(4, '0')}`
-        : undefined;
+      const structured = review.disposition === 'structuredFormula';
       invariant(
-        !review.correctionFingerprint,
-        `knowledge review ledger decision has a correction fingerprint`,
+        ['structuredFormula', 'inlineMath'].includes(review.disposition) &&
+          structured === ('display' in signal && signal.display) &&
+          (structured
+            ? Boolean(review.targetBlockId)
+            : !review.targetBlockId && !review.correctionFingerprint),
+        `candidate review ledger disposition mismatch for ${signal.candidateId}`,
+      );
+    } else if (category === 'table') {
+      const structured = review.disposition === 'table';
+      invariant(
+        ['table', 'notTable'].includes(review.disposition) &&
+          (structured
+            ? Boolean(review.targetBlockId && review.correctionFingerprint)
+            : !review.targetBlockId &&
+              !review.correctionFingerprint &&
+              !correction),
+        `candidate review ledger disposition mismatch for ${signal.candidateId}`,
+      );
+    } else if (category === 'code') {
+      const structured = review.disposition === 'code';
+      const appendix = signal.candidateId === 'code-signal-appendix-a';
+      invariant(
+        ['code', 'notCode'].includes(review.disposition) &&
+          (structured
+            ? Boolean(review.targetBlockId) &&
+              (appendix
+                ? review.targetBlockId === APPENDIX_CORRECTION.candidateId &&
+                  !review.correctionFingerprint
+                : Boolean(review.correctionFingerprint))
+            : !review.targetBlockId &&
+              !review.correctionFingerprint &&
+              !correction),
+        `candidate review ledger disposition mismatch for ${signal.candidateId}`,
+      );
+    } else {
+      const structured = review.disposition === 'knowledgeCheck';
+      invariant(
+        ['knowledgeCheck', 'notKnowledgeCheck'].includes(review.disposition) &&
+          !review.correctionFingerprint &&
+          (structured ? Boolean(review.targetBlockId) : !review.targetBlockId),
+        `candidate review ledger disposition mismatch for ${signal.candidateId}`,
       );
     }
-    invariant(
-      review.disposition === expectedDisposition &&
-        review.targetBlockId === expectedTarget,
-      `candidate review ledger disposition mismatch for ${signal.candidateId}`,
-    );
     return {
       ...signal,
       category,
@@ -522,7 +501,7 @@ function validateCandidateAudit(
 
 function allowedExclusionReasons(audit: SourceAudit): Map<string, string> {
   const reasons = new Map<string, string>();
-  const anchors = deriveHeadingAnchors(audit);
+  const anchors = deriveSourceHeadingAnchors(audit);
   const headingByLine = new Map<string, number>();
   for (const anchor of anchors)
     for (const lineIndex of anchor.lineIndexes)
@@ -587,7 +566,7 @@ function shouldJoinSourceParagraphs(
 
 function independentSourceParagraphKeys(
   audit: SourceAudit,
-  anchors: ReturnType<typeof deriveHeadingAnchors>,
+  anchors: ReturnType<typeof deriveSourceHeadingAnchors>,
 ): string[] {
   const headingByLine = new Map<string, number>();
   for (const anchor of anchors)
@@ -744,36 +723,99 @@ function runtimeParagraphKeys(audit: SourceAudit, course: Course): string[] {
   return keys.sort();
 }
 
+function jpegDimensions(bytes: Buffer): { width: number; height: number } {
+  invariant(
+    bytes.length >= 4 && bytes[0] === 0xff && bytes[1] === 0xd8,
+    'pinned review sheet is not a JPEG',
+  );
+  const startOfFrame = new Set([
+    0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce,
+    0xcf,
+  ]);
+  let offset = 2;
+  while (offset + 8 < bytes.length) {
+    if (bytes[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+    while (bytes[offset] === 0xff) offset += 1;
+    const marker = bytes[offset++];
+    if (marker === 0xd8 || marker === 0x01) continue;
+    if (marker === 0xd9 || marker === 0xda) break;
+    const length = bytes.readUInt16BE(offset);
+    invariant(
+      length >= 2 && offset + length <= bytes.length,
+      'pinned review JPEG segment is invalid',
+    );
+    if (startOfFrame.has(marker)) {
+      return {
+        height: bytes.readUInt16BE(offset + 3),
+        width: bytes.readUInt16BE(offset + 5),
+      };
+    }
+    offset += length;
+  }
+  throw new Error(
+    'Content validation failed: pinned review JPEG dimensions are missing',
+  );
+}
+
+function readTrustedReviewEvidence(repositoryRoot: string): {
+  ledger: CandidateReviewLedger;
+  index: VisualReviewIndex;
+} {
+  const ledgerPath = path.join(
+    repositoryRoot,
+    'src/content/candidate-review-ledger.json',
+  );
+  const evidenceRoot = path.join(
+    repositoryRoot,
+    'reports/content-review-evidence',
+  );
+  const ledgerBytes = readFileSync(ledgerPath);
+  const indexBytes = readFileSync(path.join(evidenceRoot, 'index.json'));
+  invariant(
+    sha256(ledgerBytes) === CONTENT_REVIEW_TRUST_ROOT.candidateLedgerSha256,
+    'pinned review ledger digest changed',
+  );
+  invariant(
+    sha256(indexBytes) === CONTENT_REVIEW_TRUST_ROOT.visualIndexSha256,
+    'pinned review index digest changed',
+  );
+  for (const [filename, expectedSha256] of Object.entries(
+    CONTENT_REVIEW_TRUST_ROOT.sheetSha256,
+  )) {
+    const bytes = readFileSync(path.join(evidenceRoot, filename));
+    invariant(
+      sha256(bytes) === expectedSha256,
+      `pinned review sheet digest changed: ${filename}`,
+    );
+    const dimensions = jpegDimensions(bytes);
+    invariant(
+      dimensions.width === CONTENT_REVIEW_TRUST_ROOT.sheetWidth &&
+        dimensions.height === CONTENT_REVIEW_TRUST_ROOT.sheetHeight,
+      `pinned review sheet dimensions changed: ${filename}`,
+    );
+  }
+  return {
+    ledger: JSON.parse(ledgerBytes.toString('utf8')) as CandidateReviewLedger,
+    index: JSON.parse(indexBytes.toString('utf8')) as VisualReviewIndex,
+  };
+}
+
 function validateVisualReviewEvidence(
   repositoryRoot: string,
   ledger: CandidateReviewLedger,
+  index: VisualReviewIndex,
 ): void {
   const evidenceRoot = path.join(
     repositoryRoot,
     'reports/content-review-evidence',
   );
-  const index = JSON.parse(
-    readFileSync(path.join(evidenceRoot, 'index.json'), 'utf8'),
-  ) as {
-    version: number;
-    sourceSha256: string;
-    candidateLedgerSha256: string;
-    reviewer: string;
-    reviewedPageCount: number;
-    sheetColumns: number;
-    sheetRows: number;
-    sheets: {
-      file: string;
-      sha256: string;
-      cells: {
-        pdfPage: number;
-        row: number;
-        column: number;
-        candidateIds: string[];
-        candidateFingerprintChecksum: string;
-      }[];
-    }[];
-  };
+  const pinnedSheetNames = Object.keys(
+    CONTENT_REVIEW_TRUST_ROOT.sheetSha256,
+  ).sort();
+  const indexedSheetNames = index.sheets.map((sheet) => sheet.file).sort();
   invariant(
     index.version === 1 &&
       index.sourceSha256 === EXPECTED_SHA256 &&
@@ -782,7 +824,9 @@ function validateVisualReviewEvidence(
       index.reviewedPageCount === 148 &&
       index.sheetColumns === 4 &&
       index.sheetRows === 3 &&
-      index.sheets.length === 13,
+      index.sheets.length === 13 &&
+      new Set(indexedSheetNames).size === indexedSheetNames.length &&
+      JSON.stringify(indexedSheetNames) === JSON.stringify(pinnedSheetNames),
     'visual review evidence index metadata is invalid',
   );
   const decisionsByPage = new Map<number, typeof ledger.decisions>();
@@ -794,7 +838,11 @@ function validateVisualReviewEvidence(
   const cells = index.sheets.flatMap((sheet) => {
     const bytes = readFileSync(path.join(evidenceRoot, sheet.file));
     invariant(
-      sha256(bytes) === sheet.sha256,
+      sha256(bytes) === sheet.sha256 &&
+        sheet.sha256 ===
+          CONTENT_REVIEW_TRUST_ROOT.sheetSha256[
+            sheet.file as keyof typeof CONTENT_REVIEW_TRUST_ROOT.sheetSha256
+          ],
       `visual review evidence sheet checksum changed: ${sheet.file}`,
     );
     invariant(
@@ -803,9 +851,13 @@ function validateVisualReviewEvidence(
     );
     return sheet.cells;
   });
+  const coordinateKeys = index.sheets.flatMap((sheet) =>
+    sheet.cells.map((cell) => `${sheet.file}:${cell.row}:${cell.column}`),
+  );
   invariant(
     cells.length === 148 &&
       new Set(cells.map((cell) => cell.pdfPage)).size === 148 &&
+      new Set(coordinateKeys).size === coordinateKeys.length &&
       cells.every((cell) => {
         const decisions = [...(decisionsByPage.get(cell.pdfPage) ?? [])].sort(
           (left, right) => left.candidateId.localeCompare(right.candidateId),
@@ -815,6 +867,8 @@ function validateVisualReviewEvidence(
           cell.row < 3 &&
           cell.column >= 0 &&
           cell.column < 4 &&
+          cell.pdfPage >= 1 &&
+          cell.pdfPage <= 170 &&
           JSON.stringify(cell.candidateIds) ===
             JSON.stringify(decisions.map((decision) => decision.candidateId)) &&
           cell.candidateFingerprintChecksum ===
@@ -852,11 +906,8 @@ export function validateGeneratedContent(repositoryRoot = process.cwd()) {
   const audit = readSourceAudit(
     path.join(repositoryRoot, 'src/content/source-audit.generated.json.gz'),
   );
-  const ledgerPath = path.join(
-    repositoryRoot,
-    'src/content/candidate-review-ledger.json',
-  );
-  const reviewLedger = readCandidateReviewLedger(ledgerPath);
+  const { ledger: reviewLedger, index: visualReviewIndex } =
+    readTrustedReviewEvidence(repositoryRoot);
   const courseJson = readFileSync(
     path.join(repositoryRoot, 'src/content/course.generated.json'),
     'utf8',
@@ -887,7 +938,7 @@ export function validateGeneratedContent(repositoryRoot = process.cwd()) {
     'source must have 170 pages',
   );
   expectedCandidateAudits(audit, reviewLedger);
-  validateVisualReviewEvidence(repositoryRoot, reviewLedger);
+  validateVisualReviewEvidence(repositoryRoot, reviewLedger, visualReviewIndex);
   invariant(
     audit.outline.length === 461 &&
       new Set(
@@ -962,7 +1013,7 @@ export function validateGeneratedContent(repositoryRoot = process.cwd()) {
       report.outlineMap.length === 461,
     'outline coverage summary changed',
   );
-  const anchors = deriveHeadingAnchors(audit);
+  const anchors = deriveSourceHeadingAnchors(audit);
   const sectionById = new Map(sections.map((section) => [section.id, section]));
   const runtimeParentById = new Map<string, string | null>();
   const recordRuntimeParents = (
@@ -1235,6 +1286,24 @@ export function validateGeneratedContent(repositoryRoot = process.cwd()) {
       throwOnError: true,
       strict: 'error',
     });
+  }
+  for (const correction of FORMULA_CORRECTIONS) {
+    const decision = reviewLedger.decisions.find(
+      (item) => item.targetBlockId === correction.candidateId,
+    );
+    const formula = formulas.find((item) => item.id === correction.candidateId);
+    const page = audit.pages[correction.pdfPage - 1];
+    const accessibleText = correction.lineIndexes
+      .map((lineIndex) => sourceRuntimeText(page.lines[lineIndex].lineRaw))
+      .join('\n');
+    invariant(
+      decision?.disposition === 'structuredFormula' &&
+        decision.correctionFingerprint ===
+          correctionFingerprint('formula', correction) &&
+        formula?.latex === correction.latex &&
+        formula.accessibleText === accessibleText,
+      `${correction.candidateId} reviewed formula payload does not match exactly`,
+    );
   }
   const vectorSignal = detectFormulaCandidates(audit).find(
     (signal) =>

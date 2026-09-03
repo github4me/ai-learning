@@ -187,6 +187,8 @@ Node/pnpm commands prepended the bundled Node and pnpm fallback directories to `
 - `scripts/normalize-course.mts`
 - `scripts/source-audit.mts`
 - `scripts/candidate-review-ledger.mts`
+- `scripts/content-review-trust-root.mts`
+- `scripts/source-heading-anchors.mts`
 - `scripts/validate-content.mts`
 - `src/content/course.generated.json`
 - `src/content/page-manifest.generated.json`
@@ -205,6 +207,7 @@ Node/pnpm commands prepended the bundled Node and pnpm fallback directories to `
 - `package.json`
 - `pnpm-lock.yaml`
 - `tsconfig.json`
+- `.gitattributes`
 
 ## Self-review
 
@@ -338,3 +341,75 @@ The checked sheets total 12,808,267 bytes. The validator reads every sheet, veri
 - The visual evidence index is line-ending independent: it hashes canonical parsed ledger JSON, while the binary sheet checksums remain exact.
 - The page-12 formula preserves both dimensions of fidelity: exact extracted accessible text and explicit three-row vector semantics.
 - No review timestamps were invented. Machine detector descriptions remain in detection evidence; human review identity and decisions live separately in the immutable ledger.
+
+## Fix round 3/5 — exact formula payloads, source-only anchors, and pinned review roots
+
+The third scoped review found three remaining coordinated-mutation paths: corrected formula validation accepted a hidden valid matrix alongside visibly flattened text, ten outline anchors still came from the operational correction map, and the review ledger/index/sheets were self-checksummed but lacked a separate checked-in trust root.
+
+### Genuine RED evidence
+
+`pnpm exec vitest run tests/content/content-validator.test.ts` was run after adding the six new negative behaviors and before production changes. It failed 6 tests and passed 17:
+
+- a page-12 formula containing `\phantom{...bmatrix...}` plus visible flattened text was accepted;
+- the pure source-derived anchor API did not exist;
+- a coordinated ledger reviewer/rationale edit with matching report and index ledger hash was accepted;
+- the authoritative structured-correction resolver did not exist;
+- replacement contact-sheet bytes with a matching self-declared sheet hash were accepted; and
+- duplicate row/column cells in a contact sheet were accepted.
+
+Each failure was the intended missing trust-boundary behavior, not a fixture or syntax error.
+
+### Exact correction-backed formula binding
+
+Validation now iterates every formula correction, resolves its pinned ledger decision and runtime target, and requires all of the following to match exactly:
+
+- the ledger correction fingerprint;
+- the runtime block ID;
+- the complete reviewed LaTeX string; and
+- accessibility text reconstructed from the correction's exact audited physical page and line indexes.
+
+Substring or token presence is not accepted. The phantom-matrix mutation now fails at this exact-payload gate. Physical page 12 remains exactly `x = \begin{bmatrix} 100 \\ 3 \\ 8 \end{bmatrix}` with accessibility text `𝑥= [\n100\n3\n8\n]`.
+
+### Independent source heading derivation
+
+`HEADING_LINE_CORRECTIONS` was removed. Both normalization and validation now call `deriveSourceHeadingAnchors`, whose only input is the checked source audit. For every outline node it:
+
+1. projects the outline title and audited lines using explicit quote, hyphen, circled-digit, `\sqrt{...}`, and `\infty` PDF/outline equivalents;
+2. searches the outline destination physical page and the immediately following page because the PDF outline can point to the preceding page;
+3. requires every matched visual line to carry source `Black` heading typography, which rejects identical body/formula text;
+4. requires exactly one one-to-four-line match; and
+5. verifies hierarchy depth, unique non-overlapping source lines, and strict outline/source order.
+
+The independently derived result is unique for all 461 nodes. Literal regression anchors include outline 21 `Parameter` at p16 line 16 rather than body line 20, outline 144 `Wx+b` at p63 line 16 rather than formula line 3, outline 358 at p132 line 1 despite a p131 outline destination, and outline 431 at p156 line 1 despite a p155 destination. Validator comparisons of section ID/title/parent/page/lines, manifest targets, paragraph boundaries, and heading exclusions all begin from this source-only result.
+
+### Pinned review trust roots
+
+`scripts/content-review-trust-root.mts` pins raw SHA-256 roots for the immutable 812-decision ledger, visual index, and all 13 JPEG sheets. `.gitattributes` marks the ledger and index as non-text so clean-checkout line-ending conversion cannot change their pinned bytes. Before parsing either JSON artifact, validation now requires these byte digests:
+
+- ledger: `58895fc9ae892ee7401d45da9a568e80f1bec787d756c5e3be05ac370d2349d2`;
+- visual index: `2627c3f304a0b42a5d9676501df7a1063fa49b15d3f8b59f1425ddd04427f98d`; and
+- the 13 individually pinned JPEG hashes recorded in the trust-root module.
+
+Every pinned sheet is independently parsed as JPEG and required to be exactly 3308×3510. After root verification, the validator requires the exact pinned sheet filename set, unique in-range `(sheet,row,column)` coordinates, one unique cell for each of the 148 reviewed physical pages, and exact candidate IDs/fingerprint coverage for each page. Coordinated reviewer/report/index edits and sheet replacement/self-hash edits now fail against the external roots before their altered claims are interpreted.
+
+The ledger disposition is authoritative after root verification. A shared resolver requires every correction fingerprint and target to match the pinned structured decision; a missing positive correction throws rather than recomputing a negative disposition. Structured knowledge-check decisions likewise retain their pinned target and must resolve to the exact runtime block type.
+
+### Fix-round GREEN and completion gates
+
+- `pnpm exec vitest run tests/content/content-validator.test.ts` — PASS, 23/23 after the stronger exact-payload message was incorporated into the existing flattened-vector assertion.
+- `pnpm exec vitest run tests/content/course-content.test.ts tests/content/content-validator.test.ts` — PASS, 31/31.
+- `pnpm test` — PASS, 5 files and 42 tests.
+- `pnpm normalize:content` — PASS with 170/170 pages, 461/461 outline nodes, the unchanged 381/39/380/12 candidate universe, 10,762 assigned and 31,646 excluded spans, 472 Appendix lines, and zero warnings.
+- deterministic regeneration — PASS; normalization changed none of the four generated outputs, pinned ledger/index, or 13 contact sheets.
+- `pnpm validate:content` — PASS with 170 pages, 461 source-derived sections, 4,354 blocks, 812 candidate decisions, 472 Appendix lines, and zero warnings.
+- `pnpm exec tsc --noEmit` — PASS.
+- `pnpm exec oxlint scripts src/content tests/content` — PASS.
+- `pnpm build` — PASS, all five vinext stages completed.
+
+### Fix-round self-review
+
+- Corrected formula validation compares full reviewed values; there is no substring, token, rendering, or hidden-LaTeX bypass.
+- No heading anchor constant or correction map remains. Ambiguity is resolved by audited typography and global source constraints, not report metadata.
+- Root verification happens on bytes before ledger/index JSON parsing. Self-declared hashes remain useful cross-links but are never the trust root.
+- Normalization reads the pinned ledger and verifies its raw digest; it does not emit the ledger, index, sheets, or trust-root module.
+- Candidate detection remains the same source-derived 812-item universe, and the existing 148-page review evidence is unchanged.

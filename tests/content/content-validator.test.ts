@@ -17,8 +17,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   assertValidPythonSyntax,
+  deriveSourceHeadingAnchors,
   validateGeneratedContent,
 } from '@/scripts/validate-content.mts';
+import { assertCorrectionBackedDecision } from '@/scripts/candidate-review-ledger.mts';
+import { readSourceAudit } from '@/scripts/source-audit.mts';
 
 const fixtures: string[] = [];
 
@@ -104,7 +107,7 @@ function mutateJson(
   return value;
 }
 
-function sha256(value: string): string {
+function sha256(value: string | Buffer): string {
   return createHash('sha256').update(value).digest('hex');
 }
 
@@ -442,7 +445,55 @@ describe('content validator', () => {
       formula.latex = '\\text{x = [100 3 8]}';
     });
 
-    expect(() => validateGeneratedContent(root)).toThrow(/multi-row formula/i);
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /multi-row formula|reviewed formula payload/i,
+    );
+  });
+
+  it('rejects a phantom reviewed matrix embedded beside a visible flattened formula', () => {
+    const root = validationFixture();
+    mutateJson(root, 'course.generated.json', (course) => {
+      const formula = [course.overview, ...course.units]
+        .flatMap(flattenSections)
+        .flatMap((section) => section.blocks)
+        .flatMap(flattenBlocks)
+        .find(
+          (block) => block.type === 'formula' && block.source.pdfPage === 12,
+        );
+      formula.latex =
+        '\\phantom{x = \\begin{bmatrix} 100 \\\\ 3 \\\\ 8 \\end{bmatrix}}\\text{x = [100 3 8]}';
+    });
+
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /reviewed formula payload/i,
+    );
+  });
+
+  it('derives ambiguous and shifted outline anchors only from audited source typography and order', () => {
+    const audit = readSourceAudit(
+      path.resolve('src/content/source-audit.generated.json.gz'),
+    );
+    const anchors = deriveSourceHeadingAnchors(audit);
+    expect(anchors[21]).toEqual({
+      outlineIndex: 21,
+      pdfPage: 16,
+      lineIndexes: [16],
+    });
+    expect(anchors[144]).toEqual({
+      outlineIndex: 144,
+      pdfPage: 63,
+      lineIndexes: [16],
+    });
+    expect(anchors[358]).toEqual({
+      outlineIndex: 358,
+      pdfPage: 132,
+      lineIndexes: [1],
+    });
+    expect(anchors[431]).toEqual({
+      outlineIndex: 431,
+      pdfPage: 156,
+      lineIndexes: [1],
+    });
   });
 
   it('rejects a missing or changed immutable candidate review decision', () => {
@@ -494,7 +545,88 @@ describe('content validator', () => {
     );
 
     expect(() => validateGeneratedContent(root)).toThrow(
-      /visual review evidence/i,
+      /visual review evidence|pinned review/i,
+    );
+  });
+
+  it('rejects coordinated reviewer changes despite updated report and self-declared ledger hash', () => {
+    const root = validationFixture();
+    const changed = mutateJson(
+      root,
+      'candidate-review-ledger.json',
+      (ledger) => {
+        ledger.decisions[0].reviewer = 'Fabricated reviewer';
+        ledger.decisions[0].rationale = 'Fabricated rationale';
+      },
+    );
+    const candidateId = changed.decisions[0].candidateId;
+    mutateJson(root, 'conversion-report.generated.json', (report) => {
+      const audit = report.candidateAudit.find(
+        (candidate: any) => candidate.candidateId === candidateId,
+      );
+      audit.reviewer = 'Fabricated reviewer';
+      audit.rationale = 'Fabricated rationale';
+      const special = report.specialCandidates.find(
+        (candidate: any) => candidate.candidateId === candidateId,
+      );
+      if (special) special.reviewer = 'Fabricated reviewer';
+    });
+    mutateJson(
+      root,
+      '../../reports/content-review-evidence/index.json',
+      (index) => {
+        index.candidateLedgerSha256 = sha256(JSON.stringify(changed));
+      },
+    );
+
+    expect(() => validateGeneratedContent(root)).toThrow(/pinned review/i);
+  });
+
+  it('keeps a structured ledger disposition authoritative when its correction is missing', () => {
+    const ledger = JSON.parse(
+      readFileSync('src/content/candidate-review-ledger.json', 'utf8'),
+    );
+    const positiveTable = ledger.decisions.find(
+      (decision: any) => decision.disposition === 'table',
+    );
+    expect(() =>
+      assertCorrectionBackedDecision('table', positiveTable, undefined),
+    ).toThrow(/reviewed structured table correction is missing/i);
+  });
+
+  it('rejects replacement sheet bytes despite a coordinated self-declared sheet hash', () => {
+    const root = validationFixture();
+    const indexPath = path.join(
+      root,
+      'reports/content-review-evidence/index.json',
+    );
+    const index = JSON.parse(readFileSync(indexPath, 'utf8'));
+    const sheetPath = path.join(
+      root,
+      'reports/content-review-evidence',
+      index.sheets[0].file,
+    );
+    const replaced = Buffer.concat([readFileSync(sheetPath), Buffer.from([0])]);
+    writeFileSync(sheetPath, replaced);
+    index.sheets[0].sha256 = sha256(replaced);
+    writeFileSync(indexPath, `${JSON.stringify(index, null, 2)}\n`);
+
+    expect(() => validateGeneratedContent(root)).toThrow(/pinned review/i);
+  });
+
+  it('rejects duplicate visual-review cell coordinates', () => {
+    const root = validationFixture();
+    mutateJson(
+      root,
+      '../../reports/content-review-evidence/index.json',
+      (index) => {
+        index.sheets[0].cells[1].row = index.sheets[0].cells[0].row;
+        index.sheets[0].cells[1].column = index.sheets[0].cells[0].column;
+      },
+    );
+
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /visual review|pinned review/i,
     );
   });
 

@@ -27,21 +27,6 @@ const reviewed = {
   status: 'reviewed' as const,
 };
 
-export const HEADING_LINE_CORRECTIONS: Readonly<
-  Record<number, { pdfPage: number; lineIndex: number }>
-> = {
-  21: { pdfPage: 16, lineIndex: 16 },
-  132: { pdfPage: 59, lineIndex: 37 },
-  144: { pdfPage: 63, lineIndex: 16 },
-  164: { pdfPage: 69, lineIndex: 4 },
-  165: { pdfPage: 69, lineIndex: 12 },
-  166: { pdfPage: 69, lineIndex: 16 },
-  266: { pdfPage: 107, lineIndex: 25 },
-  272: { pdfPage: 109, lineIndex: 1 },
-  358: { pdfPage: 132, lineIndex: 1 },
-  431: { pdfPage: 156, lineIndex: 1 },
-};
-
 export const FORMULA_CORRECTIONS: FormulaCorrection[] = [
   {
     candidateId: 'formula-math-p012-g000',

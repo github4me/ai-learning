@@ -19,19 +19,20 @@ import {
   APPENDIX_CORRECTION,
   CODE_CORRECTIONS,
   FORMULA_CORRECTIONS,
-  HEADING_LINE_CORRECTIONS,
   KNOWLEDGE_CHECK_OUTLINE_INDEXES,
   TABLE_CORRECTIONS,
   type LineRangeCorrection,
 } from './content-corrections.mts';
 import {
+  assertCorrectionBackedDecision,
   candidateFingerprint,
-  correctionFingerprint,
   decisionMap,
   readCandidateReviewLedger,
   type CandidateCategory,
   type CandidateReviewDecision,
 } from './candidate-review-ledger.mts';
+import { CONTENT_REVIEW_TRUST_ROOT } from './content-review-trust-root.mts';
+import { deriveSourceHeadingAnchors } from './source-heading-anchors.mts';
 import {
   detectCodeCandidates,
   detectFormulaCandidates,
@@ -96,11 +97,6 @@ type RawExtraction = {
   outline: RawOutline[];
   pages: RawPage[];
 };
-type HeadingAnchor = {
-  outlineIndex: number;
-  pdfPage: number;
-  lineIndexes: number[];
-};
 type SpecialCandidate = {
   candidateId: string;
   type: 'formula' | 'table' | 'code' | 'knowledgeCheck';
@@ -137,6 +133,12 @@ type CandidateAudit = {
 };
 
 const raw = readSourceAudit(SOURCE_AUDIT_PATH) as RawExtraction;
+const reviewLedgerBytes = readFileSync(REVIEW_LEDGER_PATH);
+if (
+  sha256(reviewLedgerBytes) !== CONTENT_REVIEW_TRUST_ROOT.candidateLedgerSha256
+) {
+  fail('Pinned review ledger bytes changed');
+}
 const reviewLedger = readCandidateReviewLedger(REVIEW_LEDGER_PATH);
 
 function fail(message: string): never {
@@ -200,14 +202,6 @@ function textLatex(value: string): string {
     .replace(/\^/gu, '\\textasciicircum{}')
     .replace(/~/gu, '\\textasciitilde{}');
   return `\\text{${escaped}}`;
-}
-
-function headingProjection(value: string): string {
-  return normalizeHyphens(value)
-    .normalize('NFKC')
-    .replace(/[“”]/g, '"')
-    .replace(/\s+/g, '')
-    .toLocaleLowerCase('en');
 }
 
 function tokenSequence(value: string): string[] {
@@ -289,46 +283,6 @@ function verifyCorrection(correction: LineRangeCorrection): RawSpan[] {
   return spans;
 }
 
-function findHeadingAnchors(): HeadingAnchor[] {
-  return raw.outline.map((outline) => {
-    const correction = HEADING_LINE_CORRECTIONS[outline.outlineIndex];
-    if (correction) {
-      return {
-        outlineIndex: outline.outlineIndex,
-        pdfPage: correction.pdfPage,
-        lineIndexes: [correction.lineIndex],
-      };
-    }
-
-    const page = pageByNumber(outline.pdfPage);
-    const target = headingProjection(outline.titleRaw);
-    const matches: number[][] = [];
-    for (let start = 0; start < page.lines.length; start += 1) {
-      let projection = '';
-      for (let length = 1; length <= 4; length += 1) {
-        const line = page.lines[start + length - 1];
-        if (!line) break;
-        projection += headingProjection(line.lineRaw);
-        if (projection === target) {
-          matches.push(Array.from({ length }, (_, offset) => start + offset));
-          break;
-        }
-        if (projection.length > target.length) break;
-      }
-    }
-    if (matches.length !== 1) {
-      fail(
-        `Outline ${outline.outlineIndex} (${outline.titleRaw}) matched ${matches.length} headings on page ${outline.pdfPage}`,
-      );
-    }
-    return {
-      outlineIndex: outline.outlineIndex,
-      pdfPage: outline.pdfPage,
-      lineIndexes: matches[0],
-    };
-  });
-}
-
 function lineText(pdfPage: number, lineIndexes: number[]): string {
   const page = pageByNumber(pdfPage);
   return lineIndexes
@@ -403,7 +357,7 @@ if (raw.source.pageCount !== 170 || raw.pages.length !== 170)
 if (raw.outline.length !== 461)
   fail(`Expected 461 outline destinations, got ${raw.outline.length}`);
 
-const headingAnchors = findHeadingAnchors();
+const headingAnchors = deriveSourceHeadingAnchors(raw as SourceAudit);
 const lineToHeading = new Map<string, number>();
 for (const anchor of headingAnchors) {
   for (const lineIndex of anchor.lineIndexes) {
@@ -529,21 +483,7 @@ function requireCorrectionDecision(
   category: 'formula' | 'table' | 'code',
   correction: LineRangeCorrection | undefined,
 ): void {
-  if (decision.correctionFingerprint) {
-    if (
-      !correction ||
-      decision.correctionFingerprint !==
-        correctionFingerprint(category, correction)
-    ) {
-      fail(
-        `Candidate review ledger correction mismatch for ${decision.candidateId}`,
-      );
-    }
-  } else if (correction) {
-    fail(
-      `Candidate review ledger has no correction fingerprint for ${decision.candidateId}`,
-    );
-  }
+  assertCorrectionBackedDecision(category, decision, correction);
 }
 
 for (const signal of formulaSignals) {
