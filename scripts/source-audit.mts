@@ -44,7 +44,7 @@ export type SourceAudit = {
   pages: RawPage[];
 };
 
-export const FORMULA_GEOMETRY_VERSION = 'span-font-size-bbox-origin-v1';
+export const FORMULA_GEOMETRY_VERSION = 'span-and-line-routing-geometry-v2';
 
 export type DetectedCandidate = {
   candidateId: string;
@@ -91,6 +91,12 @@ export function formulaGeometryChecksum(audit: SourceAudit): string {
           size,
           bbox,
           origin,
+        })),
+        lines: page.lines.map(({ id, spanIds, lineRaw, bbox }) => ({
+          id,
+          spanIds,
+          lineRaw,
+          bbox,
         })),
       })),
     }),

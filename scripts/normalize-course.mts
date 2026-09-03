@@ -61,7 +61,7 @@ const PUBLIC_FILENAME =
   'AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf';
 const GENERATED_AT = '2026-09-03';
 const EXPECTED_FORMULA_GEOMETRY_SHA256 =
-  '6cec7a69ffed7bf9d204d0fa311309f0c56bb763cd1f2e3af1892df1b9e0e269';
+  '822e96785d8609335a71ac79501f3eec23194cb744f786601443698e3e7ce5ba';
 
 const MISSING_HAT_SOURCE_CHECKSUMS: Readonly<Record<string, string>> = {
   'math-p020-g003':
