@@ -16,7 +16,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useLearningStore } from '@/src/components/providers';
 import type { LearningStateV1 } from '@/src/learning/state-schema';
-import { MAX_IMPORT_BYTES } from '@/src/learning/storage-adapter';
+import {
+  MAX_IMPORT_BYTES,
+  type RecoveryRecord,
+} from '@/src/learning/storage-adapter';
 
 export const PRIVACY_COPY =
   'Your progress, notes, bookmarks, knowledge-check self-assessments, and reading preferences stay only in this browser on this device. This site has no account, cloud sync, or server database. Export a backup to keep or move this data.';
@@ -47,14 +50,50 @@ function resultMessage(result: { ok: boolean; reason?: string }): string {
     : 'Browser storage is unavailable. Changes will not survive closing this page.';
 }
 
+function recoveryDetails(recovery: RecoveryRecord): {
+  message: string;
+  action: string;
+  filename: string;
+} {
+  if (recovery.kind === 'corrupt-load') {
+    return {
+      message:
+        'Stored local data could not be read. The original payload is preserved for download; the course opened with clean in-memory data.',
+      action: 'Download unreadable data',
+      filename: 'ai-first-principles-unreadable-data.json',
+    };
+  }
+  if (recovery.kind === 'failed-import') {
+    return {
+      message:
+        recovery.reason === 'quota'
+          ? 'The validated import could not be saved because browser storage is full. Your existing learning data is unchanged. Download the failed import payload below; Export backup downloads your current data instead.'
+          : 'The validated import could not be saved because browser storage is unavailable. Your existing learning data is unchanged. Download the failed import payload below; Export backup downloads your current data instead.',
+      action: 'Download failed import',
+      filename: 'ai-first-principles-failed-import.json',
+    };
+  }
+  return {
+    message:
+      recovery.reason === 'quota'
+        ? 'A recent change could not be saved because browser storage is full. It remains available in this session; download this recovery payload or free browser storage.'
+        : recovery.reason === 'invalid'
+          ? 'A recent change could not be validated for local storage. It remains available in this session; download this recovery payload.'
+          : 'A recent change could not be saved because browser storage is unavailable. It remains available in this session; download this recovery payload.',
+    action: 'Download unsaved learning data',
+    filename: 'ai-first-principles-unsaved-data.json',
+  };
+}
+
 export function ReadingSettings() {
   const preferences = useLearningStore((state) => state.preferences);
-  const recoveryPayload = useLearningStore((state) => state.recoveryPayload);
+  const recovery = useLearningStore((state) => state.recovery);
   const setPreference = useLearningStore((state) => state.setPreference);
   const exportState = useLearningStore((state) => state.exportState);
   const previewImport = useLearningStore((state) => state.previewImport);
   const importState = useLearningStore((state) => state.importState);
   const resetState = useLearningStore((state) => state.resetState);
+  const dismissRecovery = useLearningStore((state) => state.dismissRecovery);
   const [message, setMessage] = React.useState('');
   const [importCandidate, setImportCandidate] = React.useState<{
     serialized: string;
@@ -113,8 +152,8 @@ export function ReadingSettings() {
     setImportCandidate(undefined);
     setMessage(
       result.reason === 'quota'
-        ? 'Could not save locally. Your changes are still available in this session; export a backup or free browser storage.'
-        : 'Browser storage is unavailable. Changes will not survive closing this page.',
+        ? 'Import was not applied because browser storage is full. Current data is unchanged; use Download failed import in the recovery notice.'
+        : 'Import was not applied because browser storage is unavailable. Current data is unchanged; use Download failed import in the recovery notice.',
     );
   }
 
@@ -141,6 +180,7 @@ export function ReadingSettings() {
           .length,
       }
     : undefined;
+  const recoveryCopy = recovery ? recoveryDetails(recovery) : undefined;
 
   return (
     <div className="reading-settings">
@@ -206,24 +246,27 @@ export function ReadingSettings() {
       <section aria-labelledby="backup-heading" className="backup-settings">
         <h3 id="backup-heading">Local data and backup</h3>
         <p>{PRIVACY_COPY}</p>
-        {recoveryPayload && (
+        {recovery && recoveryCopy && (
           <div className="recovery-notice" aria-live="polite">
-            <p>
-              Recovered local data could not be read. You can download the
-              original data file.
-            </p>
-            <button
-              type="button"
-              className="learning-button"
-              onClick={() =>
-                downloadPayload(
-                  recoveryPayload,
-                  'ai-first-principles-recovery.json',
-                )
-              }
-            >
-              <Download aria-hidden="true" /> Download recovery data
-            </button>
+            <p>{recoveryCopy.message}</p>
+            <div className="recovery-actions">
+              <button
+                type="button"
+                className="learning-button"
+                onClick={() =>
+                  downloadPayload(recovery.payload, recoveryCopy.filename)
+                }
+              >
+                <Download aria-hidden="true" /> {recoveryCopy.action}
+              </button>
+              <button
+                type="button"
+                className="learning-button"
+                onClick={dismissRecovery}
+              >
+                Dismiss recovery notice
+              </button>
+            </div>
           </div>
         )}
         <div className="backup-actions">

@@ -191,11 +191,13 @@ function SectionStream({
       <ContentRenderer blocks={section.blocks} />
       <SectionActions section={section} unit={unit} />
       {section.children.map((child) => (
-        <SectionStream key={child.id} section={child} unit={unit} />
+        <MemoSectionStream key={child.id} section={child} unit={unit} />
       ))}
     </section>
   );
 }
+
+const MemoSectionStream = React.memo(SectionStream);
 
 function decodeHash(hash: string): string {
   const value = hash.startsWith('#') ? hash.slice(1) : hash;
@@ -215,6 +217,7 @@ function locationHref(
 }
 
 export function LessonReader({ unitId }: { unitId: string }) {
+  const course = getCourse();
   const unit = getUnit(unitId);
   if (!unit) throw new Error(`Unknown course unit: ${unitId}`);
 
@@ -226,11 +229,19 @@ export function LessonReader({ unitId }: { unitId: string }) {
   const visibleSections = React.useRef(new Map<string, DOMRectReadOnly>());
   const lastVisited = React.useRef('');
   const visitSection = useLearningStore((state) => state.visitSection);
-  const courseProgress = useLearningStore((state) =>
-    selectCourseProgress(state, getCourse()),
+  const completedSectionIds = useLearningStore(
+    (state) => state.completedSectionIds,
   );
-  const unitProgress = useLearningStore((state) =>
-    unit.kind === 'week' ? selectWeekProgress(state, unit) : undefined,
+  const courseProgress = React.useMemo(
+    () => selectCourseProgress({ completedSectionIds }, course),
+    [completedSectionIds, course],
+  );
+  const unitProgress = React.useMemo(
+    () =>
+      unit.kind === 'week'
+        ? selectWeekProgress({ completedSectionIds }, unit)
+        : undefined,
+    [completedSectionIds, unit],
   );
   const appendixRead = useLearningStore((state) =>
     unit.kind === 'appendix'
@@ -258,7 +269,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
 
       setActiveSectionId(section.id);
       document.getElementById(section.id)?.scrollIntoView({ block: 'start' });
-      if (!consumeSearchResultFocus(section.id)) return;
+      consumeSearchResultFocus(section.id);
 
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
@@ -322,7 +333,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
     };
   }, [unit.id, visitSection]);
 
-  const order = readingOrder();
+  const order = React.useMemo(() => readingOrder(), []);
   const unitStart = order.findIndex((entry) => entry.unit.id === unit.id);
   const activeIndex = order.findIndex(
     (entry) => entry.section.id === activeSectionId,
@@ -411,7 +422,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
           <SectionActions section={unit} unit={unit} />
         )}
         {unit.children.map((section) => (
-          <SectionStream key={section.id} section={section} unit={unit} />
+          <MemoSectionStream key={section.id} section={section} unit={unit} />
         ))}
 
         <nav className="lesson-continuity" aria-label="Lesson continuity">

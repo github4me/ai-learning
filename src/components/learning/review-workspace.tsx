@@ -2,6 +2,7 @@
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
 
 import { Bookmark, FileText } from 'lucide-react';
+import * as React from 'react';
 
 import {
   useFlushPendingNotes,
@@ -23,7 +24,10 @@ type ReviewItem = {
   groupOrder: number;
 };
 
-function collectItems(course: Course, state: LearningStore): ReviewItem[] {
+function collectItems(
+  course: Course,
+  state: Pick<LearningStore, 'notesBySection' | 'bookmarks'>,
+): ReviewItem[] {
   const references = sectionReferenceMap(course);
   const orphanLabel = 'Unavailable in this course version';
   const items: ReviewItem[] = [];
@@ -70,12 +74,15 @@ export function LearningItemGroups({
   kinds?: Array<'note' | 'bookmark'>;
   compact?: boolean;
 }) {
-  const state = useLearningStore((current) => current);
+  const state = useLearningStore((current) => ({
+    notesBySection: current.notesBySection,
+    bookmarks: current.bookmarks,
+  }));
   const flushPendingNotes = useFlushPendingNotes();
-  const allowed = new Set(kinds);
-  const items = collectItems(course, state).filter((item) =>
-    allowed.has(item.kind),
-  );
+  const items = React.useMemo(() => {
+    const allowed = new Set(kinds);
+    return collectItems(course, state).filter((item) => allowed.has(item.kind));
+  }, [course, kinds, state]);
 
   if (items.length === 0) {
     return (

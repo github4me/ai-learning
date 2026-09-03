@@ -3,7 +3,7 @@ import { ReviewWorkspace } from '@/src/components/learning/review-workspace';
 
 export default function ReviewPage() {
   return (
-    <AppShell>
+    <AppShell currentContextLabel="Review">
       <ReviewWorkspace />
     </AppShell>
   );

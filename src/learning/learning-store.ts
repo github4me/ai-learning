@@ -6,6 +6,7 @@ import type { LearningStateV1 } from './state-schema';
 import type {
   ImportResult,
   PersistResult,
+  RecoveryRecord,
   StorageAdapter,
 } from './storage-adapter';
 
@@ -36,7 +37,7 @@ export type LearningStore = LearningStateV1 & {
     status: 'idle' | 'saving' | 'saved' | 'error';
     result?: PersistResult;
   };
-  recoveryPayload?: string;
+  recovery?: RecoveryRecord;
   flushPendingNotes(): PersistResult;
   completeSection(sectionId: string): PersistResult;
   reopenSection(sectionId: string): PersistResult;
@@ -58,6 +59,7 @@ export type LearningStore = LearningStateV1 & {
   previewImport(serialized: string): LearningStateV1;
   exportState(): string;
   resetState(): PersistResult;
+  dismissRecovery(): void;
 };
 
 function leaves(root: SectionNode): SectionNode[] {
@@ -170,14 +172,15 @@ export function createLearningStore({
       } as LearningStateV1;
       set(next);
       const result = persist(next);
-      if (!result.ok && result.recoverablePayload)
-        set({ recoveryPayload: result.recoverablePayload });
+      if (!result.ok && result.recovery) set({ recovery: result.recovery });
+      else if (result.ok && get().recovery?.kind === 'failed-write')
+        set({ recovery: adapter.getRecoveryRecord() });
       return result;
     };
     return {
       ...state,
       notePersistence: { status: 'idle' },
-      recoveryPayload: adapter.getRecovery(),
+      recovery: adapter.getRecoveryRecord(),
       flushPendingNotes: () => adapter.flushPendingNotes(),
       completeSection(sectionId) {
         const isAppendix = isAppendixReadSection(course, sectionId);
@@ -306,9 +309,9 @@ export function createLearningStore({
           set({
             ...result.state,
             notePersistence: { status: 'idle' },
-            recoveryPayload: undefined,
+            recovery: adapter.getRecoveryRecord(),
           });
-        else set({ recoveryPayload: result.recoverablePayload });
+        else set({ recovery: result.recovery });
         return result;
       },
       previewImport(serialized) {
@@ -323,9 +326,13 @@ export function createLearningStore({
           set({
             ...adapter.load(),
             notePersistence: { status: 'idle' },
-            recoveryPayload: undefined,
+            recovery: undefined,
           });
         return result;
+      },
+      dismissRecovery() {
+        adapter.dismissRecovery();
+        set({ recovery: undefined });
       },
     };
   });
@@ -335,9 +342,11 @@ export function createLearningStore({
         status: result.ok ? 'saved' : 'error',
         result,
       },
-      ...(!result.ok && result.recoverablePayload
-        ? { recoveryPayload: result.recoverablePayload }
-        : {}),
+      ...(!result.ok && result.recovery
+        ? { recovery: result.recovery }
+        : result.ok && store.getState().recovery?.kind === 'failed-write'
+          ? { recovery: adapter.getRecoveryRecord() }
+          : {}),
     });
   });
   return store;

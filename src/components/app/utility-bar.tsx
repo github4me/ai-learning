@@ -19,6 +19,7 @@ export type CourseProgress = {
 
 export function UtilityBar({
   currentWeek,
+  currentContextLabel,
   courseProgress,
   onOpenNavigation,
   onOpenSearch,
@@ -30,6 +31,7 @@ export function UtilityBar({
   onExitFocusMode,
 }: {
   currentWeek?: number;
+  currentContextLabel?: string;
   courseProgress: CourseProgress;
   onOpenNavigation: () => void;
   onOpenSearch?: () => void;
@@ -52,7 +54,9 @@ export function UtilityBar({
         <Menu aria-hidden="true" />
       </button>
       <p className="current-week">
-        {currentWeek ? `Current: Week ${currentWeek}` : 'Course overview'}
+        Current:{' '}
+        {currentContextLabel ??
+          (currentWeek ? `Week ${currentWeek}` : 'Course overview')}
       </p>
       {focusMode ? (
         <button

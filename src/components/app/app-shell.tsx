@@ -21,6 +21,28 @@ import { UtilityBar, type CourseProgress } from './utility-bar';
 
 type ModalSurface = 'navigation' | 'study' | 'settings' | 'search';
 type ActiveSurface = 'none' | ModalSurface | `compact:${string}`;
+type PersistentNavigationMode = 'full' | 'compact' | 'mobile';
+
+function subscribeToNavigationMode(onStoreChange: () => void) {
+  const compactQuery = window.matchMedia('(min-width: 1024px)');
+  const fullQuery = window.matchMedia('(min-width: 1280px)');
+  compactQuery.addEventListener('change', onStoreChange);
+  fullQuery.addEventListener('change', onStoreChange);
+  return () => {
+    compactQuery.removeEventListener('change', onStoreChange);
+    fullQuery.removeEventListener('change', onStoreChange);
+  };
+}
+
+function getNavigationMode(): PersistentNavigationMode {
+  if (window.matchMedia('(min-width: 1280px)').matches) return 'full';
+  if (window.matchMedia('(min-width: 1024px)').matches) return 'compact';
+  return 'mobile';
+}
+
+function getServerNavigationMode(): PersistentNavigationMode {
+  return 'full';
+}
 
 const SearchPalette = React.lazy(
   () => import('@/src/components/search/search-palette'),
@@ -56,6 +78,7 @@ export type AppShellProps = {
   onOpenSettings?: () => void;
   settingsContent?: React.ReactNode;
   studyContent?: React.ReactNode;
+  currentContextLabel?: string;
 };
 
 export function AppShell({
@@ -70,6 +93,7 @@ export function AppShell({
   onOpenSettings,
   settingsContent,
   studyContent,
+  currentContextLabel: injectedContextLabel,
 }: AppShellProps) {
   const course = injectedCourse ?? getCourse();
   const [activeSurface, setActiveSurface] =
@@ -78,26 +102,47 @@ export function AppShell({
   const utilitySearchRef = React.useRef<HTMLButtonElement>(null);
   const searchReturnFocusRef = React.useRef<HTMLElement | null>(null);
   const flushPendingNotes = useFlushPendingNotes();
-  const learningState = useOptionalLearningStore((state) => state);
+  const learningSnapshot = useOptionalLearningStore((state) => ({
+    completedSectionIds: state.completedSectionIds,
+    appendixReadSectionIds: state.appendixReadSectionIds,
+    focusMode: state.preferences.focusMode,
+  }));
   const setPreference = useOptionalLearningStore(
     (state) => state.setPreference,
   );
+  const navigationMode = React.useSyncExternalStore(
+    subscribeToNavigationMode,
+    getNavigationMode,
+    getServerNavigationMode,
+  );
   const [focusMessage, setFocusMessage] = React.useState('');
   const activeUnit = course.units.find((unit) => unit.id === currentUnitId);
-  const resolvedCompleted =
-    completedSectionIds ??
-    (learningState
-      ? [
-          ...learningState.completedSectionIds,
-          ...learningState.appendixReadSectionIds,
-        ]
-      : []);
-  const resolvedProgress =
-    courseProgress ??
-    (learningState
-      ? selectCourseProgress(learningState, course)
-      : { completed: 0, total: 0, percent: 0 });
-  const closeSurface = () => setActiveSurface('none');
+  const resolvedCompleted = React.useMemo(
+    () =>
+      completedSectionIds ??
+      (learningSnapshot
+        ? [
+            ...learningSnapshot.completedSectionIds,
+            ...learningSnapshot.appendixReadSectionIds,
+          ]
+        : []),
+    [completedSectionIds, learningSnapshot],
+  );
+  const resolvedProgress = React.useMemo(
+    () =>
+      courseProgress ??
+      (learningSnapshot
+        ? selectCourseProgress(learningSnapshot, course)
+        : { completed: 0, total: 0, percent: 0 }),
+    [course, courseProgress, learningSnapshot],
+  );
+  const currentContextLabel =
+    injectedContextLabel ??
+    (activeUnit?.kind === 'week'
+      ? `Week ${activeUnit.weekNumber}`
+      : activeUnit?.kind === 'appendix'
+        ? 'Appendix A'
+        : 'Course overview');
   const changeModal = (surface: ModalSurface, open: boolean) =>
     setActiveSurface((current) =>
       open ? surface : current === surface ? 'none' : current,
@@ -120,12 +165,15 @@ export function AppShell({
     },
     [flushPendingNotes],
   );
-  const showNavigation = () => setActiveSurface('navigation');
-  const showStudy = () => setActiveSurface('study');
-  const showSettings = () => {
+  const showNavigation = React.useCallback(
+    () => setActiveSurface('navigation'),
+    [],
+  );
+  const showStudy = React.useCallback(() => setActiveSurface('study'), []);
+  const showSettings = React.useCallback(() => {
     setActiveSurface('settings');
     onOpenSettings?.();
-  };
+  }, [onOpenSettings]);
   const showSearch = React.useCallback(() => {
     const activeElement =
       document.activeElement instanceof HTMLElement
@@ -176,7 +224,7 @@ export function AppShell({
       if (
         event.key !== 'Escape' ||
         activeSurface !== 'none' ||
-        !learningState?.preferences.focusMode
+        !learningSnapshot?.focusMode
       )
         return;
       event.preventDefault();
@@ -184,7 +232,30 @@ export function AppShell({
     }
     document.addEventListener('keydown', handleFocusEscape);
     return () => document.removeEventListener('keydown', handleFocusEscape);
-  }, [activeSurface, exitFocusMode, learningState?.preferences.focusMode]);
+  }, [activeSurface, exitFocusMode, learningSnapshot?.focusMode]);
+
+  const handleCompactNavigate = React.useCallback(
+    (target: { unitId: string; sectionId?: string }) => {
+      handleNavigate(target);
+      setActiveSurface('none');
+    },
+    [handleNavigate],
+  );
+  const handleMobileNavigate = React.useCallback(
+    (target: { unitId: string; sectionId?: string }) => {
+      handleNavigate(target);
+      setActiveSurface('none');
+    },
+    [handleNavigate],
+  );
+  const handleCompactOpenChange = React.useCallback(
+    (unitId: string | undefined, trigger: HTMLButtonElement) => {
+      compactReturnFocusRef.current = trigger;
+      setActiveSurface(unitId ? `compact:${unitId}` : 'none');
+      if (!unitId) window.requestAnimationFrame(() => trigger.focus());
+    },
+    [],
+  );
 
   React.useEffect(() => {
     function handleCompactNavigationEscape(event: KeyboardEvent) {
@@ -206,45 +277,46 @@ export function AppShell({
       <a className="skip-link" href="#lesson-content">
         Skip to lesson content
       </a>
-      <aside className="workspace-rail full-rail" aria-label="Course workspace">
-        <CourseNavigation
-          course={course}
-          currentUnitId={currentUnitId}
-          currentSectionId={currentSectionId}
-          completedSectionIds={resolvedCompleted}
-          courseProgress={resolvedProgress}
-          onNavigate={handleNavigate}
-          onBeforeNavigate={flushPendingNotes}
-          onOpenSearch={showSearch}
-        />
-      </aside>
-      <aside
-        className="workspace-rail compact-rail"
-        aria-label="Compact course workspace"
-      >
-        <CourseNavigation
-          course={course}
-          mode="compact"
-          currentUnitId={currentUnitId}
-          currentSectionId={currentSectionId}
-          completedSectionIds={resolvedCompleted}
-          onNavigate={(target) => {
-            handleNavigate(target);
-            setActiveSurface('none');
-          }}
-          compactOpenUnitId={compactOpenUnitId}
-          onCompactOpenChange={(unitId, trigger) => {
-            compactReturnFocusRef.current = trigger;
-            setActiveSurface(unitId ? `compact:${unitId}` : 'none');
-            if (!unitId) window.requestAnimationFrame(() => trigger.focus());
-          }}
-        />
-      </aside>
+      {navigationMode === 'full' && (
+        <aside
+          className="workspace-rail full-rail"
+          aria-label="Course workspace"
+        >
+          <CourseNavigation
+            course={course}
+            currentUnitId={currentUnitId}
+            currentSectionId={currentSectionId}
+            completedSectionIds={resolvedCompleted}
+            courseProgress={resolvedProgress}
+            onNavigate={handleNavigate}
+            onBeforeNavigate={flushPendingNotes}
+            onOpenSearch={showSearch}
+          />
+        </aside>
+      )}
+      {navigationMode === 'compact' && (
+        <aside
+          className="workspace-rail compact-rail"
+          aria-label="Compact course workspace"
+        >
+          <CourseNavigation
+            course={course}
+            mode="compact"
+            currentUnitId={currentUnitId}
+            currentSectionId={currentSectionId}
+            completedSectionIds={resolvedCompleted}
+            onNavigate={handleCompactNavigate}
+            compactOpenUnitId={compactOpenUnitId}
+            onCompactOpenChange={handleCompactOpenChange}
+          />
+        </aside>
+      )}
       <section className="workspace">
         <UtilityBar
           currentWeek={
             activeUnit?.kind === 'week' ? activeUnit.weekNumber : undefined
           }
+          currentContextLabel={currentContextLabel}
           courseProgress={resolvedProgress}
           onOpenNavigation={showNavigation}
           onOpenSearch={showSearch}
@@ -252,7 +324,7 @@ export function AppShell({
           onOpenStudy={showStudy}
           onBeforeNavigate={flushPendingNotes}
           searchTriggerRef={utilitySearchRef}
-          focusMode={learningState?.preferences.focusMode}
+          focusMode={learningSnapshot?.focusMode}
           onExitFocusMode={exitFocusMode}
         />
         <main
@@ -286,12 +358,10 @@ export function AppShell({
               currentUnitId={currentUnitId}
               currentSectionId={currentSectionId}
               completedSectionIds={resolvedCompleted}
-              onNavigate={(target) => {
-                handleNavigate(target);
-                closeSurface();
-              }}
+              onNavigate={handleMobileNavigate}
               onBeforeNavigate={flushPendingNotes}
               onOpenSearch={showSearch}
+              onOpenSettings={showSettings}
             />
           </SheetContent>
         )}

@@ -2,6 +2,7 @@
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
 
 import { CheckCircle2, Circle, ChevronRight } from 'lucide-react';
+import * as React from 'react';
 
 import type {
   Course,
@@ -20,6 +21,7 @@ export type CourseNavigationProps = {
   onNavigate?: (target: { unitId: string; sectionId?: string }) => void;
   onBeforeNavigate?: () => void;
   onOpenSearch?: () => void;
+  onOpenSettings?: () => void;
   compactOpenUnitId?: string;
   onCompactOpenChange?: (
     unitId: string | undefined,
@@ -78,7 +80,7 @@ function SectionLinks({
                 </span>
               </a>
               {node.children.length > 0 && (
-                <SectionLinks
+                <MemoSectionLinks
                   nodes={node.children}
                   unit={unit}
                   currentSectionId={currentSectionId}
@@ -93,6 +95,8 @@ function SectionLinks({
     </ul>
   );
 }
+
+const MemoSectionLinks = React.memo(SectionLinks);
 
 function UnitOutline({
   unit,
@@ -130,7 +134,7 @@ function UnitOutline({
         {appendixRead && <span className="nav-state">Read</span>}
         {current && <span className="nav-state">Current unit</span>}
       </a>
-      <SectionLinks
+      <MemoSectionLinks
         nodes={unit.children}
         unit={unit}
         currentSectionId={currentSectionId}
@@ -140,6 +144,8 @@ function UnitOutline({
     </div>
   );
 }
+
+const MemoUnitOutline = React.memo(UnitOutline);
 
 function CompactNavigation({
   course,
@@ -163,7 +169,10 @@ function CompactNavigation({
     (unit): unit is WeekUnit =>
       unit.kind === 'week' && unit.id === compactOpenUnitId,
   );
-  const completed = new Set(completedSectionIds);
+  const completed = React.useMemo(
+    () => new Set(completedSectionIds),
+    [completedSectionIds],
+  );
   const panelId = 'compact-week-sections';
   return (
     <nav aria-label="Week selector" className="compact-course-navigation">
@@ -213,7 +222,7 @@ function CompactNavigation({
               <span className="nav-state">Current week</span>
             )}
           </a>
-          <SectionLinks
+          <MemoSectionLinks
             nodes={selectedWeek.children}
             unit={selectedWeek}
             currentSectionId={currentSectionId}
@@ -226,7 +235,7 @@ function CompactNavigation({
   );
 }
 
-export function CourseNavigation({
+export const CourseNavigation = React.memo(function CourseNavigation({
   course,
   currentUnitId,
   currentSectionId,
@@ -236,9 +245,14 @@ export function CourseNavigation({
   onNavigate,
   onBeforeNavigate,
   onOpenSearch,
+  onOpenSettings,
   compactOpenUnitId,
   onCompactOpenChange,
 }: CourseNavigationProps) {
+  const completed = React.useMemo(
+    () => new Set(completedSectionIds),
+    [completedSectionIds],
+  );
   if (mode === 'compact') {
     return (
       <CompactNavigation
@@ -252,7 +266,6 @@ export function CourseNavigation({
       />
     );
   }
-  const completed = new Set(completedSectionIds);
   const monthGroups = [
     { label: 'Month 1', weeks: [1, 2, 3, 4] },
     { label: 'Month 2', weeks: [5, 6, 7, 8] },
@@ -284,14 +297,24 @@ export function CourseNavigation({
         <small>核心教程深度扩展版</small>
       </a>
       {mode === 'mobile' && (
-        <button
-          type="button"
-          className="rail-search-button mobile-search-button"
-          onClick={onOpenSearch}
-          aria-label="Search course"
-        >
-          Search course / 搜索课程
-        </button>
+        <div className="mobile-rail-actions">
+          <button
+            type="button"
+            className="rail-search-button mobile-search-button"
+            onClick={onOpenSearch}
+            aria-label="Search course"
+          >
+            Search course / 搜索课程
+          </button>
+          <button
+            type="button"
+            className="rail-search-button mobile-settings-button"
+            onClick={onOpenSettings}
+            aria-label="Reading settings and local data backup"
+          >
+            Reading settings / 阅读设置
+          </button>
+        </div>
       )}
       {monthGroups.map(({ label, weeks }) => (
         <section
@@ -311,11 +334,13 @@ export function CourseNavigation({
                 unit.kind === 'week' && weeks.includes(unit.weekNumber),
             )
             .map((unit) => (
-              <UnitOutline
+              <MemoUnitOutline
                 key={unit.id}
                 unit={unit}
                 currentUnitId={currentUnitId}
-                currentSectionId={currentSectionId}
+                currentSectionId={
+                  unit.id === currentUnitId ? currentSectionId : undefined
+                }
                 completed={completed}
                 onNavigate={onNavigate}
               />
@@ -327,10 +352,12 @@ export function CourseNavigation({
           <p id="reference-heading" className="course-group-label">
             Reference
           </p>
-          <UnitOutline
+          <MemoUnitOutline
             unit={appendix}
             currentUnitId={currentUnitId}
-            currentSectionId={currentSectionId}
+            currentSectionId={
+              appendix.id === currentUnitId ? currentSectionId : undefined
+            }
             completed={completed}
             onNavigate={onNavigate}
           />
@@ -360,4 +387,4 @@ export function CourseNavigation({
       </a>
     </nav>
   );
-}
+});

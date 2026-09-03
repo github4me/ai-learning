@@ -1,6 +1,8 @@
 'use client';
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
 
+import * as React from 'react';
+
 import type { Course } from '@/src/content/schema';
 import { getCourse } from '@/src/content/course-runtime';
 import {
@@ -23,20 +25,29 @@ export function CourseOverview({
 }) {
   const course = injectedCourse ?? getCourse();
   const flushPendingNotes = useFlushPendingNotes();
-  const learningState = useOptionalLearningStore((state) => state);
-  const continueLocation =
-    injectedContinueLocation ??
-    (learningState
-      ? selectContinueLocation(learningState, course)
-      : {
-          unitId: course.units[0]?.id ?? course.overview.id,
-          sectionId: course.units[0]?.id ?? course.overview.id,
-        });
-  const courseProgress =
-    injectedCourseProgress ??
-    (learningState
-      ? selectCourseProgress(learningState, course)
-      : { completed: 0, total: 0, percent: 0 });
+  const learningSnapshot = useOptionalLearningStore((state) => ({
+    completedSectionIds: state.completedSectionIds,
+    lastLocation: state.lastLocation,
+  }));
+  const continueLocation = React.useMemo(
+    () =>
+      injectedContinueLocation ??
+      (learningSnapshot
+        ? selectContinueLocation(learningSnapshot, course)
+        : {
+            unitId: course.units[0]?.id ?? course.overview.id,
+            sectionId: course.units[0]?.id ?? course.overview.id,
+          }),
+    [course, injectedContinueLocation, learningSnapshot],
+  );
+  const courseProgress = React.useMemo(
+    () =>
+      injectedCourseProgress ??
+      (learningSnapshot
+        ? selectCourseProgress(learningSnapshot, course)
+        : { completed: 0, total: 0, percent: 0 }),
+    [course, injectedCourseProgress, learningSnapshot],
+  );
   const unit = course.units.find(
     (candidate) => candidate.id === continueLocation.unitId,
   );
@@ -75,11 +86,7 @@ export function CourseOverview({
         {actionLabel}
       </a>
       {completed && (
-        <a
-          className="review-link"
-          href="/review"
-          onClick={flushPendingNotes}
-        >
+        <a className="review-link" href="/review" onClick={flushPendingNotes}>
           Review notes and bookmarks
         </a>
       )}

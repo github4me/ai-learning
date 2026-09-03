@@ -10,18 +10,34 @@ export const LEARNING_STATE_KEY = 'ai-first-principles:learning-state';
 export const MAX_NOTE_CODE_POINTS = 20_000;
 export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
+export type StorageFailureReason = 'quota' | 'unavailable' | 'invalid';
+export type RecoveryRecord =
+  | { kind: 'corrupt-load'; reason: 'invalid'; payload: string }
+  | {
+      kind: 'failed-write';
+      reason: StorageFailureReason;
+      payload: string;
+    }
+  | {
+      kind: 'failed-import';
+      reason: Exclude<StorageFailureReason, 'invalid'>;
+      payload: string;
+    };
+
 export type PersistResult =
   | { ok: true }
   | {
       ok: false;
-      reason: 'quota' | 'unavailable' | 'invalid';
+      reason: StorageFailureReason;
+      recovery?: Extract<RecoveryRecord, { kind: 'failed-write' }>;
       recoverablePayload?: string;
     };
 export type ImportResult =
   | { ok: true; state: LearningStateV1 }
   | {
       ok: false;
-      reason: 'quota' | 'unavailable' | 'invalid';
+      reason: Exclude<StorageFailureReason, 'invalid'>;
+      recovery: Extract<RecoveryRecord, { kind: 'failed-import' }>;
       recoverablePayload: string;
     };
 
@@ -37,7 +53,10 @@ export interface StorageAdapter {
   subscribeNotePersistence(
     listener: (result: PersistResult) => void,
   ): () => void;
+  /** Returns the raw payload for compatibility with non-UI adapter consumers. */
   getRecovery(): string | undefined;
+  getRecoveryRecord(): RecoveryRecord | undefined;
+  dismissRecovery(): void;
 }
 
 export interface HydratableStorageAdapter extends StorageAdapter {
@@ -75,7 +94,7 @@ export function createStorageAdapter(
   let current = initial();
   let hydrated = false;
   let available = storage !== undefined;
-  let recovery: string | undefined;
+  let recovery: RecoveryRecord | undefined;
   let pending: LearningStateV1 | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let listening = false;
@@ -95,6 +114,11 @@ export function createStorageAdapter(
       return {
         ok: false,
         reason: 'unavailable',
+        recovery: {
+          kind: 'failed-write',
+          reason: 'unavailable',
+          payload: serialized,
+        },
         recoverablePayload: serialized,
       };
     try {
@@ -104,6 +128,11 @@ export function createStorageAdapter(
       return {
         ok: false,
         reason: isQuota(error) ? 'quota' : 'unavailable',
+        recovery: {
+          kind: 'failed-write',
+          reason: isQuota(error) ? 'quota' : 'unavailable',
+          payload: serialized,
+        },
         recoverablePayload: serialized,
       };
     }
@@ -128,7 +157,11 @@ export function createStorageAdapter(
         aliases,
       );
     } catch {
-      recovery = serialized;
+      recovery = {
+        kind: 'corrupt-load',
+        reason: 'invalid',
+        payload: serialized,
+      };
       current = initial();
     }
     return current;
@@ -151,20 +184,22 @@ export function createStorageAdapter(
     }
     const serialized = validate(state);
     if (!serialized) {
-      const recoverablePayload = JSON.stringify(state);
+      const payload = JSON.stringify(state);
       const result: PersistResult = {
         ok: false,
         reason: 'invalid',
-        recoverablePayload,
+        recovery: { kind: 'failed-write', reason: 'invalid', payload },
+        recoverablePayload: payload,
       };
       current = state;
-      recovery = recoverablePayload;
+      recovery = result.recovery;
       if (supersedesPendingNotes)
         noteListeners.forEach((listener) => listener(result));
       return result;
     }
     const result = write(serialized);
-    if (!result.ok) recovery = serialized;
+    if (!result.ok) recovery = result.recovery;
+    else if (recovery?.kind === 'failed-write') recovery = undefined;
     current = state;
     if (supersedesPendingNotes)
       noteListeners.forEach((listener) => listener(result));
@@ -238,12 +273,26 @@ export function createStorageAdapter(
       const canonical = validate(candidate)!;
       const result = write(canonical);
       if (!result.ok) {
-        recovery = canonical;
-        return { ...result, recoverablePayload: canonical };
+        const importRecovery: Extract<
+          RecoveryRecord,
+          { kind: 'failed-import' }
+        > = {
+          kind: 'failed-import',
+          reason: result.reason === 'quota' ? 'quota' : 'unavailable',
+          payload: canonical,
+        };
+        recovery = importRecovery;
+        return {
+          ok: false,
+          reason: importRecovery.reason,
+          recovery: importRecovery,
+          recoverablePayload: canonical,
+        };
       }
       clearTimer();
       pending = undefined;
       current = candidate;
+      if (recovery?.kind !== 'corrupt-load') recovery = undefined;
       return { ok: true, state: current };
     },
     export(state) {
@@ -270,7 +319,11 @@ export function createStorageAdapter(
       noteListeners.add(listener);
       return () => noteListeners.delete(listener);
     },
-    getRecovery: () => recovery,
+    getRecovery: () => recovery?.payload,
+    getRecoveryRecord: () => recovery,
+    dismissRecovery() {
+      recovery = undefined;
+    },
     dispose,
   };
 }

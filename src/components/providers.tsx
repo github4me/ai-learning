@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import type { StoreApi } from 'zustand/vanilla';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { Course } from '@/src/content/schema';
 import { getCourse } from '@/src/content/course-runtime';
@@ -16,6 +17,9 @@ import {
 
 const LearningStoreContext =
   React.createContext<StoreApi<LearningStore> | null>(null);
+
+const emptySubscribe = () => () => undefined;
+const emptySnapshot = () => undefined;
 
 export function Providers({
   course,
@@ -50,7 +54,7 @@ export function Providers({
           window.localStorage,
           () => new Date(),
         ),
-        recoveryPayload: learning.adapter.getRecovery(),
+        recovery: learning.adapter.getRecoveryRecord(),
       });
     } catch {
       // The adapter remains usable in memory when the browser denies storage access.
@@ -59,16 +63,26 @@ export function Providers({
   }, [learning]);
 
   React.useEffect(() => {
-    const applyPreferences = () => {
-      const { preferences } = learning.store.getState();
+    const applyPreferences = (preferences: LearningStore['preferences']) => {
       const root = document.documentElement;
       root.dataset.theme = preferences.theme;
       root.dataset.fontSize = preferences.fontSize;
       root.dataset.lineWidth = preferences.lineWidth;
       root.dataset.focusMode = String(preferences.focusMode);
     };
-    applyPreferences();
-    return learning.store.subscribe(applyPreferences);
+    let appliedPreferences = learning.store.getState().preferences;
+    applyPreferences(appliedPreferences);
+    return learning.store.subscribe((state) => {
+      if (
+        state.preferences.theme === appliedPreferences.theme &&
+        state.preferences.fontSize === appliedPreferences.fontSize &&
+        state.preferences.lineWidth === appliedPreferences.lineWidth &&
+        state.preferences.focusMode === appliedPreferences.focusMode
+      )
+        return;
+      appliedPreferences = state.preferences;
+      applyPreferences(appliedPreferences);
+    });
   }, [learning.store]);
 
   return (
@@ -81,10 +95,11 @@ export function Providers({
 export function useLearningStore<T>(selector: (state: LearningStore) => T): T {
   const store = React.useContext(LearningStoreContext);
   if (!store) throw new Error('useLearningStore must be used inside Providers');
+  const stableSelector = useShallow(selector);
   return React.useSyncExternalStore(
     store.subscribe,
-    () => selector(store.getState()),
-    () => selector(store.getState()),
+    () => stableSelector(store.getState()),
+    () => stableSelector(store.getInitialState()),
   );
 }
 
@@ -92,10 +107,13 @@ export function useOptionalLearningStore<T>(
   selector: (state: LearningStore) => T,
 ): T | undefined {
   const store = React.useContext(LearningStoreContext);
+  const stableSelector = useShallow((state: LearningStore | undefined) =>
+    state === undefined ? undefined : selector(state),
+  );
   return React.useSyncExternalStore(
-    store?.subscribe ?? (() => () => undefined),
-    () => (store ? selector(store.getState()) : undefined),
-    () => (store ? selector(store.getState()) : undefined),
+    store?.subscribe ?? emptySubscribe,
+    store ? () => stableSelector(store.getState()) : emptySnapshot,
+    store ? () => stableSelector(store.getInitialState()) : emptySnapshot,
   );
 }
 
