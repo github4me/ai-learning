@@ -182,7 +182,8 @@
 }
 .content-paragraph > .block-source-link,
 .content-list > .block-source-link {
-  min-height: 32px;
+  min-height: 44px;
+  padding-block: 0.25rem;
   opacity: 0.72;
 }
 
