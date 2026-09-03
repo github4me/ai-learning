@@ -10,11 +10,19 @@ describe('course search', () => {
   const index = createCourseSearch(course);
 
   it('finds generated bilingual material with useful deterministic metadata', () => {
-    expect(searchCourse(index, '梯度')[0]?.sectionId).toBe('o0048-9-gradient-descent');
-    expect(searchCourse(index, '梯度')[0]?.excerpt).toContain('梯度下降');
-    expect(searchCourse(index, '神经网络')[0]?.sectionId).toBe('o0077-week-3-neural-network-neuron');
-    expect(searchCourse(index, 'Attention')[0]?.sectionId).toBe('o0254-week-7-attention-token');
-    expect(searchCourse(index, 'CrossEntropyLoss')[0]?.sectionId).toBe('o0243-12-pytorch-crossentropyloss-logits');
+    const canonical = [
+      ['梯度', 'o0048-9-gradient-descent', '梯度下降'],
+      ['神经网络', 'o0077-week-3-neural-network-neuron', '神经网络'],
+      ['Attention', 'o0254-week-7-attention-token', 'Attention'],
+      ['CrossEntropyLoss', 'o0243-12-pytorch-crossentropyloss-logits', 'CrossEntropyLoss'],
+    ] as const;
+
+    for (const [query, sectionId, visibleText] of canonical) {
+      const result = searchCourse(index, query)[0];
+      expect(result?.sectionId).toBe(sectionId);
+      expect(result?.excerpt).toContain(visibleText);
+      expect(result?.excerpt).not.toMatch(/<[^>]+>/);
+    }
   });
 
   it('normalizes NFKC case and hyphens, including the CJK fallback', () => {

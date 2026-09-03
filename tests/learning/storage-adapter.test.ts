@@ -72,6 +72,20 @@ describe('StorageAdapter', () => {
     expect(storage.getItem(LEARNING_STATE_KEY)).toEqual('{not json');
   });
 
+  it('keeps writable storage available after corrupt hydration recovery', () => {
+    const storage = new MemoryStorage();
+    const corrupt = '{"schemaVersion":1}';
+    storage.setItem(LEARNING_STATE_KEY, corrupt);
+    const adapter = createStorageAdapter({ storage, contentVersion: 'course-1' });
+
+    expect(adapter.load()).toMatchObject({ completedSectionIds: [] });
+    expect(adapter.getRecovery()).toBe(corrupt);
+    expect(storage.getItem(LEARNING_STATE_KEY)).toBe(corrupt);
+    const fresh = { ...adapter.load(), completedSectionIds: ['fresh'] };
+    expect(adapter.persist(fresh)).toEqual({ ok: true });
+    expect(storage.getItem(LEARNING_STATE_KEY)).toBe(JSON.stringify(fresh));
+  });
+
   it('rejects a future version atomically', () => {
     const storage = new MemoryStorage();
     const adapter = createStorageAdapter({ storage, contentVersion: 'course-1' });

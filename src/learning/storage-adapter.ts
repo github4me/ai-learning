@@ -78,13 +78,19 @@ export function createStorageAdapter(options: Options): StorageAdapter {
     if (hydrated) return current;
     hydrated = true;
     if (!storage) return current;
+    let serialized: string | null;
     try {
-      const serialized = storage.getItem(LEARNING_STATE_KEY);
-      if (!serialized) return current;
-      current = parseLearningState(JSON.parse(serialized), options.contentVersion, aliases);
+      serialized = storage.getItem(LEARNING_STATE_KEY);
     } catch {
       available = false;
-      try { recovery = storage.getItem(LEARNING_STATE_KEY) ?? undefined; } catch { /* unavailable storage still has a clean state */ }
+      current = initial();
+      return current;
+    }
+    if (!serialized) return current;
+    try {
+      current = parseLearningState(JSON.parse(serialized), options.contentVersion, aliases);
+    } catch {
+      recovery = serialized;
       current = initial();
     }
     return current;

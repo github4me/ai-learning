@@ -67,3 +67,20 @@ unchanged. V0/V1 and all nested records are strict, store mutations return typed
 persistence outcomes, and the CJK fallback activates whenever `Intl.Segmenter` is
 actually unavailable. Exact target assertions pass for gradient descent, neural
 network, Attention, and CrossEntropyLoss.
+
+## Review fix round 2
+
+### RED
+
+Added a regression that seeds a strict-invalid stored payload, verifies clean
+hydration plus recovery retention without an overwrite, and then requires a valid
+persist to succeed. It failed because hydration treated parse/schema errors as a
+storage-access failure. The canonical query tests were also strengthened to require
+exact IDs and safe, query-relevant excerpts for every required query.
+
+### GREEN
+
+Storage reads are now separated from parse/migration work: only an actual
+`getItem` exception marks storage unavailable. Corrupt or unsupported serialized
+state remains recoverable while the backend stays writable. The focused suite
+passes 68 tests with the strengthened canonical-excerpt assertions.
