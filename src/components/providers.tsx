@@ -5,7 +5,7 @@ import type { StoreApi } from 'zustand/vanilla'
 
 import type { Course } from '@/src/content/schema'
 import { createLearningStore, type LearningStore } from '@/src/learning/learning-store'
-import { createStorageAdapter } from '@/src/learning/storage-adapter'
+import { createStorageAdapter, type HydratableStorageAdapter } from '@/src/learning/storage-adapter'
 
 const LearningStoreContext = React.createContext<StoreApi<LearningStore> | null>(null)
 
@@ -18,17 +18,21 @@ export function Providers({
   store?: StoreApi<LearningStore>
   children: React.ReactNode
 }) {
-  const [learningStore] = React.useState<StoreApi<LearningStore>>(() =>
-    store ?? createLearningStore({
-      course,
-      adapter: createStorageAdapter({
-        contentVersion: course.version,
-        storage: typeof window === 'undefined' ? undefined : window.localStorage,
-      }),
-    }),
-  )
+  const [learning] = React.useState<{ store: StoreApi<LearningStore>; adapter?: HydratableStorageAdapter }>(() => {
+    if (store) return { store }
+    const adapter = createStorageAdapter({
+      contentVersion: course.version,
+      clock: () => new Date(0),
+    })
+    return { store: createLearningStore({ course, adapter }), adapter }
+  })
 
-  return <LearningStoreContext.Provider value={learningStore}>{children}</LearningStoreContext.Provider>
+  React.useEffect(() => {
+    if (!learning.adapter) return
+    learning.store.setState(learning.adapter.hydrateStorage(window.localStorage, () => new Date()))
+  }, [learning])
+
+  return <LearningStoreContext.Provider value={learning.store}>{children}</LearningStoreContext.Provider>
 }
 
 export function useLearningStore<T>(selector: (state: LearningStore) => T): T {

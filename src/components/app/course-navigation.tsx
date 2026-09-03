@@ -11,8 +11,10 @@ export type CourseNavigationProps = {
   currentUnitId?: string
   currentSectionId?: string
   completedSectionIds?: readonly string[]
+  courseProgress?: { completed: number; total: number; percent: number }
   mode?: 'full' | 'compact' | 'mobile'
   onNavigate?: (target: { unitId: string; sectionId?: string }) => void
+  onOpenSearch?: () => void
 }
 
 function unitPath(unit: CourseUnit): string {
@@ -108,8 +110,18 @@ function UnitOutline({
   )
 }
 
-function CompactNavigation({ course, onNavigate }: Pick<CourseNavigationProps, 'course' | 'onNavigate'>) {
-  const [selectedWeek, setSelectedWeek] = React.useState<WeekUnit | null>(null)
+function CompactNavigation({
+  course,
+  currentUnitId,
+  currentSectionId,
+  completedSectionIds = [],
+  onNavigate,
+}: Pick<CourseNavigationProps, 'course' | 'currentUnitId' | 'currentSectionId' | 'completedSectionIds' | 'onNavigate'>) {
+  const currentWeek = course.units.find(
+    (unit): unit is WeekUnit => unit.kind === 'week' && unit.id === currentUnitId,
+  )
+  const [selectedWeek, setSelectedWeek] = React.useState<WeekUnit | null>(currentWeek ?? null)
+  const completed = new Set(completedSectionIds)
   const panelId = 'compact-week-sections'
   return (
     <nav aria-label="Week selector" className="compact-course-navigation">
@@ -135,10 +147,22 @@ function CompactNavigation({ course, onNavigate }: Pick<CourseNavigationProps, '
       </ol>
       {selectedWeek && (
         <section id={panelId} aria-label={`Week ${selectedWeek.weekNumber} sections`} className="compact-section-panel">
-          <a href={unitPath(selectedWeek)} onClick={() => onNavigate?.({ unitId: selectedWeek.id })}>
+          <a
+            className="course-unit-link"
+            href={unitPath(selectedWeek)}
+            aria-current={selectedWeek.id === currentUnitId ? 'page' : undefined}
+            onClick={() => onNavigate?.({ unitId: selectedWeek.id })}
+          >
             Week {selectedWeek.weekNumber}: {selectedWeek.title}
+            {selectedWeek.id === currentUnitId && <span className="nav-state">Current week</span>}
           </a>
-          <SectionLinks nodes={selectedWeek.children} unit={selectedWeek} completed={new Set()} onNavigate={onNavigate} />
+          <SectionLinks
+            nodes={selectedWeek.children}
+            unit={selectedWeek}
+            currentSectionId={currentSectionId}
+            completed={completed}
+            onNavigate={onNavigate}
+          />
         </section>
       )}
     </nav>
@@ -150,10 +174,22 @@ export function CourseNavigation({
   currentUnitId,
   currentSectionId,
   completedSectionIds = [],
+  courseProgress,
   mode = 'full',
   onNavigate,
+  onOpenSearch,
 }: CourseNavigationProps) {
-  if (mode === 'compact') return <CompactNavigation course={course} onNavigate={onNavigate} />
+  if (mode === 'compact') {
+    return (
+      <CompactNavigation
+        course={course}
+        currentUnitId={currentUnitId}
+        currentSectionId={currentSectionId}
+        completedSectionIds={completedSectionIds}
+        onNavigate={onNavigate}
+      />
+    )
+  }
   const completed = new Set(completedSectionIds)
   const monthGroups = [
     { label: 'Month 1', weeks: [1, 2, 3, 4] },
@@ -172,7 +208,7 @@ export function CourseNavigation({
       </a>
       {monthGroups.map(({ label, weeks }) => (
         <section key={label} className="course-month" aria-labelledby={`${label.toLowerCase().replace(' ', '-')}-heading`}>
-          <h2 id={`${label.toLowerCase().replace(' ', '-')}-heading`}>{label}</h2>
+          <p id={`${label.toLowerCase().replace(' ', '-')}-heading`} className="course-group-label">{label}</p>
           {course.units
             .filter((unit): unit is WeekUnit => unit.kind === 'week' && weeks.includes(unit.weekNumber))
             .map((unit) => (
@@ -189,7 +225,7 @@ export function CourseNavigation({
       ))}
       {appendix && (
         <section className="course-month" aria-labelledby="reference-heading">
-          <h2 id="reference-heading">Reference</h2>
+          <p id="reference-heading" className="course-group-label">Reference</p>
           <UnitOutline
             unit={appendix}
             currentUnitId={currentUnitId}
@@ -198,6 +234,12 @@ export function CourseNavigation({
             onNavigate={onNavigate}
           />
         </section>
+      )}
+      {mode === 'full' && courseProgress && (
+        <div className="rail-tools">
+          <p className="rail-progress">Course progress: {courseProgress.completed} of {courseProgress.total} sections ({courseProgress.percent}%)</p>
+          <button type="button" className="rail-search-button" onClick={onOpenSearch}>Open search</button>
+        </div>
       )}
       <a className="source-pdf-link" href="/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf">View original PDF <ChevronRight aria-hidden="true" /></a>
     </nav>

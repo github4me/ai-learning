@@ -60,11 +60,21 @@ export function AppShell({
           currentUnitId={currentUnitId}
           currentSectionId={currentSectionId}
           completedSectionIds={resolvedCompleted}
+          courseProgress={resolvedProgress}
           onNavigate={onNavigate}
+          onOpenSearch={onOpenSearch}
         />
       </aside>
       <aside className="workspace-rail compact-rail" aria-label="Compact course workspace">
-        <CourseNavigation course={course} mode="compact" onNavigate={onNavigate} />
+        <CourseNavigation
+          key={currentUnitId ?? 'course-overview'}
+          course={course}
+          mode="compact"
+          currentUnitId={currentUnitId}
+          currentSectionId={currentSectionId}
+          completedSectionIds={resolvedCompleted}
+          onNavigate={onNavigate}
+        />
       </aside>
       <section className="workspace">
         <UtilityBar

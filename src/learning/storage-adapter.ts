@@ -28,6 +28,10 @@ export interface StorageAdapter {
   getRecovery(): string | undefined;
 }
 
+export interface HydratableStorageAdapter extends StorageAdapter {
+  hydrateStorage(storage: Storage, clock?: () => Date): LearningStateV1;
+}
+
 type Options = {
   storage?: Storage;
   contentVersion: string;
@@ -45,10 +49,11 @@ function hasValidNotes(state: LearningStateV1): boolean {
   return Object.values(state.notesBySection).every((note) => Array.from(note.text).length <= MAX_NOTE_CODE_POINTS);
 }
 
-export function createStorageAdapter(options: Options): StorageAdapter {
-  const storage = options.storage;
+export function createStorageAdapter(options: Options): HydratableStorageAdapter {
+  let storage = options.storage;
   const aliases = options.aliases ?? {};
-  const initial = () => createInitialLearningState(options.contentVersion, (options.clock?.() ?? new Date()).toISOString());
+  let clock = options.clock ?? (() => new Date());
+  const initial = () => createInitialLearningState(options.contentVersion, clock().toISOString());
   let current = initial();
   let hydrated = false;
   let available = storage !== undefined;
@@ -127,6 +132,13 @@ export function createStorageAdapter(options: Options): StorageAdapter {
 
   return {
     load,
+    hydrateStorage(nextStorage, nextClock) {
+      storage = nextStorage;
+      clock = nextClock ?? clock;
+      available = true;
+      hydrated = false;
+      return load();
+    },
     persist,
     import(serialized) {
       load();
