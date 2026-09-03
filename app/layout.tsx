@@ -11,8 +11,17 @@ import './globals.css';
 import { Providers } from '@/src/components/providers';
 
 export const metadata: Metadata = {
-  title: 'AI First Principles · 核心教程深度扩展版',
-  description: '从数据、参数与梯度一路学习到可运行的 Mini GPT。',
+  applicationName: 'AI First Principles / AI 第一性原理',
+  title: {
+    default: 'AI First Principles · 12周 AI 第一性原理学习教程',
+    template: '%s · AI First Principles',
+  },
+  description:
+    '12周双语 AI 第一性原理学习教程：从 Linear Regression、数据、参数与梯度到可运行的 Mini GPT。',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
 };
 
 const preferenceBootstrap = `
