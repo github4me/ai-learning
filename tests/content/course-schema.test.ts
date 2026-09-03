@@ -105,6 +105,15 @@ describe('course schema', () => {
     );
   });
 
+  it('requires Weeks 1 through 12 before Appendix A', () => {
+    expect(() =>
+      loadCourse({
+        ...fixture,
+        units: [fixture.units[12], ...fixture.units.slice(0, 12)],
+      }),
+    ).toThrow(/weeks 1 through 12.*appendix a/i);
+  });
+
   it('rejects duplicate stable identifiers, invalid physical pages, and empty blocks', () => {
     expect(() =>
       loadCourse({
@@ -135,5 +144,32 @@ describe('course schema', () => {
         ),
       }),
     ).toThrow(/children/i);
+  });
+
+  it('rejects a duplicate section alias', () => {
+    expect(() =>
+      loadCourse({
+        ...fixture,
+        units: fixture.units.map((unit, index) =>
+          index === 1 ? { ...unit, aliases: ['old-vector-anchor'] } : unit,
+        ),
+      }),
+    ).toThrow(/duplicate stable alias/i);
+  });
+
+  it('rejects a content block ID that collides with a section ID', () => {
+    expect(() =>
+      loadCourse({
+        ...fixture,
+        units: fixture.units.map((unit, index) =>
+          index === 1
+            ? {
+                ...unit,
+                blocks: [paragraph('week-01-vectors')],
+              }
+            : unit,
+        ),
+      }),
+    ).toThrow(/duplicate stable identifier/i);
   });
 });

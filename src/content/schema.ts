@@ -7,7 +7,6 @@ export const SourceRefSchema = z.object({
   pdfPage: z.int().min(1).max(170),
   printedPageLabel: nonEmptyText.optional(),
 });
-
 export type SourceRef = z.infer<typeof SourceRefSchema>;
 
 export type InlineNode =
@@ -36,7 +35,6 @@ export const InlineNodeSchema: z.ZodType<InlineNode> = z.lazy(() =>
 );
 
 type BlockBase = { id: string; source: SourceRef };
-
 export type ContentBlock =
   | (BlockBase & { type: 'paragraph'; children: InlineNode[] })
   | (BlockBase & { type: 'list'; ordered: boolean; items: InlineNode[][] })
@@ -69,7 +67,6 @@ export type ContentBlock =
 
 const inlineChildren = z.array(InlineNodeSchema).min(1);
 const inlineRows = z.array(inlineChildren).min(1);
-
 export const ContentBlockSchema: z.ZodType<ContentBlock> = z.lazy(() =>
   z.discriminatedUnion('type', [
     z.object({
@@ -144,7 +141,6 @@ export interface SectionNode {
   blocks: ContentBlock[];
   children: SectionNode[];
 }
-
 export const SectionNodeSchema: z.ZodType<SectionNode> = z.lazy(() =>
   z
     .object({
@@ -175,14 +171,12 @@ export type WeekUnit = SectionNode & {
   sourcePages: number[];
   estimatedReadingMinutes: number;
 };
-
 export type AppendixUnit = SectionNode & {
   kind: 'appendix';
   label: 'A';
   slug: string;
 };
 export type CourseUnit = WeekUnit | AppendixUnit;
-
 const WeekUnitSchema: z.ZodType<WeekUnit> = SectionNodeSchema.and(
   z.object({
     kind: z.literal('week'),
@@ -194,7 +188,6 @@ const WeekUnitSchema: z.ZodType<WeekUnit> = SectionNodeSchema.and(
     estimatedReadingMinutes: z.int().positive(),
   }),
 );
-
 const AppendixUnitSchema: z.ZodType<AppendixUnit> = SectionNodeSchema.and(
   z.object({
     kind: z.literal('appendix'),
@@ -209,14 +202,12 @@ export type GlossaryEntry = {
   sectionId: string;
   aliases?: string[];
 };
-
 const GlossaryEntrySchema: z.ZodType<GlossaryEntry> = z.object({
   term: nonEmptyText,
   definition: nonEmptyText,
   sectionId: stableId,
   aliases: z.array(stableId).min(1).optional(),
 });
-
 export interface Course {
   title: string;
   description: string;
@@ -225,7 +216,6 @@ export interface Course {
   units: CourseUnit[];
   glossary?: GlossaryEntry[];
 }
-
 export const CourseSchema: z.ZodType<Course> = z.object({
   title: nonEmptyText,
   description: nonEmptyText,
@@ -246,6 +236,5 @@ export const PageManifestEntrySchema = z.object({
   sectionId: stableId.optional(),
   mergedIntoSectionId: stableId.optional(),
 });
-
 export const PageManifestSchema = z.array(PageManifestEntrySchema);
 export type PageManifestEntry = z.infer<typeof PageManifestEntrySchema>;

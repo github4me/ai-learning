@@ -11,9 +11,8 @@ type UnknownRecord = Record<string, unknown>;
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     Object.freeze(value);
-    for (const property of Object.values(value as UnknownRecord)) {
+    for (const property of Object.values(value as UnknownRecord))
       deepFreeze(property);
-    }
   }
   return value;
 }
@@ -33,30 +32,24 @@ function collectBlockIds(blocks: readonly ContentBlock[], ids: string[]): void {
 }
 
 function assertCourseInvariants(course: Course): void {
-  const weeks = course.units.filter(
-    (unit): unit is Extract<CourseUnit, { kind: 'week' }> =>
-      unit.kind === 'week',
-  );
-  const appendices = course.units.filter((unit) => unit.kind === 'appendix');
-
-  if (weeks.length !== 12 || appendices.length !== 1) {
+  if (
+    course.units.length !== 13 ||
+    !course.units
+      .slice(0, 12)
+      .every(
+        (unit, index) => unit.kind === 'week' && unit.weekNumber === index + 1,
+      ) ||
+    course.units[12]?.kind !== 'appendix'
+  ) {
     throw new Error(
-      'A course must contain exactly 12 numbered weeks and Appendix A',
+      'A course must contain 12 numbered weeks (Weeks 1 through 12 in order) followed by Appendix A',
     );
-  }
-  for (let index = 0; index < 12; index += 1) {
-    if (weeks[index]?.weekNumber !== index + 1) {
-      throw new Error(
-        'The 12 numbered weeks must be sequential from 1 through 12',
-      );
-    }
   }
 
   const ids = new Set<string>();
   const aliases = new Set<string>();
   const sections: SectionNode[] = [];
   for (const unit of course.units) collectSections(unit, sections);
-
   for (const section of sections) {
     if (ids.has(section.id) || aliases.has(section.id))
       throw new Error(`Duplicate stable identifier: ${section.id}`);
