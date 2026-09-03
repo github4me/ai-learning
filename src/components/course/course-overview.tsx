@@ -1,52 +1,94 @@
-'use client'
+'use client';
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
 
-import type { Course } from '@/src/content/schema'
-import { useOptionalLearningStore } from '@/src/components/providers'
-import { selectContinueLocation, selectCourseProgress } from '@/src/learning/learning-store'
+import type { Course } from '@/src/content/schema';
+import { getCourse } from '@/src/content/course-runtime';
+import { useOptionalLearningStore } from '@/src/components/providers';
+import {
+  selectContinueLocation,
+  selectCourseProgress,
+} from '@/src/learning/learning-store';
 
 export function CourseOverview({
-  course,
+  course: injectedCourse,
   continueLocation: injectedContinueLocation,
   courseProgress: injectedCourseProgress,
 }: {
-  course: Course
-  continueLocation?: { unitId: string; sectionId: string }
-  courseProgress?: { completed: number; total: number; percent: number }
+  course?: Course;
+  continueLocation?: { unitId: string; sectionId: string };
+  courseProgress?: { completed: number; total: number; percent: number };
 }) {
-  const learningState = useOptionalLearningStore((state) => state)
-  const continueLocation = injectedContinueLocation ?? (learningState ? selectContinueLocation(learningState, course) : {
-    unitId: course.units[0]?.id ?? course.overview.id,
-    sectionId: course.units[0]?.id ?? course.overview.id,
-  })
-  const courseProgress = injectedCourseProgress ?? (learningState ? selectCourseProgress(learningState, course) : { completed: 0, total: 0, percent: 0 })
-  const unit = course.units.find((candidate) => candidate.id === continueLocation.unitId)
-  const completed = unit === undefined
+  const course = injectedCourse ?? getCourse();
+  const learningState = useOptionalLearningStore((state) => state);
+  const continueLocation =
+    injectedContinueLocation ??
+    (learningState
+      ? selectContinueLocation(learningState, course)
+      : {
+          unitId: course.units[0]?.id ?? course.overview.id,
+          sectionId: course.units[0]?.id ?? course.overview.id,
+        });
+  const courseProgress =
+    injectedCourseProgress ??
+    (learningState
+      ? selectCourseProgress(learningState, course)
+      : { completed: 0, total: 0, percent: 0 });
+  const unit = course.units.find(
+    (candidate) => candidate.id === continueLocation.unitId,
+  );
+  const completed = unit === undefined;
   const destination = unit
     ? `${unit.kind === 'appendix' ? '/appendix/mini-gpt' : `/week/${unit.slug}`}#${continueLocation.sectionId}`
-    : '/review'
-  const actionLabel = completed ? 'Review your learning' : courseProgress.completed > 0 ? 'Continue learning' : 'Start Week 1'
+    : '/review';
+  const actionLabel = completed
+    ? 'Review your learning'
+    : courseProgress.completed > 0
+      ? 'Continue learning'
+      : 'Start Week 1';
   return (
     <article className="course-overview">
       <p className="eyebrow">Course workspace</p>
       <h1>{course.title}</h1>
-      <p className="course-premise">{course.description} 阅读以原始教程为准，按周次、章节与可验证练习持续推进。</p>
-      <div className="overview-status" aria-label={`Course progress: ${courseProgress.completed} of ${courseProgress.total} sections (${courseProgress.percent}%)`}>
+      <p className="course-premise">
+        {course.description}{' '}
+        阅读以原始教程为准，按周次、章节与可验证练习持续推进。
+      </p>
+      <div
+        className="overview-status"
+        aria-label={`Course progress: ${courseProgress.completed} of ${courseProgress.total} sections (${courseProgress.percent}%)`}
+      >
         <strong>{courseProgress.percent}%</strong>
-        <span>Course progress · {courseProgress.completed} of {courseProgress.total} sections</span>
+        <span>
+          Course progress · {courseProgress.completed} of {courseProgress.total}{' '}
+          sections
+        </span>
       </div>
-      <a className="primary-action" href={destination}>{actionLabel}</a>
-      {completed && <a className="review-link" href="/review">Review notes and bookmarks</a>}
-      <section className="overview-path" aria-labelledby="learning-path-heading">
+      <a className="primary-action" href={destination}>
+        {actionLabel}
+      </a>
+      {completed && (
+        <a className="review-link" href="/review">
+          Review notes and bookmarks
+        </a>
+      )}
+      <section
+        className="overview-path"
+        aria-labelledby="learning-path-heading"
+      >
         <h2 id="learning-path-heading">12-week learning path</h2>
         <ol>
-          {course.units.filter((unit) => unit.kind === 'week').map((week) => (
-            <li key={week.id}>
-              <a href={`/week/${week.slug}`}><span>Week {week.weekNumber}</span>{week.title}</a>
-            </li>
-          ))}
+          {course.units
+            .filter((unit) => unit.kind === 'week')
+            .map((week) => (
+              <li key={week.id}>
+                <a href={`/week/${week.slug}`}>
+                  <span>Week {week.weekNumber}</span>
+                  {week.title}
+                </a>
+              </li>
+            ))}
         </ol>
       </section>
     </article>
-  )
+  );
 }

@@ -3,6 +3,26 @@ import { z } from 'zod';
 const nonEmptyText = z.string().trim().min(1);
 const stableId = nonEmptyText;
 
+export function isSafeContentHref(href: string): boolean {
+  const value = href.trim();
+  if (value.startsWith('#')) return value.length > 1;
+  if (value.startsWith('/') && !value.startsWith('//')) return true;
+  if (!/^https?:\/\//i.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      Boolean(url.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+const contentHref = nonEmptyText.refine(isSafeContentHref, {
+  message: 'Links must use http, https, a root-relative path, or a hash anchor',
+});
+
 export const SourceRefSchema = z.object({
   pdfPage: z.int().min(1).max(170),
   printedPageLabel: nonEmptyText.optional(),
@@ -28,7 +48,7 @@ export const InlineNodeSchema: z.ZodType<InlineNode> = z.lazy(() =>
     }),
     z.object({
       type: z.literal('link'),
-      href: z.url(),
+      href: contentHref,
       children: z.array(InlineNodeSchema).min(1),
     }),
   ]),
