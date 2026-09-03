@@ -23,7 +23,7 @@ export type TableCorrection = LineRangeCorrection & {
 };
 
 const reviewed = {
-  reviewer: 'Codex source-span and rendered-page review 2026-09-03',
+  reviewer: 'Codex rendered-source correction review',
   status: 'reviewed' as const,
 };
 
@@ -43,6 +43,15 @@ export const HEADING_LINE_CORRECTIONS: Readonly<
 };
 
 export const FORMULA_CORRECTIONS: FormulaCorrection[] = [
+  {
+    candidateId: 'formula-math-p012-g000',
+    pdfPage: 12,
+    lineIndexes: [21, 22, 23, 24, 25],
+    sourceChecksum:
+      '88f1e4723afb82f3d21da26b5f8ae79772d0b8e603e43369ecb91d3d54b796a4',
+    latex: 'x = \\begin{bmatrix} 100 \\\\ 3 \\\\ 8 \\end{bmatrix}',
+    ...reviewed,
+  },
   {
     candidateId: 'formula-p021-l0020',
     pdfPage: 21,

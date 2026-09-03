@@ -1238,7 +1238,7 @@
             {
               "type": "formula",
               "id": "formula-math-p012-g000",
-              "latex": "\\text{x= [ 100 3 8 ]}",
+              "latex": "x = \\begin{bmatrix} 100 \\\\ 3 \\\\ 8 \\end{bmatrix}",
               "accessibleText": "𝑥= [\n100\n3\n8\n]",
               "source": {
                 "pdfPage": 12,

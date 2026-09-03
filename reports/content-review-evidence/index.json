@@ -1,0 +1,2092 @@
+{
+  "version": 1,
+  "sourceSha256": "3ED047406DE297352B38635D01CF080B0213C9FD899AEA80520AA8A8283E1D52",
+  "candidateLedgerSha256": "1bb5866569279cc14cae623119165eb514ab3e47089cc78a92143f2814f831e2",
+  "reviewer": "Codex rendered-source candidate review",
+  "reviewScope": "148 physical pages containing all 812 independently detected candidates",
+  "legend": {
+    "formula": "red",
+    "table": "blue",
+    "code": "green",
+    "knowledgeCheck": "purple"
+  },
+  "sheetColumns": 4,
+  "sheetRows": 3,
+  "reviewedPageCount": 148,
+  "sheets": [
+    {
+      "file": "sheet-002-013.jpg",
+      "sha256": "9187588f2c78e623dc5b7d8f100419a7b35862c5a3081b80a19ee7e2ad3bc923",
+      "cells": [
+        {
+          "pdfPage": 2,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "table-signal-p002-g000",
+            "table-signal-p002-g001"
+          ],
+          "candidateFingerprintChecksum": "fe95b8525f6dad9758260563ab86693cd93631f3c6a5d691520d5bf18b26944a"
+        },
+        {
+          "pdfPage": 3,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "table-signal-p003-g000",
+            "table-signal-p003-g001"
+          ],
+          "candidateFingerprintChecksum": "f375efaee23c0ba3cf4d72549b75cf6f43b7f68a184d390c336e332e4b62da47"
+        },
+        {
+          "pdfPage": 4,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "table-signal-p004-g000"
+          ],
+          "candidateFingerprintChecksum": "a37d215809b21b8e03bddb308e839f5bfe7f20bf9edb2508ab809745b524e958"
+        },
+        {
+          "pdfPage": 5,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "table-signal-p005-g000",
+            "table-signal-p005-g001",
+            "table-signal-p005-g002",
+            "table-signal-p005-g003"
+          ],
+          "candidateFingerprintChecksum": "4e6b9daab5b4a0b6f46228fe9e192fd2636a19140be0920ebc2da11a0daf68bb"
+        },
+        {
+          "pdfPage": 6,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "math-p006-g000",
+            "math-p006-g001",
+            "table-signal-p006-g000",
+            "table-signal-p006-g001",
+            "table-signal-p006-g002",
+            "table-signal-p006-g003"
+          ],
+          "candidateFingerprintChecksum": "87018f11fb127363e515acf271e72d2cae4f4b8e18359a71640be0846c4077cf"
+        },
+        {
+          "pdfPage": 7,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "table-signal-p007-g000"
+          ],
+          "candidateFingerprintChecksum": "053df459d1bfb46c415b2d3ad14059a368632ee5d0c98a9e1a8a5a67751e4ad6"
+        },
+        {
+          "pdfPage": 8,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "table-signal-p008-g000"
+          ],
+          "candidateFingerprintChecksum": "8fc19b020e90e105d91f730a9128911712faa6467202ec6ea2c2027842994c0f"
+        },
+        {
+          "pdfPage": 9,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "table-signal-p009-g000"
+          ],
+          "candidateFingerprintChecksum": "65511aa6b094517ca39be5779c9c219a9596562797188d26c9c1b418dc469af1"
+        },
+        {
+          "pdfPage": 10,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "table-signal-p010-g000",
+            "table-signal-p010-g001"
+          ],
+          "candidateFingerprintChecksum": "1850f923594de1b72e8ccbbc99ead8659f31f0bc5af163e1959408a81cd6896f"
+        },
+        {
+          "pdfPage": 11,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "table-signal-p011-g000"
+          ],
+          "candidateFingerprintChecksum": "e71457d179636ce6d160cdddc44e1d1267e14abeee57cdbb1594bf95bab6a0c2"
+        },
+        {
+          "pdfPage": 12,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p012-g000",
+            "code-signal-p012-g001",
+            "math-p012-g000"
+          ],
+          "candidateFingerprintChecksum": "cf54ed94c04484479f5b57aa5416b70ace7e77a86c2458f12fd47e5b55db2382"
+        },
+        {
+          "pdfPage": 13,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "math-p013-g000",
+            "math-p013-g001",
+            "table-signal-p013-g000"
+          ],
+          "candidateFingerprintChecksum": "407d0d57b436ffe13b3175547900e5feeef64a3feebc46a761390c710eb06ca6"
+        }
+      ]
+    },
+    {
+      "file": "sheet-014-025.jpg",
+      "sha256": "a1cb7d8054c21963e5be9f7bb50facd88ec2e2144167af1a5e1ac620e8525d39",
+      "cells": [
+        {
+          "pdfPage": 14,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p014-g000",
+            "code-signal-p014-g001",
+            "code-signal-p014-g002",
+            "math-p014-g000",
+            "math-p014-g001",
+            "math-p014-g002",
+            "math-p014-g003"
+          ],
+          "candidateFingerprintChecksum": "575daafbb017c088d539be5d399e3ec97e234359abbdb1ce28c7a895b5784aae"
+        },
+        {
+          "pdfPage": 15,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p015-g000",
+            "code-signal-p015-g001",
+            "code-signal-p015-g002",
+            "math-p015-g000",
+            "math-p015-g001",
+            "math-p015-g002",
+            "math-p015-g003"
+          ],
+          "candidateFingerprintChecksum": "528b20904f04c250525738c35aa09eed5fdf9ac8e0282da5371647d0fb7ed060"
+        },
+        {
+          "pdfPage": 16,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "math-p016-g000",
+            "math-p016-g001",
+            "table-signal-p016-g000"
+          ],
+          "candidateFingerprintChecksum": "ee01a4812728300ee9a10b555d9440c7379252c3c42861fc22e4a126d3360eff"
+        },
+        {
+          "pdfPage": 17,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "math-p017-g000",
+            "math-p017-g001",
+            "math-p017-g002",
+            "math-p017-g003",
+            "math-p017-g004"
+          ],
+          "candidateFingerprintChecksum": "2ec09ecbf3e5a2f3700e57b2e8bb30827852294f14948a9f81ab3adbc960932e"
+        },
+        {
+          "pdfPage": 18,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p018-g000",
+            "code-signal-p018-g001",
+            "math-p018-g000",
+            "math-p018-g001",
+            "math-p018-g002",
+            "math-p018-g003"
+          ],
+          "candidateFingerprintChecksum": "91d046c7c8ed996f6eedaf7e4b5a3854b86c37fcd475fb57de740d8ce0b4025f"
+        },
+        {
+          "pdfPage": 19,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p019-g000",
+            "code-signal-p019-g001",
+            "code-signal-p019-g002",
+            "code-signal-p019-g003",
+            "code-signal-p019-g004",
+            "code-signal-p019-g005",
+            "code-signal-p019-g006"
+          ],
+          "candidateFingerprintChecksum": "2e757818bae0a0568e750e1d66b54024f2b705c3d82d9cf51e5828f376457251"
+        },
+        {
+          "pdfPage": 20,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p020-g000",
+            "knowledge-signal-o0037",
+            "math-p020-g000",
+            "math-p020-g001",
+            "math-p020-g002",
+            "math-p020-g003"
+          ],
+          "candidateFingerprintChecksum": "639c5e9ab4eca6b7fe57b23a96035ba836d49088e1a532077bfa103e03af6f10"
+        },
+        {
+          "pdfPage": 21,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p021-g000",
+            "knowledge-signal-o0040",
+            "math-p021-g000",
+            "math-p021-g001",
+            "table-signal-p021-g000"
+          ],
+          "candidateFingerprintChecksum": "e207b260c7861f8161d03a5704d47ff620c9f3aacb85a6e074197864747c8425"
+        },
+        {
+          "pdfPage": 22,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "math-p022-g000",
+            "math-p022-g001",
+            "math-p022-g002",
+            "math-p022-g003",
+            "math-p022-g004"
+          ],
+          "candidateFingerprintChecksum": "6b9cbf36ecd73c48adc5c9d207bb51803a5d00b6a9580368b6c66d0c691e35ca"
+        },
+        {
+          "pdfPage": 23,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "math-p023-g000",
+            "math-p023-g001"
+          ],
+          "candidateFingerprintChecksum": "b387d80f3ca7bf9ec836489424f0264beb613fe40c80f2c925b5557584036e90"
+        },
+        {
+          "pdfPage": 24,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "math-p024-g000",
+            "math-p024-g001"
+          ],
+          "candidateFingerprintChecksum": "c0338eba48625d419a478126385846c18a3e930b2b072f4b7e5dc8519847d791"
+        },
+        {
+          "pdfPage": 25,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "math-p025-g000",
+            "math-p025-g001",
+            "math-p025-g002",
+            "math-p025-g003",
+            "math-p025-g004",
+            "math-p025-g005",
+            "math-p025-g006",
+            "math-p025-g007"
+          ],
+          "candidateFingerprintChecksum": "dd915929ce2031a7bdee458c110a2cac20ed19e9d56dd40bc2e7baacc6a1e5d5"
+        }
+      ]
+    },
+    {
+      "file": "sheet-026-038.jpg",
+      "sha256": "376ce28dd531a6d299dbe862210ede8a6801aab8cf9658423961e9746e6478ef",
+      "cells": [
+        {
+          "pdfPage": 26,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "math-p026-g000",
+            "math-p026-g001",
+            "math-p026-g002",
+            "math-p026-g003",
+            "math-p026-g004",
+            "math-p026-g005",
+            "math-p026-g006"
+          ],
+          "candidateFingerprintChecksum": "01983da44e56eff9b3404284cafec58e7d05475bae874b501d305a4d8b767308"
+        },
+        {
+          "pdfPage": 27,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "math-p027-g000",
+            "math-p027-g001",
+            "math-p027-g002"
+          ],
+          "candidateFingerprintChecksum": "56bf640cb41d85aac421b28d7aed0ac275b8b1bb83dd502aa1d1c75ca3a09fe3"
+        },
+        {
+          "pdfPage": 28,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p028-g000",
+            "code-signal-p028-g001",
+            "code-signal-p028-g002",
+            "code-signal-p028-g003",
+            "code-signal-p028-g004",
+            "code-signal-p028-g005",
+            "code-signal-p028-g006",
+            "code-signal-p028-g007",
+            "code-signal-p028-g008",
+            "code-signal-p028-g009",
+            "code-signal-p028-g010"
+          ],
+          "candidateFingerprintChecksum": "abd2b0a60bbc46dc88a420635b23c985c983f5497f27af49c36f667576cafb50"
+        },
+        {
+          "pdfPage": 29,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p029-g000",
+            "code-signal-p029-g001",
+            "code-signal-p029-g002",
+            "code-signal-p029-g003",
+            "code-signal-p029-g004",
+            "code-signal-p029-g005",
+            "math-p029-g000",
+            "math-p029-g001",
+            "math-p029-g002",
+            "math-p029-g003",
+            "math-p029-g004"
+          ],
+          "candidateFingerprintChecksum": "cbd8ba7dde0f9e725e34da64d3f210deb8044a7480bacc1dce98245827c1ded3"
+        },
+        {
+          "pdfPage": 30,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p030-g000",
+            "math-p030-g000",
+            "math-p030-g001"
+          ],
+          "candidateFingerprintChecksum": "32281c1b84719b35a3dded8e3d38c0337d4459cfca7fbccebc68f70ba941ae91"
+        },
+        {
+          "pdfPage": 31,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "table-signal-p031-g000"
+          ],
+          "candidateFingerprintChecksum": "ecfca88fb7f798d96a92dd4ba69dcdfbb56f7d68b4a53370771a16f424012f0b"
+        },
+        {
+          "pdfPage": 32,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "math-p032-g000",
+            "math-p032-g001",
+            "math-p032-g002",
+            "math-p032-g003",
+            "math-p032-g004",
+            "table-signal-p032-g000"
+          ],
+          "candidateFingerprintChecksum": "220df902631c6e1d2354d4703a35b935f9af917fc34dd92d6acff1d258d889f2"
+        },
+        {
+          "pdfPage": 33,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p033-g000",
+            "math-p033-g000",
+            "math-p033-g001",
+            "math-p033-g002",
+            "math-p033-g003",
+            "math-p033-g004"
+          ],
+          "candidateFingerprintChecksum": "4591986e245e26191431fa8f0e099bfc0ca1b4345f25eea249679ef598ed0e76"
+        },
+        {
+          "pdfPage": 34,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "math-p034-g000",
+            "math-p034-g001",
+            "math-p034-g002",
+            "math-p034-g003",
+            "math-p034-g004",
+            "table-signal-p034-g000"
+          ],
+          "candidateFingerprintChecksum": "19626a75ebadd43a0e4dc06e9367336aa19794f0fda7cd38435a3dec7a8f1bb0"
+        },
+        {
+          "pdfPage": 36,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "knowledge-signal-o0078",
+            "math-p036-g000",
+            "math-p036-g001",
+            "math-p036-g002",
+            "math-p036-g003",
+            "math-p036-g004"
+          ],
+          "candidateFingerprintChecksum": "7c58864e130462bad6954b46440bd3797c4672710fcc8f9ff1091272d20073fd"
+        },
+        {
+          "pdfPage": 37,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "math-p037-g000",
+            "math-p037-g001",
+            "math-p037-g002"
+          ],
+          "candidateFingerprintChecksum": "21806f118fac9bb5e6355cda5605a18f57462ce18f1c59b6071daaf7cbac480d"
+        },
+        {
+          "pdfPage": 38,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "math-p038-g000",
+            "math-p038-g001",
+            "math-p038-g002"
+          ],
+          "candidateFingerprintChecksum": "aa289876786afd11cbc5a321d1ea963666a7f23e8667e08980e471afbc156773"
+        }
+      ]
+    },
+    {
+      "file": "sheet-039-051.jpg",
+      "sha256": "9f90e934fbdd7236653bb0691a2eca54dbad0a89cfae684103e47642cffe8dc5",
+      "cells": [
+        {
+          "pdfPage": 39,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "math-p039-g000",
+            "math-p039-g001",
+            "math-p039-g002",
+            "math-p039-g003"
+          ],
+          "candidateFingerprintChecksum": "615dec0ed5d5e31ab01688e19eef820765f3ffbc0f5d49c89394e9ebb957f791"
+        },
+        {
+          "pdfPage": 40,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "knowledge-signal-o0086",
+            "math-p040-g000",
+            "math-p040-g001",
+            "math-p040-g002",
+            "math-p040-g003",
+            "math-p040-g004",
+            "math-p040-g005",
+            "math-p040-g006",
+            "math-p040-g007"
+          ],
+          "candidateFingerprintChecksum": "26802a72ee7f91c031133e0a3a59ba6a9c4fc799955984afac02517bf1e7a49f"
+        },
+        {
+          "pdfPage": 41,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "math-p041-g000",
+            "math-p041-g001",
+            "math-p041-g002",
+            "math-p041-g003",
+            "math-p041-g004",
+            "math-p041-g005",
+            "math-p041-g006",
+            "math-p041-g007",
+            "math-p041-g008"
+          ],
+          "candidateFingerprintChecksum": "983146243c33ac3ba4229f06b0b70a6a86cfbfb7e87091af815afb459e58c626"
+        },
+        {
+          "pdfPage": 42,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "math-p042-g000",
+            "math-p042-g001",
+            "math-p042-g002"
+          ],
+          "candidateFingerprintChecksum": "3125fbc00ea586ea105a8770918fc2ff09026d39c2dff0cd2d5e6aabdfb4379e"
+        },
+        {
+          "pdfPage": 43,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "math-p043-g000",
+            "math-p043-g001",
+            "math-p043-g002",
+            "math-p043-g003",
+            "table-signal-p043-g000"
+          ],
+          "candidateFingerprintChecksum": "da75d32d00589ccf44c65ea4b0c6d4a44c5094dc2be821991284dd4e387ed58c"
+        },
+        {
+          "pdfPage": 44,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "math-p044-g000",
+            "math-p044-g001",
+            "math-p044-g002",
+            "math-p044-g003",
+            "math-p044-g004",
+            "math-p044-g005"
+          ],
+          "candidateFingerprintChecksum": "bd44f69fa16d736658ce417f6b6cfc1d7eedc045fb9a2538b42f0ae371dede1c"
+        },
+        {
+          "pdfPage": 45,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "math-p045-g000",
+            "math-p045-g001",
+            "math-p045-g002",
+            "math-p045-g003",
+            "math-p045-g004",
+            "math-p045-g005",
+            "math-p045-g006",
+            "math-p045-g007",
+            "math-p045-g008",
+            "math-p045-g009",
+            "math-p045-g010",
+            "math-p045-g011",
+            "math-p045-g012"
+          ],
+          "candidateFingerprintChecksum": "7fa3c1c93d7d638cc084daed53e82d9e7dc5917d9d5c51838c5e2f45ab85fd2e"
+        },
+        {
+          "pdfPage": 46,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "math-p046-g000",
+            "math-p046-g001",
+            "math-p046-g002",
+            "math-p046-g003",
+            "math-p046-g004",
+            "math-p046-g005"
+          ],
+          "candidateFingerprintChecksum": "234fb2e4c5f18ad91bb520bf47d49c798d523d43f88ea8580a1ad235be90c5ad"
+        },
+        {
+          "pdfPage": 47,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "math-p047-g000",
+            "math-p047-g001"
+          ],
+          "candidateFingerprintChecksum": "313e0133a725604ec487225e23ba92be89f2b1fa4b69316a0af7df0830859a76"
+        },
+        {
+          "pdfPage": 49,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "math-p049-g000",
+            "math-p049-g001",
+            "math-p049-g002",
+            "math-p049-g003",
+            "math-p049-g004",
+            "math-p049-g005",
+            "math-p049-g006",
+            "table-signal-p049-g000"
+          ],
+          "candidateFingerprintChecksum": "c5b688e7ce3046a5c8727922701a078c6fadaf5d99f2412acc122e79c32d7a29"
+        },
+        {
+          "pdfPage": 50,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "math-p050-g000",
+            "math-p050-g001",
+            "math-p050-g002",
+            "math-p050-g003",
+            "math-p050-g004",
+            "math-p050-g005",
+            "math-p050-g006",
+            "math-p050-g007",
+            "math-p050-g008",
+            "math-p050-g009",
+            "math-p050-g010",
+            "math-p050-g011"
+          ],
+          "candidateFingerprintChecksum": "9af1d9eda07f1d99b83cad128c7ce55ae9c8234d0a345920c4d8b9db5217dae8"
+        },
+        {
+          "pdfPage": 51,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "math-p051-g000",
+            "math-p051-g001",
+            "math-p051-g002",
+            "math-p051-g003",
+            "math-p051-g004",
+            "math-p051-g005",
+            "math-p051-g006",
+            "math-p051-g007",
+            "math-p051-g008"
+          ],
+          "candidateFingerprintChecksum": "b457421b22c2f4f7b4fdc08a3aa329c854af9d52a49776cbb0412ea73a21a2f5"
+        }
+      ]
+    },
+    {
+      "file": "sheet-052-066.jpg",
+      "sha256": "18dcceaced49b3a1b2305d76fb7e00e1c1e7a3d1470e0381bfb5d4a790b1217a",
+      "cells": [
+        {
+          "pdfPage": 52,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "math-p052-g000",
+            "math-p052-g001",
+            "math-p052-g002",
+            "math-p052-g003",
+            "math-p052-g004",
+            "math-p052-g005",
+            "table-signal-p052-g000"
+          ],
+          "candidateFingerprintChecksum": "34d76c3af12be980237d9b90036bde36ce4c69d6f3cae7fb9d79138ce7845a7e"
+        },
+        {
+          "pdfPage": 53,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "math-p053-g000"
+          ],
+          "candidateFingerprintChecksum": "608a88c67c96bb12bd3d04a40ace02cdac0e0534489fffe87c9243a4e6f22f44"
+        },
+        {
+          "pdfPage": 54,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "knowledge-signal-o0117",
+            "math-p054-g000",
+            "math-p054-g001",
+            "math-p054-g002",
+            "math-p054-g003",
+            "math-p054-g004"
+          ],
+          "candidateFingerprintChecksum": "499f9fa32b8e032492152eadc7772cf3fd7e002636132ced6845909cfb1da7f5"
+        },
+        {
+          "pdfPage": 55,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "math-p055-g000",
+            "math-p055-g001",
+            "math-p055-g002"
+          ],
+          "candidateFingerprintChecksum": "7458a4f2bba9c9c1a5504c6ed86ec30bfbe76f81ca5dc2de7e1921d76916e7ff"
+        },
+        {
+          "pdfPage": 56,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "math-p056-g000",
+            "math-p056-g001",
+            "math-p056-g002",
+            "math-p056-g003",
+            "math-p056-g004",
+            "math-p056-g005"
+          ],
+          "candidateFingerprintChecksum": "2a7a005acfa7608367f5625184126430121fba9665f2bac4436e6c58d71372e0"
+        },
+        {
+          "pdfPage": 57,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "math-p057-g000",
+            "math-p057-g001"
+          ],
+          "candidateFingerprintChecksum": "8675427e2de27a500a38cc6e4a1f0f94c072ae80ef6b6fe70ba8c92dedf2706c"
+        },
+        {
+          "pdfPage": 60,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "math-p060-g000",
+            "math-p060-g001"
+          ],
+          "candidateFingerprintChecksum": "ea8751fe913e2d5e92f7d08d048540aa5ef6107503f2c075f0d9b006808e3ed3"
+        },
+        {
+          "pdfPage": 61,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "math-p061-g000",
+            "math-p061-g001",
+            "math-p061-g002",
+            "math-p061-g003",
+            "math-p061-g004",
+            "math-p061-g005"
+          ],
+          "candidateFingerprintChecksum": "fc477c5a5f5d221e8bc544f2a0efd33cb0d0425091fb0d68f7e784018393b260"
+        },
+        {
+          "pdfPage": 62,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "math-p062-g000",
+            "math-p062-g001",
+            "math-p062-g002"
+          ],
+          "candidateFingerprintChecksum": "61b66525ff8075e8a175cf1757316effe602f73ea00b745861fc937b633f8e14"
+        },
+        {
+          "pdfPage": 63,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "math-p063-g000",
+            "math-p063-g001"
+          ],
+          "candidateFingerprintChecksum": "bfca6f67d592f8d73173c4b249811529010fe38a45da4c6fdf3571ef0990c101"
+        },
+        {
+          "pdfPage": 64,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "math-p064-g000",
+            "math-p064-g001",
+            "math-p064-g002",
+            "math-p064-g003",
+            "math-p064-g004"
+          ],
+          "candidateFingerprintChecksum": "e0461ac7eb5f9aa094ec986a6a67696c52eceadfa6e1f93f473ef950f624adde"
+        },
+        {
+          "pdfPage": 66,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "math-p066-g000"
+          ],
+          "candidateFingerprintChecksum": "a79ad08132970c4f0eb6bf6173d3b120316ef98ee193d73f966742ee9dae988b"
+        }
+      ]
+    },
+    {
+      "file": "sheet-067-079.jpg",
+      "sha256": "bd9a3ac320e7ff8e89710b6ddabe28cffa269223774a03938aa4ac98a039f147",
+      "cells": [
+        {
+          "pdfPage": 67,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "math-p067-g000"
+          ],
+          "candidateFingerprintChecksum": "d3531c891bf259cd3565010897222639296bc37128bd2c02ebc93176a56a5c78"
+        },
+        {
+          "pdfPage": 69,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "knowledge-signal-o0167",
+            "math-p069-g000",
+            "math-p069-g001",
+            "math-p069-g002",
+            "math-p069-g003",
+            "math-p069-g004"
+          ],
+          "candidateFingerprintChecksum": "93fffd09f6facf8ccb33a2ed9b6e5b207eeef5a1c15986bc5c1427e56b2d26af"
+        },
+        {
+          "pdfPage": 70,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "math-p070-g000",
+            "math-p070-g001",
+            "math-p070-g002",
+            "math-p070-g003",
+            "math-p070-g004",
+            "math-p070-g005",
+            "math-p070-g006",
+            "math-p070-g007",
+            "math-p070-g008",
+            "math-p070-g009"
+          ],
+          "candidateFingerprintChecksum": "a2b22883fd3c4b5f3ae1db5f31ac28f5fa543e93a0badecf51209f9365165075"
+        },
+        {
+          "pdfPage": 71,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "knowledge-signal-o0169"
+          ],
+          "candidateFingerprintChecksum": "31311c09922d0bb7168d6f7f74e85275f1fb282e0f16230d45c56d96b95024d2"
+        },
+        {
+          "pdfPage": 72,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "math-p072-g000",
+            "math-p072-g001",
+            "math-p072-g002"
+          ],
+          "candidateFingerprintChecksum": "05f9dd0036f4d481d08dc40dc0aba565461213bf16ee69df8e369c0b9773b646"
+        },
+        {
+          "pdfPage": 73,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "math-p073-g000"
+          ],
+          "candidateFingerprintChecksum": "d0efd1c5d0c51c84e98bf7049197e5d94791cb21dd10cd37f9ad2ab2a78df373"
+        },
+        {
+          "pdfPage": 74,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "math-p074-g000",
+            "math-p074-g001"
+          ],
+          "candidateFingerprintChecksum": "0f9e8d6e7cb667c390882e48e3fcacfcd5d3c20cdf1d644a1c6bdafee9feef23"
+        },
+        {
+          "pdfPage": 75,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "math-p075-g000",
+            "math-p075-g001",
+            "math-p075-g002",
+            "math-p075-g003",
+            "table-signal-p075-g000"
+          ],
+          "candidateFingerprintChecksum": "cfefe74be5e51a99b9701fdc4cdef0fdc260c05b3a14307e41de780de611f685"
+        },
+        {
+          "pdfPage": 76,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "math-p076-g000",
+            "math-p076-g001",
+            "math-p076-g002",
+            "math-p076-g003",
+            "math-p076-g004",
+            "math-p076-g005"
+          ],
+          "candidateFingerprintChecksum": "4f3e95eefee5961a10e24f57d69e301db97f5c3f992222028cbd122cc6dd4d8a"
+        },
+        {
+          "pdfPage": 77,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "math-p077-g000",
+            "math-p077-g001",
+            "math-p077-g002",
+            "math-p077-g003",
+            "math-p077-g004",
+            "math-p077-g005",
+            "math-p077-g006",
+            "table-signal-p077-g000"
+          ],
+          "candidateFingerprintChecksum": "36f2d9ca72eb19d4d8cf8370a677d648748debc6e80eab59cb865bff6330f394"
+        },
+        {
+          "pdfPage": 78,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "math-p078-g000",
+            "math-p078-g001",
+            "math-p078-g002",
+            "math-p078-g003",
+            "table-signal-p078-g000"
+          ],
+          "candidateFingerprintChecksum": "931a83a6f77ed8685ac669d021da41cf45a39fce67bc4292ca3ee247c2c44847"
+        },
+        {
+          "pdfPage": 79,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "math-p079-g000",
+            "math-p079-g001",
+            "math-p079-g002",
+            "math-p079-g003",
+            "math-p079-g004",
+            "math-p079-g005"
+          ],
+          "candidateFingerprintChecksum": "d1c4334b0d1724378320f78f7db97c479f7914ab59c15c667af14aef3595deb3"
+        }
+      ]
+    },
+    {
+      "file": "sheet-080-091.jpg",
+      "sha256": "4b34356641eaf74a77a2c8133a21c6703240e5a13931bdcec5a80a5a354281ef",
+      "cells": [
+        {
+          "pdfPage": 80,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "math-p080-g000",
+            "math-p080-g001",
+            "math-p080-g002",
+            "math-p080-g003",
+            "math-p080-g004",
+            "math-p080-g005",
+            "math-p080-g006",
+            "math-p080-g007"
+          ],
+          "candidateFingerprintChecksum": "829bf500e753e76b75cc975782d0b91552385679fb983177b8cf8010f769d66c"
+        },
+        {
+          "pdfPage": 81,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "math-p081-g000",
+            "math-p081-g001",
+            "math-p081-g002",
+            "math-p081-g003",
+            "math-p081-g004",
+            "math-p081-g005",
+            "math-p081-g006"
+          ],
+          "candidateFingerprintChecksum": "eb3ecb1439838e42dad4113ea0164f68a3f194eb9072d475b7d0a1664eb7992e"
+        },
+        {
+          "pdfPage": 82,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p082-g000",
+            "code-signal-p082-g001",
+            "code-signal-p082-g002",
+            "code-signal-p082-g003",
+            "code-signal-p082-g004",
+            "code-signal-p082-g005",
+            "code-signal-p082-g006",
+            "code-signal-p082-g007",
+            "code-signal-p082-g008",
+            "math-p082-g000",
+            "math-p082-g001"
+          ],
+          "candidateFingerprintChecksum": "8e75a959bf68a9334d687c1562ee1c8fb4cc79807491fae26e2e898383c52d7e"
+        },
+        {
+          "pdfPage": 83,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "math-p083-g000",
+            "math-p083-g001",
+            "math-p083-g002",
+            "math-p083-g003"
+          ],
+          "candidateFingerprintChecksum": "4d635c059f25f3f2245dadde204b9d96e33b0155dcad63002253a79dad6bb11f"
+        },
+        {
+          "pdfPage": 84,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "knowledge-signal-o0199",
+            "math-p084-g000",
+            "math-p084-g001"
+          ],
+          "candidateFingerprintChecksum": "d9694a300a8427b4af2f4f76eab37f2b954eb91bbddb8457ef61ba134492e82c"
+        },
+        {
+          "pdfPage": 85,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p085-g000"
+          ],
+          "candidateFingerprintChecksum": "41bf6f603b0cf2020ad79650e12dc76b8a00953082110600f63d11b92b2f13b5"
+        },
+        {
+          "pdfPage": 86,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p086-g000",
+            "code-signal-p086-g001",
+            "code-signal-p086-g002",
+            "code-signal-p086-g003",
+            "math-p086-g000"
+          ],
+          "candidateFingerprintChecksum": "80a067e32c3601ba02bba31719dd386919de5957d2672f99fcf941df19f2e04c"
+        },
+        {
+          "pdfPage": 87,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p087-g000",
+            "code-signal-p087-g001",
+            "code-signal-p087-g002",
+            "code-signal-p087-g003",
+            "code-signal-p087-g004"
+          ],
+          "candidateFingerprintChecksum": "0a04bc12a56ab6fb8831739ac444481c29d703967f3b021f8436f72d1af942c5"
+        },
+        {
+          "pdfPage": 88,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p088-g000",
+            "code-signal-p088-g001",
+            "code-signal-p088-g002",
+            "code-signal-p088-g003",
+            "math-p088-g000",
+            "math-p088-g001",
+            "math-p088-g002"
+          ],
+          "candidateFingerprintChecksum": "a042eb5077b08f80cf6d56be0e955cda0df15424b4689744d1b492194d1a76cc"
+        },
+        {
+          "pdfPage": 89,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "math-p089-g000",
+            "math-p089-g001",
+            "math-p089-g002"
+          ],
+          "candidateFingerprintChecksum": "f564705e226eeb99a64847e82daf18223dee5e9839b634a882b5dd1cc00b26d4"
+        },
+        {
+          "pdfPage": 90,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p090-g000",
+            "code-signal-p090-g001",
+            "code-signal-p090-g002",
+            "code-signal-p090-g003",
+            "code-signal-p090-g004",
+            "code-signal-p090-g005",
+            "code-signal-p090-g006",
+            "math-p090-g000"
+          ],
+          "candidateFingerprintChecksum": "e2905ebf700615e6f7513cc7b29981f6fd6f39c0d29308e72becfd4b59c7cb45"
+        },
+        {
+          "pdfPage": 91,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p091-g000",
+            "code-signal-p091-g001",
+            "code-signal-p091-g002",
+            "code-signal-p091-g003",
+            "code-signal-p091-g004",
+            "table-signal-p091-g000"
+          ],
+          "candidateFingerprintChecksum": "e797e4646afcac2ab8a7713d1d533b6db707583564c547fef25815f4b4c3ff34"
+        }
+      ]
+    },
+    {
+      "file": "sheet-092-105.jpg",
+      "sha256": "9f3e65ee0892dd0bbd290c72cb2d57ad81e0f0eba806e095ece9206d03abb446",
+      "cells": [
+        {
+          "pdfPage": 92,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p092-g000",
+            "table-signal-p092-g000"
+          ],
+          "candidateFingerprintChecksum": "432aec701706b469b20baae785fd7c8a9a64fd6e5ae873ed3732d62eff8d78b1"
+        },
+        {
+          "pdfPage": 94,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "knowledge-signal-o0221"
+          ],
+          "candidateFingerprintChecksum": "6f436216bac623a9c9b5dad84f302edcf6516911f4bca87ce159389dcfc3d5ad"
+        },
+        {
+          "pdfPage": 95,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p095-g000",
+            "code-signal-p095-g001",
+            "math-p095-g000",
+            "math-p095-g001",
+            "math-p095-g002",
+            "table-signal-p095-g000"
+          ],
+          "candidateFingerprintChecksum": "8f19559452f5c4599170488fda623e8672cd41cd0c644e1f76e155ee56ca0809"
+        },
+        {
+          "pdfPage": 96,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "math-p096-g000",
+            "math-p096-g001"
+          ],
+          "candidateFingerprintChecksum": "189e7ae0aa15e07fc36a96db24dd5fc478711f25080247c68f0cf852fb268fb7"
+        },
+        {
+          "pdfPage": 97,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "math-p097-g000",
+            "math-p097-g001"
+          ],
+          "candidateFingerprintChecksum": "4d1a3110fce5a4a884986c5d5bda9c237130d833c9b0ce03e407bbbd034e2172"
+        },
+        {
+          "pdfPage": 98,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "math-p098-g000"
+          ],
+          "candidateFingerprintChecksum": "750f707553639373058131a5bed02a95686fce572cac904aeefad6799fb7607c"
+        },
+        {
+          "pdfPage": 99,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "math-p099-g000",
+            "math-p099-g001",
+            "math-p099-g002",
+            "math-p099-g003",
+            "math-p099-g004",
+            "math-p099-g005"
+          ],
+          "candidateFingerprintChecksum": "e6e0455d73be61392c804c90247a8a4259ea271532d338a01e05ce9a352b9a95"
+        },
+        {
+          "pdfPage": 100,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p100-g000",
+            "code-signal-p100-g001",
+            "code-signal-p100-g002",
+            "code-signal-p100-g003",
+            "code-signal-p100-g004",
+            "code-signal-p100-g005",
+            "code-signal-p100-g006",
+            "code-signal-p100-g007"
+          ],
+          "candidateFingerprintChecksum": "5f8b263876311e20456ebd10a7dd1c73011faede2503d73afabe386596c7b9e6"
+        },
+        {
+          "pdfPage": 101,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p101-g000",
+            "code-signal-p101-g001",
+            "code-signal-p101-g002",
+            "code-signal-p101-g003",
+            "code-signal-p101-g004",
+            "code-signal-p101-g005"
+          ],
+          "candidateFingerprintChecksum": "cad7ced570d320d4d836fece75d07631266517a8a5afb672dd5590d3442b7b09"
+        },
+        {
+          "pdfPage": 102,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p102-g000",
+            "math-p102-g000"
+          ],
+          "candidateFingerprintChecksum": "2d1246432f359d59bd07bfe4156cd32bca1f2a5996cf59526b5acfed67131c51"
+        },
+        {
+          "pdfPage": 104,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "math-p104-g000",
+            "math-p104-g001"
+          ],
+          "candidateFingerprintChecksum": "6c5c9f206243f3a6e2cac2aad8a18182031eb3500625f27ba4968e032d93aedb"
+        },
+        {
+          "pdfPage": 105,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "math-p105-g000",
+            "math-p105-g001",
+            "math-p105-g002",
+            "math-p105-g003",
+            "math-p105-g004",
+            "math-p105-g005",
+            "math-p105-g006"
+          ],
+          "candidateFingerprintChecksum": "486372147d7b21b2727c9f2db5de3108f6b74213c3619d5cd6d91c546724515e"
+        }
+      ]
+    },
+    {
+      "file": "sheet-106-123.jpg",
+      "sha256": "965d00b32bd8f6f0c3342470cef32b388cc2181975cab69dac5ff5186e3042fc",
+      "cells": [
+        {
+          "pdfPage": 106,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "math-p106-g000",
+            "math-p106-g001",
+            "math-p106-g002",
+            "math-p106-g003",
+            "math-p106-g004",
+            "math-p106-g005",
+            "math-p106-g006",
+            "math-p106-g007"
+          ],
+          "candidateFingerprintChecksum": "4b2eac7f623df969d5d480f5ad1c0ac2d996678b1c271d39dd779d9dd212fbe9"
+        },
+        {
+          "pdfPage": 107,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "math-p107-g000",
+            "math-p107-g001",
+            "math-p107-g002",
+            "math-p107-g003",
+            "math-p107-g004",
+            "math-p107-g005",
+            "math-p107-g006",
+            "table-signal-p107-g000"
+          ],
+          "candidateFingerprintChecksum": "c039ab137d074b6e144bf6277ad9d7e103b1c3c155cbc34ae16a442e304b8b96"
+        },
+        {
+          "pdfPage": 108,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "math-p108-g000"
+          ],
+          "candidateFingerprintChecksum": "30ba15e26a0e6f6e46bcde561269d0deb87eb77e63a56dc40400eb422c5eac31"
+        },
+        {
+          "pdfPage": 109,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p109-g000",
+            "code-signal-p109-g001",
+            "code-signal-p109-g002",
+            "code-signal-p109-g003",
+            "code-signal-p109-g004",
+            "code-signal-p109-g005",
+            "code-signal-p109-g006",
+            "code-signal-p109-g007",
+            "code-signal-p109-g008",
+            "code-signal-p109-g009",
+            "math-p109-g000",
+            "math-p109-g001",
+            "math-p109-g002"
+          ],
+          "candidateFingerprintChecksum": "e1ccd624b6dc0698bca3c622b79fa2c2ca18525583bdade193999770c7eeca60"
+        },
+        {
+          "pdfPage": 110,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p110-g000",
+            "code-signal-p110-g001",
+            "code-signal-p110-g002",
+            "math-p110-g000",
+            "math-p110-g001",
+            "math-p110-g002",
+            "math-p110-g003",
+            "math-p110-g004"
+          ],
+          "candidateFingerprintChecksum": "45b3e49213807c51370c18a9f2a92479ae87b8b9f05ef53ab674ddf83a50f08f"
+        },
+        {
+          "pdfPage": 111,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "math-p111-g000"
+          ],
+          "candidateFingerprintChecksum": "1e42f1aa803de9cbae279f870b39709c6f06f5e0f2aad0ad461440bbe3ea5748"
+        },
+        {
+          "pdfPage": 114,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p114-g000",
+            "code-signal-p114-g001",
+            "code-signal-p114-g002"
+          ],
+          "candidateFingerprintChecksum": "5c588e4f0383831f5cbf04e41fa9ae48fbedce2af6f5c577ddb315f707de792b"
+        },
+        {
+          "pdfPage": 115,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p115-g000",
+            "code-signal-p115-g001",
+            "code-signal-p115-g002",
+            "math-p115-g000",
+            "math-p115-g001",
+            "math-p115-g002",
+            "math-p115-g003"
+          ],
+          "candidateFingerprintChecksum": "b56e966bc5986fa1d9032eeb516596c5b47c5480ae7cea86937a0e5b2e412cae"
+        },
+        {
+          "pdfPage": 116,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "math-p116-g000",
+            "math-p116-g001",
+            "math-p116-g002",
+            "math-p116-g003"
+          ],
+          "candidateFingerprintChecksum": "ce0396ed43b282bf2ad7d756ef0b06a8d848dc54d541cc3a718aa1850943bb21"
+        },
+        {
+          "pdfPage": 117,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p117-g000",
+            "code-signal-p117-g001",
+            "code-signal-p117-g002",
+            "code-signal-p117-g003",
+            "code-signal-p117-g004",
+            "code-signal-p117-g005",
+            "math-p117-g000",
+            "math-p117-g001"
+          ],
+          "candidateFingerprintChecksum": "6221d4b91065211d6f6c3a900a10f73b87ca5a98b0dd1253082e9881ed2c281c"
+        },
+        {
+          "pdfPage": 118,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p118-g000",
+            "code-signal-p118-g001",
+            "code-signal-p118-g002",
+            "math-p118-g000"
+          ],
+          "candidateFingerprintChecksum": "50ee467cec02541a2429ffb6844d83ac6afb3752cd70a80bb71013cb6e131760"
+        },
+        {
+          "pdfPage": 123,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p123-g000",
+            "code-signal-p123-g001",
+            "code-signal-p123-g002",
+            "code-signal-p123-g003",
+            "code-signal-p123-g004",
+            "code-signal-p123-g005",
+            "code-signal-p123-g006",
+            "code-signal-p123-g007",
+            "code-signal-p123-g008",
+            "code-signal-p123-g009",
+            "knowledge-signal-o0334"
+          ],
+          "candidateFingerprintChecksum": "8b9417a48815facf3c48e2de5436f079f616546ee135ebc047fcd063b601e67a"
+        }
+      ]
+    },
+    {
+      "file": "sheet-126-139.jpg",
+      "sha256": "bb644e581e639d754978fa7ec3e75d9437826e1b38193df43bb19a8323e3511f",
+      "cells": [
+        {
+          "pdfPage": 126,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p126-g000",
+            "code-signal-p126-g001",
+            "code-signal-p126-g002",
+            "code-signal-p126-g003"
+          ],
+          "candidateFingerprintChecksum": "257be0a46aa6574eb23d8a1efafc40cb27e3435a5bccba13cc7a943287035c33"
+        },
+        {
+          "pdfPage": 127,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p127-g000",
+            "code-signal-p127-g001",
+            "code-signal-p127-g002",
+            "code-signal-p127-g003"
+          ],
+          "candidateFingerprintChecksum": "4db12f32f4f29f37d63be76381031f8adc8c6c8fb086962527a136a1eb494f70"
+        },
+        {
+          "pdfPage": 129,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p129-g000",
+            "code-signal-p129-g001",
+            "table-signal-p129-g000"
+          ],
+          "candidateFingerprintChecksum": "5c76b0f916bcaad45ebab89be73b5b9d3f1e16e2d8b77985fb3cc12ea31087ba"
+        },
+        {
+          "pdfPage": 130,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p130-g000",
+            "math-p130-g000"
+          ],
+          "candidateFingerprintChecksum": "493e52d1879bc05fe35d85f6734f431c154c8867ad85a4cc25ddcc0df8c844fd"
+        },
+        {
+          "pdfPage": 131,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p131-g000",
+            "code-signal-p131-g001",
+            "code-signal-p131-g002",
+            "code-signal-p131-g003",
+            "code-signal-p131-g004",
+            "code-signal-p131-g005",
+            "code-signal-p131-g006",
+            "code-signal-p131-g007",
+            "code-signal-p131-g008",
+            "code-signal-p131-g009",
+            "code-signal-p131-g010",
+            "code-signal-p131-g011",
+            "code-signal-p131-g012",
+            "code-signal-p131-g013",
+            "code-signal-p131-g014",
+            "code-signal-p131-g015"
+          ],
+          "candidateFingerprintChecksum": "24420aaa295cbaafc35e1a5e53421742bde8de240d8f98077f6d7e6ea3ef6e1a"
+        },
+        {
+          "pdfPage": 132,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p132-g000",
+            "code-signal-p132-g001",
+            "code-signal-p132-g002",
+            "code-signal-p132-g003",
+            "code-signal-p132-g004",
+            "code-signal-p132-g005",
+            "code-signal-p132-g006",
+            "math-p132-g000"
+          ],
+          "candidateFingerprintChecksum": "526d851317c0a3dd97ad912294a5da5bae1a690ddd77e3a2b763fd747ccd1c98"
+        },
+        {
+          "pdfPage": 133,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p133-g000",
+            "code-signal-p133-g001",
+            "code-signal-p133-g002",
+            "code-signal-p133-g003",
+            "code-signal-p133-g004",
+            "code-signal-p133-g005",
+            "code-signal-p133-g006",
+            "code-signal-p133-g007",
+            "code-signal-p133-g008",
+            "code-signal-p133-g009",
+            "code-signal-p133-g010",
+            "code-signal-p133-g011",
+            "code-signal-p133-g012",
+            "code-signal-p133-g013",
+            "code-signal-p133-g014",
+            "code-signal-p133-g015",
+            "code-signal-p133-g016",
+            "code-signal-p133-g017"
+          ],
+          "candidateFingerprintChecksum": "efc9f458bf48368f6201ebbb719d7ea5750fd9ddb0662d50b7f445ecb59f8361"
+        },
+        {
+          "pdfPage": 134,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p134-g000",
+            "code-signal-p134-g001",
+            "code-signal-p134-g002",
+            "code-signal-p134-g003",
+            "code-signal-p134-g004",
+            "code-signal-p134-g005",
+            "table-signal-p134-g000"
+          ],
+          "candidateFingerprintChecksum": "0bfaa3601885b5b81aee295f17db4b3c1a35eb435285c278fb589b8f0a8f2838"
+        },
+        {
+          "pdfPage": 135,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p135-g000",
+            "math-p135-g000",
+            "math-p135-g001",
+            "math-p135-g002",
+            "math-p135-g003",
+            "math-p135-g004",
+            "math-p135-g005"
+          ],
+          "candidateFingerprintChecksum": "ecf3cdda84e5b7aeac35f8b67a522ff5139cdb9d72c7e67e8d1602203e986749"
+        },
+        {
+          "pdfPage": 136,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p136-g000",
+            "code-signal-p136-g001",
+            "code-signal-p136-g002",
+            "code-signal-p136-g003",
+            "code-signal-p136-g004",
+            "code-signal-p136-g005",
+            "code-signal-p136-g006",
+            "math-p136-g000"
+          ],
+          "candidateFingerprintChecksum": "6f9547a84c48bc7d944cdb1faca54bec68ee48ef683b5576e2d84b8f4c161327"
+        },
+        {
+          "pdfPage": 137,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p137-g000",
+            "math-p137-g000",
+            "math-p137-g001"
+          ],
+          "candidateFingerprintChecksum": "d8fea5f80e24330f124aec94c18d9c04ac92a29b66958bdf513f8f760c641ced"
+        },
+        {
+          "pdfPage": 139,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "math-p139-g000"
+          ],
+          "candidateFingerprintChecksum": "b49cd76ae39f608a2a40d45bb2d74b685f0fd04afe1763ff7a34c975e5359107"
+        }
+      ]
+    },
+    {
+      "file": "sheet-140-152.jpg",
+      "sha256": "ab7e27a0ff8a11a1be6151545fbb4d99735b5f5d585923f09b2e881f05c19f81",
+      "cells": [
+        {
+          "pdfPage": 140,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "math-p140-g000",
+            "math-p140-g001",
+            "math-p140-g002",
+            "math-p140-g003"
+          ],
+          "candidateFingerprintChecksum": "06a184f68218dca48f5660f76d69ff5efd907901d54b3ffddc6590dc3a17937e"
+        },
+        {
+          "pdfPage": 141,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p141-g000",
+            "code-signal-p141-g001",
+            "code-signal-p141-g002",
+            "code-signal-p141-g003",
+            "code-signal-p141-g004",
+            "code-signal-p141-g005",
+            "code-signal-p141-g006"
+          ],
+          "candidateFingerprintChecksum": "42ad5c9572c230c3af7307c2a43811cc22901b6986f63a593649654b044097e9"
+        },
+        {
+          "pdfPage": 142,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p142-g000",
+            "code-signal-p142-g001",
+            "code-signal-p142-g002",
+            "code-signal-p142-g003",
+            "code-signal-p142-g004",
+            "code-signal-p142-g005",
+            "math-p142-g000",
+            "math-p142-g001"
+          ],
+          "candidateFingerprintChecksum": "c0acb02ac2b96fb26ef11d219bd197fd39691b94b3e2e4afd0dcbcc4d9b9cba0"
+        },
+        {
+          "pdfPage": 143,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p143-g000",
+            "code-signal-p143-g001",
+            "code-signal-p143-g002",
+            "code-signal-p143-g003",
+            "code-signal-p143-g004",
+            "code-signal-p143-g005",
+            "math-p143-g000"
+          ],
+          "candidateFingerprintChecksum": "92f9c3abcef3c1829fe0b9201789be10055f8e618ee38fe6c3a1d7035fce638a"
+        },
+        {
+          "pdfPage": 144,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p144-g000",
+            "code-signal-p144-g001",
+            "code-signal-p144-g002",
+            "code-signal-p144-g003",
+            "code-signal-p144-g004"
+          ],
+          "candidateFingerprintChecksum": "218fcc237ef7f34c58f597be082849fa61dbcfd0d78b1dd4ca1ea7173694c9d2"
+        },
+        {
+          "pdfPage": 145,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p145-g000"
+          ],
+          "candidateFingerprintChecksum": "28071e07c59263f07dbdfea02b61d6e08c3f7e1ce30f3f22b15476776fc831ab"
+        },
+        {
+          "pdfPage": 146,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p146-g000",
+            "math-p146-g000",
+            "math-p146-g001",
+            "math-p146-g002"
+          ],
+          "candidateFingerprintChecksum": "be6925dc6c61ef31434a00b7b07f46fae7c27f51d491fd8b1ac3d3ef2053f495"
+        },
+        {
+          "pdfPage": 147,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p147-g000",
+            "code-signal-p147-g001",
+            "code-signal-p147-g002",
+            "code-signal-p147-g003",
+            "code-signal-p147-g004",
+            "code-signal-p147-g005",
+            "code-signal-p147-g006",
+            "code-signal-p147-g007",
+            "code-signal-p147-g008",
+            "code-signal-p147-g009",
+            "code-signal-p147-g010",
+            "code-signal-p147-g011",
+            "math-p147-g000"
+          ],
+          "candidateFingerprintChecksum": "e0788238ec8e7bb52285c1b0c4c820e403f8f33e0da44d94285f252bf452c9cd"
+        },
+        {
+          "pdfPage": 148,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p148-g000",
+            "code-signal-p148-g001",
+            "code-signal-p148-g002",
+            "code-signal-p148-g003",
+            "code-signal-p148-g004"
+          ],
+          "candidateFingerprintChecksum": "764d9371e57917adfc03fdf549ddf1ef2cfdd81acd2dceed0c002311acb92e9e"
+        },
+        {
+          "pdfPage": 149,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "math-p149-g000"
+          ],
+          "candidateFingerprintChecksum": "846877447220d92e1b017034fbeec3580f9db4b33d5b686001809b74d470926f"
+        },
+        {
+          "pdfPage": 151,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p151-g000",
+            "code-signal-p151-g001",
+            "code-signal-p151-g002",
+            "code-signal-p151-g003",
+            "table-signal-p151-g000"
+          ],
+          "candidateFingerprintChecksum": "2732bfb117965ce8eee90c360350bad7aeecea4c6dfb413415b828a988775809"
+        },
+        {
+          "pdfPage": 152,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "table-signal-p152-g000"
+          ],
+          "candidateFingerprintChecksum": "877a00ab9bca5e57493bcb47431f9940bc991a709d2ea61ee51393b0c8c9807e"
+        }
+      ]
+    },
+    {
+      "file": "sheet-153-166.jpg",
+      "sha256": "1e7c909ed33153a4951bc6ffd01c456e0a390e39b78fd8c4fb6cf621d888f3af",
+      "cells": [
+        {
+          "pdfPage": 153,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p153-g000"
+          ],
+          "candidateFingerprintChecksum": "ba07295394202c49ffdcf20ff301249b4ac03041da8d15663c69d0cf8a5e1423"
+        },
+        {
+          "pdfPage": 154,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p154-g000",
+            "code-signal-p154-g001",
+            "math-p154-g000"
+          ],
+          "candidateFingerprintChecksum": "25adbac9ccf0e753a857534df4e671557fbe7f38e141b001650f746ccb5ea44e"
+        },
+        {
+          "pdfPage": 157,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p157-g000",
+            "code-signal-p157-g001",
+            "code-signal-p157-g002",
+            "code-signal-p157-g003",
+            "code-signal-p157-g004",
+            "knowledge-signal-o0437"
+          ],
+          "candidateFingerprintChecksum": "a1ada73be6ac56eb61c0e71d0c595a5d29a01ab7663f8d5b3705334b41ba5806"
+        },
+        {
+          "pdfPage": 158,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p158-g000"
+          ],
+          "candidateFingerprintChecksum": "7322fc4a94d7411d8cb93ec0a2f7c0909c737de8e8548ad771ffeba545cd53f4"
+        },
+        {
+          "pdfPage": 159,
+          "row": 1,
+          "column": 0,
+          "candidateIds": [
+            "knowledge-signal-o0458"
+          ],
+          "candidateFingerprintChecksum": "825dffe849507179ec16e4eb087a41913ca2be943fee6054ac1f8ecd85cdc1ba"
+        },
+        {
+          "pdfPage": 160,
+          "row": 1,
+          "column": 1,
+          "candidateIds": [
+            "math-p160-g000"
+          ],
+          "candidateFingerprintChecksum": "960be3b88521f75d337a62ec47c6146848629c0ddc5718d7ef4104ae68bfbc85"
+        },
+        {
+          "pdfPage": 161,
+          "row": 1,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-appendix-a",
+            "code-signal-p161-g000",
+            "code-signal-p161-g001",
+            "code-signal-p161-g002",
+            "code-signal-p161-g003",
+            "code-signal-p161-g004",
+            "code-signal-p161-g005"
+          ],
+          "candidateFingerprintChecksum": "2efec37cda74c045bb65c8d6e81d7e0358277722ffdc2f16c7ef478be0fc6823"
+        },
+        {
+          "pdfPage": 162,
+          "row": 1,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p162-g000",
+            "code-signal-p162-g001",
+            "code-signal-p162-g002",
+            "code-signal-p162-g003",
+            "code-signal-p162-g004",
+            "code-signal-p162-g005",
+            "code-signal-p162-g006",
+            "code-signal-p162-g007",
+            "code-signal-p162-g008",
+            "code-signal-p162-g009",
+            "code-signal-p162-g010",
+            "code-signal-p162-g011",
+            "code-signal-p162-g012",
+            "code-signal-p162-g013",
+            "code-signal-p162-g014"
+          ],
+          "candidateFingerprintChecksum": "6d4d9a1188b18695cc5e54a496994c90df0455778bd6544d47bd6947b5b28698"
+        },
+        {
+          "pdfPage": 163,
+          "row": 2,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p163-g000",
+            "code-signal-p163-g001",
+            "code-signal-p163-g002",
+            "code-signal-p163-g003",
+            "code-signal-p163-g004",
+            "code-signal-p163-g005",
+            "code-signal-p163-g006",
+            "code-signal-p163-g007",
+            "code-signal-p163-g008",
+            "code-signal-p163-g009",
+            "code-signal-p163-g010",
+            "code-signal-p163-g011",
+            "code-signal-p163-g012",
+            "code-signal-p163-g013",
+            "code-signal-p163-g014"
+          ],
+          "candidateFingerprintChecksum": "da62760195e9e204fdc7efd69c33dca6f589e26d54498eb20de043ca6bdb3273"
+        },
+        {
+          "pdfPage": 164,
+          "row": 2,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p164-g000",
+            "code-signal-p164-g001",
+            "code-signal-p164-g002",
+            "code-signal-p164-g003",
+            "code-signal-p164-g004",
+            "code-signal-p164-g005",
+            "code-signal-p164-g006",
+            "code-signal-p164-g007",
+            "code-signal-p164-g008",
+            "code-signal-p164-g009",
+            "code-signal-p164-g010",
+            "code-signal-p164-g011",
+            "code-signal-p164-g012",
+            "code-signal-p164-g013",
+            "code-signal-p164-g014"
+          ],
+          "candidateFingerprintChecksum": "898bba04c020d32fa5fd6cf11e083d8a96b3ecd4b9133d7d8bf0d50499c82888"
+        },
+        {
+          "pdfPage": 165,
+          "row": 2,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p165-g000",
+            "code-signal-p165-g001",
+            "code-signal-p165-g002",
+            "code-signal-p165-g003",
+            "code-signal-p165-g004",
+            "code-signal-p165-g005",
+            "code-signal-p165-g006",
+            "code-signal-p165-g007",
+            "code-signal-p165-g008",
+            "code-signal-p165-g009",
+            "code-signal-p165-g010",
+            "code-signal-p165-g011",
+            "code-signal-p165-g012"
+          ],
+          "candidateFingerprintChecksum": "e41f51f5d782bc13b4cf6f415790dc08c642c8311aebfbf73d44b558f2451eff"
+        },
+        {
+          "pdfPage": 166,
+          "row": 2,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p166-g000",
+            "code-signal-p166-g001",
+            "code-signal-p166-g002",
+            "code-signal-p166-g003",
+            "code-signal-p166-g004",
+            "code-signal-p166-g005",
+            "code-signal-p166-g006",
+            "code-signal-p166-g007",
+            "code-signal-p166-g008",
+            "code-signal-p166-g009",
+            "code-signal-p166-g010",
+            "code-signal-p166-g011",
+            "code-signal-p166-g012",
+            "code-signal-p166-g013",
+            "code-signal-p166-g014"
+          ],
+          "candidateFingerprintChecksum": "b9793f7f466f934a6d2235adb79a3f67798fa7c097ad33b25600619b80da91c7"
+        }
+      ]
+    },
+    {
+      "file": "sheet-167-170.jpg",
+      "sha256": "625eaa3d47e932e24bdaa375a5365219f28e77b531b81e4dad4cc7e5061e32e3",
+      "cells": [
+        {
+          "pdfPage": 167,
+          "row": 0,
+          "column": 0,
+          "candidateIds": [
+            "code-signal-p167-g000",
+            "code-signal-p167-g001",
+            "code-signal-p167-g002",
+            "code-signal-p167-g003",
+            "code-signal-p167-g004",
+            "code-signal-p167-g005",
+            "code-signal-p167-g006",
+            "code-signal-p167-g007",
+            "code-signal-p167-g008",
+            "code-signal-p167-g009",
+            "code-signal-p167-g010",
+            "code-signal-p167-g011",
+            "code-signal-p167-g012",
+            "code-signal-p167-g013",
+            "code-signal-p167-g014"
+          ],
+          "candidateFingerprintChecksum": "1ce5e5ee23a92dd91ca7f13458f8e392295606e2ebd66e1896a41d0da719d2cb"
+        },
+        {
+          "pdfPage": 168,
+          "row": 0,
+          "column": 1,
+          "candidateIds": [
+            "code-signal-p168-g000",
+            "code-signal-p168-g001",
+            "code-signal-p168-g002",
+            "code-signal-p168-g003",
+            "code-signal-p168-g004",
+            "code-signal-p168-g005",
+            "code-signal-p168-g006",
+            "code-signal-p168-g007",
+            "code-signal-p168-g008",
+            "code-signal-p168-g009",
+            "code-signal-p168-g010",
+            "code-signal-p168-g011",
+            "code-signal-p168-g012",
+            "code-signal-p168-g013",
+            "code-signal-p168-g014",
+            "code-signal-p168-g015",
+            "code-signal-p168-g016"
+          ],
+          "candidateFingerprintChecksum": "96568de1f162b2f40512d189a1821ce5c9a75f986ea6edd297145c82729e455a"
+        },
+        {
+          "pdfPage": 169,
+          "row": 0,
+          "column": 2,
+          "candidateIds": [
+            "code-signal-p169-g000",
+            "code-signal-p169-g001",
+            "code-signal-p169-g002",
+            "code-signal-p169-g003",
+            "code-signal-p169-g004",
+            "code-signal-p169-g005",
+            "code-signal-p169-g006",
+            "code-signal-p169-g007",
+            "code-signal-p169-g008",
+            "code-signal-p169-g009",
+            "code-signal-p169-g010",
+            "code-signal-p169-g011",
+            "code-signal-p169-g012",
+            "code-signal-p169-g013"
+          ],
+          "candidateFingerprintChecksum": "a071a02d74c79040cb5f0d850264548b8ef6fe575e96f08d2344c2ae18121d07"
+        },
+        {
+          "pdfPage": 170,
+          "row": 0,
+          "column": 3,
+          "candidateIds": [
+            "code-signal-p170-g000",
+            "code-signal-p170-g001"
+          ],
+          "candidateFingerprintChecksum": "0a2a5d593d76f92c62d30d381ed908971074a4ee90a5cc6c1dfaa40ca4102ce2"
+        }
+      ]
+    }
+  ]
+}

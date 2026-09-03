@@ -20,7 +20,7 @@ Generated from the pinned source on 2026-09-03. This report is backed by the mac
 | Code block | 380 | 380 |
 | Knowledge check | 12 | 12 |
 
-Every independently detected candidate records its physical source page, exact positioned-span IDs, a SHA-256 checksum, reviewer, final status, and disposition in the JSON report. Formula review used all detected LatinModernMath components and strict KaTeX validation; table review checked repeated-column signals; code review checked compact code-like regions; question/check review began from outline title patterns. The Appendix was additionally checked at its first and last page and across every indentation depth.
+Every independently detected candidate is joined to the immutable checked review ledger, which records its source fingerprint, physical page, reviewer, rationale, disposition, and structured target where applicable. Normalization does not create or overwrite review decisions. The validator also checks the 13 ledger-linked contact sheets and their 148-page cell/checksum index.
 
 ## Prose preservation
 
@@ -37,16 +37,11 @@ The comparison projection applies Unicode NFC, whitespace tokenization, proven v
 - Indentation recovered from the 62.362 pt base and 1.79125 pt per space grid
 - Python AST is a mandatory validator gate
 
-## Rendered-source QA checklist
+## Rendered-source review evidence
 
-- [x] Physical page(s) 10: overview and chapter table
-- [x] Physical page(s) 21-35: Week 2 tables, formulas, and code
-- [x] Physical page(s) 36-73: Week 3 prose and formulas
-- [x] Physical page(s) 74: Week 4 entry and formulas
-- [x] Physical page(s) 109: attention code and negative infinity
-- [x] Physical page(s) 129-136: GPT code and tables
-- [x] Physical page(s) 150-160: Week 12 integration and final check
-- [x] Physical page(s) 161-170: Appendix code indentation and endpoints
+- Immutable decision ledger: `src/content/candidate-review-ledger.json`
+- Contact-sheet index: `reports/content-review-evidence/index.json`
+- 13 checked contact sheets covering all 148 candidate-bearing physical pages
 
 ## Explicit exclusions
 

@@ -186,17 +186,21 @@ Node/pnpm commands prepended the bundled Node and pnpm fallback directories to `
 - `scripts/content-corrections.mts`
 - `scripts/normalize-course.mts`
 - `scripts/source-audit.mts`
+- `scripts/candidate-review-ledger.mts`
 - `scripts/validate-content.mts`
 - `src/content/course.generated.json`
 - `src/content/page-manifest.generated.json`
 - `src/content/conversion-report.generated.json`
 - `src/content/source-audit.generated.json.gz`
+- `src/content/candidate-review-ledger.json`
 - `src/content/schema.ts`
 - `src/content/load-course.ts`
 - `tests/content/course-content.test.ts`
 - `tests/content/content-validator.test.ts`
 - `tests/content/course-schema.test.ts`
 - `reports/content-conversion.md`
+- `reports/content-review-evidence/index.json`
+- `reports/content-review-evidence/sheet-*.jpg` (13 checked contact sheets)
 - `public/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf`
 - `package.json`
 - `pnpm-lock.yaml`
@@ -250,3 +254,87 @@ The first Task 3 review correctly identified circular formula discovery, visual-
 - `pnpm test` — PASS, 5 files and 28 tests.
 - `pnpm validate:content` — PASS with 170 pages, 461 source-equal outline mappings/sections, 4,354 recursive blocks, 381/39/380/12 independent candidates, 10,762 assigned spans, 31,646 justified exclusions, 472 Appendix lines, and zero warnings.
 - `pnpm build` — PASS, all five vinext stages completed.
+
+## Fix round 2/5 — structural formulas and immutable review evidence
+
+The second scoped review found four remaining trust-boundary problems: the physical-page-12 vector was typed as a formula but flattened to text, paragraph grouping could be coordinated with report assignments, outline identity/hierarchy was not fully source-derived, and review outcomes were still being stamped during normalization rather than joined to an immutable decision record.
+
+### Genuine RED evidence
+
+- `pnpm exec vitest run tests/content/course-content.test.ts` — RED, 1 failed/7 passed. The physical-page-12 formula retained its five source lines in `accessibleText`, but its LaTeX was `\text{x= [ 100 3 8 ]}` rather than a three-row vector.
+- `pnpm exec vitest run tests/content/content-validator.test.ts` — RED, 8 failed/9 passed. Validation accepted: a valid three-line paragraph split at a real source-line boundary with the affected span assignments coordinated to the two new blocks; coordinated runtime/report/manifest section-ID changes; altered heading page/line evidence; a changed runtime title; a source section moved under the wrong runtime parent; flattened page-12 vector LaTeX with unchanged accessible text; a removed/changed review-ledger decision; and a tampered visual-review index.
+
+### Page-12 vector structure
+
+The source detector independently resolves physical page 12, lines 21-25, as candidate `math-p012-g000`. The source geometry contains the opening expression/bracket plus three numeric rows at distinct vertical coordinates (`100`, `3`, `8`) and the closing bracket. A reviewed formula correction now emits:
+
+`x = \begin{bmatrix} 100 \\ 3 \\ 8 \end{bmatrix}`
+
+The exact source accessibility text remains `𝑥= [\n100\n3\n8\n]`. The immutable ledger binds candidate fingerprint `55beca09e052a1ef0e884717d1d46e8bf72e05614f515427ae51073bbae2c9fa` to structured target `formula-math-p012-g000` and correction fingerprint `72b397530fed81fc4109883d7329d2567bcb46c4175033e8305fa96b12efbbbf`. Validation independently rechecks the five audited lines, three distinct row coordinates, correction fingerprint, exact accessibility text, `bmatrix` delimiters, row separators, and value order.
+
+### Independent paragraph and outline models
+
+Paragraph validation now begins with checked source-audit pages and independently:
+
+1. resolves heading lines and active source outline nodes;
+2. removes only independently derived headings, running furniture, checked structured regions, and Appendix code geometry;
+3. reconstructs atomic body lines and semantic joins from source spacing, indentation, full-line width, page-edge continuation, punctuation/list boundaries, and language-aware wrapping;
+4. derives list and concept-chain boundaries; and
+5. compares the resulting section-scoped paragraph token multiset directly with runtime blocks.
+
+Report span assignments are not an input to this gate. The coordinated mutation that split `body-00048` between source spans `p011-s00061` and `p011-s00062`/`p011-s00063`, then reassigned the latter spans to the new block, is rejected by the independently derived single paragraph boundary.
+
+For every one of the 461 outline nodes, validation now deterministically recomputes the stable section ID from source index/title, the runtime title from resolved audited heading lines, parent ID from `parentOutlineIndex`, navigation depth, source page, `headingPdfPage`, and `headingLineIndexes`. Runtime hierarchy, report mappings, and page-manifest section targets must all match that source model. Exclusion reasons for heading spans use these derived IDs and never a report-provided ID.
+
+### Immutable candidate-review ledger
+
+`src/content/candidate-review-ledger.json` is a checked, normalization-independent ledger with exactly 812 decisions. Each entry records:
+
+- deterministic fingerprint over category, candidate ID, physical page, audited line indexes, span IDs, source checksum, and detector;
+- explicit disposition and rationale;
+- reviewer identity without a fabricated timestamp;
+- structured target block when applicable; and
+- a canonical correction fingerprint when a formula/table/code correction is required.
+
+Normalization only reads and joins this ledger to the 812 independently detected candidates. It fails on missing/extra/fingerprint-mismatched decisions, category/page drift, invalid positive/negative disposition, missing structured target, or correction fingerprint mismatch. Thus removing a positive table/code/formula correction cannot silently recast its source candidate as a reviewed negative. The validator performs the same source-to-ledger join independently and compares emitted report evidence back to the ledger. The canonical parsed-ledger SHA-256 is `1bb5866569279cc14cae623119165eb514ab3e47089cc78a92143f2814f831e2`.
+
+### Checked visual-review evidence
+
+The rendered review is now auditable in `reports/content-review-evidence/`:
+
+- 13 checked JPEG contact sheets, retaining the category-colored source-geometry overlays;
+- 148 indexed physical-page cells, covering every page containing a detected candidate;
+- every cell's row/column, candidate IDs, and aggregate candidate-fingerprint checksum;
+- per-sheet SHA-256 checksums; and
+- an index binding the source SHA, canonical ledger SHA, reviewer, 4x3 sheet layout, legend, page count, and all cells.
+
+The checked sheets total 12,808,267 bytes. The validator reads every sheet, verifies its checksum, and proves exact page/candidate/fingerprint coverage against the immutable ledger. Post-compression spot inspection of sheets `002-013` (including the page-12 vertical vector) and `153-166` (including the Appendix transition and dense code pages) found the overlays and labels legible and unchanged.
+
+### Fix-round GREEN evidence
+
+- `pnpm exec vitest run tests/content/course-content.test.ts` — PASS, 8/8.
+- `pnpm exec vitest run tests/content/content-validator.test.ts` — PASS, 17/17.
+- Combined content-focused run — PASS, 25/25.
+- `pnpm normalize:content` — PASS with the unchanged 170/461/candidate/span/Appendix gates.
+- `pnpm validate:content` — PASS with 170 pages, 461 source-derived outline sections, 4,354 recursive blocks, 381/39/380/12 ledger-bound candidates, 10,762 assigned spans, 31,646 justified exclusions, 472 Appendix lines, and zero warnings.
+- `pnpm exec tsc --noEmit` — PASS.
+- `pnpm exec oxlint scripts src/content tests/content` — PASS.
+
+### Completion-boundary verification
+
+- Normalization determinism and immutability check — PASS. Hashes for the four normalized outputs, immutable ledger, visual index, and 13 contact sheets were captured; `pnpm normalize:content` changed none of the 19 artifacts.
+- Source-audit regeneration — PASS. Two fresh gzip writes from `tmp/pdf-extraction/raw.json` and the checked audit all reproduced SHA-256 `F26C0033C8CD4B7A6B47459281F1C6887037A84685312D2565DFC01FD4A23DFD`.
+- `pnpm test` — PASS, 5 files and 36 tests.
+- `pnpm validate:content` — PASS with the exact source/content counts above.
+- `pnpm exec tsc --noEmit` — PASS.
+- `pnpm exec oxlint scripts src/content tests/content` — PASS.
+- `pnpm build` — PASS, all five vinext stages completed.
+
+### Fix-round self-review
+
+- The validator's canonical paragraph groups begin with audited lines and source outline anchors; report assignments are only checked later as a separate accounting layer.
+- Section identity, title, parent, heading coordinates, manifest target, and heading-exclusion reasons all originate from source outline/audit evidence.
+- Candidate detection remains the same full 812-item universe. The immutable ledger cannot be emitted or changed by normalization, and every correction-backed positive decision is fingerprint-bound.
+- The visual evidence index is line-ending independent: it hashes canonical parsed ledger JSON, while the binary sheet checksums remain exact.
+- The page-12 formula preserves both dimensions of fidelity: exact extracted accessible text and explicit three-row vector semantics.
+- No review timestamps were invented. Machine detector descriptions remain in detection evidence; human review identity and decisions live separately in the immutable ledger.

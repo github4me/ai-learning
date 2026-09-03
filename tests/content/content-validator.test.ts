@@ -2,6 +2,8 @@
 import { createHash } from 'node:crypto';
 import {
   copyFileSync,
+  cpSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -21,7 +23,8 @@ import {
 const fixtures: string[] = [];
 
 afterEach(() => {
-  for (const fixture of fixtures.splice(0)) rmSync(fixture, { recursive: true });
+  for (const fixture of fixtures.splice(0))
+    rmSync(fixture, { recursive: true });
 });
 
 function validationFixture(options: { includeRaw?: boolean } = {}): string {
@@ -42,6 +45,36 @@ function validationFixture(options: { includeRaw?: boolean } = {}): string {
       // The clean-checkout audit artifact is intentionally absent in the RED run.
     }
   }
+  const reviewLedger = path.resolve('src/content/candidate-review-ledger.json');
+  if (existsSync(reviewLedger)) {
+    copyFileSync(
+      reviewLedger,
+      path.join(root, 'src/content/candidate-review-ledger.json'),
+    );
+  } else {
+    const report = JSON.parse(
+      readFileSync(
+        path.resolve('src/content/conversion-report.generated.json'),
+        'utf8',
+      ),
+    );
+    writeFileSync(
+      path.join(root, 'src/content/candidate-review-ledger.json'),
+      JSON.stringify(
+        {
+          sourceSha256: report.source.sha256,
+          decisions: report.candidateAudit,
+        },
+        null,
+        2,
+      ) + '\n',
+    );
+  }
+  const visualEvidence = path.resolve('reports/content-review-evidence');
+  if (existsSync(visualEvidence))
+    cpSync(visualEvidence, path.join(root, 'reports/content-review-evidence'), {
+      recursive: true,
+    });
   copyFileSync(
     path.resolve(
       'public/AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf',
@@ -221,8 +254,8 @@ describe('content validator', () => {
           section.blocks.map((block: any) => block.id),
         ),
       );
-      const moved = report.spanAccounting.assigned.filter((assignment: any) =>
-        assignment.blockId === removedBlockId,
+      const moved = report.spanAccounting.assigned.filter(
+        (assignment: any) => assignment.blockId === removedBlockId,
       );
       report.spanAccounting.assigned = report.spanAccounting.assigned.filter(
         (assignment: any) => assignment.blockId !== removedBlockId,
@@ -299,10 +332,176 @@ describe('content validator', () => {
     expect(() => validateGeneratedContent(root)).toThrow(/semantic paragraph/i);
   });
 
+  it('rejects a source-line paragraph split even when report spans are reassigned', () => {
+    const root = validationFixture();
+    const firstLine =
+      '为什么必须做representation？因为现实概念没有统一的机器运算接口。“离CBD 很近”“房屋较新”';
+    const secondAndThirdLines =
+      '“用户很喜欢”都需要先变成可比较、可组合的数值。Representation 决定模型能够看见什么：如果输入里从未表达“距离”，再复杂的模型也无法直接利用这个信息。';
+    const newBlockId = 'body-00048-coordinated-split';
+    mutateJson(root, 'course.generated.json', (course) => {
+      const section = flattenSections(course.units[0]).find((item) =>
+        item.blocks.some((block: any) => block.id === 'body-00048'),
+      );
+      const index = section.blocks.findIndex(
+        (block: any) => block.id === 'body-00048',
+      );
+      const original = section.blocks[index];
+      original.children = [{ type: 'text', value: firstLine }];
+      section.blocks.splice(index + 1, 0, {
+        ...original,
+        id: newBlockId,
+        children: [{ type: 'text', value: secondAndThirdLines }],
+      });
+    });
+    mutateJson(root, 'conversion-report.generated.json', (report) => {
+      for (const assignment of report.spanAccounting.assigned) {
+        if (
+          assignment.blockId === 'body-00048' &&
+          ['p011-s00062', 'p011-s00063'].includes(assignment.spanId)
+        ) {
+          assignment.blockId = newBlockId;
+        }
+      }
+    });
+
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /independent semantic paragraph/i,
+    );
+  });
+
+  it('rejects coordinated source-derived outline identity mutations', () => {
+    const root = validationFixture();
+    mutateJson(root, 'course.generated.json', (course) => {
+      course.units[0].id = 'coordinated-week-one-id';
+    });
+    mutateJson(root, 'conversion-report.generated.json', (report) => {
+      report.outlineMap[1].sectionId = 'coordinated-week-one-id';
+    });
+    mutateJson(root, 'page-manifest.generated.json', (manifest) => {
+      for (const entry of manifest) {
+        if (entry.sectionId === 'o0001-week-1')
+          entry.sectionId = 'coordinated-week-one-id';
+      }
+    });
+
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /source-derived section id/i,
+    );
+  });
+
+  it('rejects altered heading page and line evidence', () => {
+    const root = validationFixture();
+    mutateJson(root, 'conversion-report.generated.json', (report) => {
+      report.outlineMap[1].headingPdfPage = 99;
+      report.outlineMap[1].headingLineIndexes = [99];
+    });
+
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /source-derived heading/i,
+    );
+  });
+
+  it('rejects a runtime outline title changed independently of its source', () => {
+    const root = validationFixture();
+    mutateJson(root, 'course.generated.json', (course) => {
+      course.units[0].title = 'Fabricated Week 1 title';
+    });
+
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /source-derived title/i,
+    );
+  });
+
+  it('rejects a runtime section moved under the wrong source parent', () => {
+    const root = validationFixture();
+    mutateJson(root, 'course.generated.json', (course) => {
+      const week = course.units[0];
+      const moved = week.children.shift();
+      week.children[0].children.push(moved);
+    });
+
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /source-derived parent/i,
+    );
+  });
+
+  it('rejects a flattened multi-row formula despite preserved accessible text', () => {
+    const root = validationFixture();
+    mutateJson(root, 'course.generated.json', (course) => {
+      const formula = [course.overview, ...course.units]
+        .flatMap(flattenSections)
+        .flatMap((section) => section.blocks)
+        .flatMap(flattenBlocks)
+        .find(
+          (block) =>
+            block.type === 'formula' &&
+            block.source.pdfPage === 12 &&
+            block.accessibleText === '𝑥= [\n100\n3\n8\n]',
+        );
+      formula.latex = '\\text{x = [100 3 8]}';
+    });
+
+    expect(() => validateGeneratedContent(root)).toThrow(/multi-row formula/i);
+  });
+
+  it('rejects a missing or changed immutable candidate review decision', () => {
+    const missingRoot = validationFixture();
+    mutateJson(missingRoot, 'candidate-review-ledger.json', (ledger) => {
+      ledger.decisions.splice(0, 1);
+    });
+    expect(() => validateGeneratedContent(missingRoot)).toThrow(
+      /review ledger/i,
+    );
+
+    const changedRoot = validationFixture();
+    mutateJson(changedRoot, 'candidate-review-ledger.json', (ledger) => {
+      const positive = ledger.decisions.find((decision: any) =>
+        ['table', 'code', 'knowledgeCheck'].includes(decision.disposition),
+      );
+      positive.disposition =
+        'not' +
+        positive.disposition[0].toUpperCase() +
+        positive.disposition.slice(1);
+      delete positive.blockId;
+      delete positive.targetBlockId;
+    });
+    expect(() => validateGeneratedContent(changedRoot)).toThrow(
+      /review ledger/i,
+    );
+  });
+
+  it('rejects visual-review evidence whose checked index is changed', () => {
+    const root = validationFixture();
+    const indexPath = path.join(
+      root,
+      'reports/content-review-evidence/index.json',
+    );
+    if (!existsSync(indexPath)) {
+      mkdirSync(path.dirname(indexPath), { recursive: true });
+      writeFileSync(
+        indexPath,
+        JSON.stringify({ sourceSha256: 'placeholder', sheets: [] }, null, 2) +
+          '\n',
+      );
+    }
+    mutateJson(
+      root,
+      '../../reports/content-review-evidence/index.json',
+      (index) => {
+        index.sourceSha256 = 'tampered';
+      },
+    );
+
+    expect(() => validateGeneratedContent(root)).toThrow(
+      /visual review evidence/i,
+    );
+  });
+
   it('rejects malformed Appendix syntax without invoking a host-specific Python', () => {
-    expect(() =>
-      assertValidPythonSyntax('def broken(:\n    pass\n'),
-    ).toThrow(/Python syntax/i);
+    expect(() => assertValidPythonSyntax('def broken(:\n    pass\n')).toThrow(
+      /Python syntax/i,
+    );
 
     const root = validationFixture();
     mutateJson(root, 'course.generated.json', (course) => {

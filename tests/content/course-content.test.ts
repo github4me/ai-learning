@@ -105,7 +105,13 @@ describe('complete generated course content', () => {
     );
 
     expect(vectorFormulas).toHaveLength(1);
-    expect(vectorFormulas[0]).toMatchObject({ type: 'formula' });
+    expect(vectorFormulas[0]).toMatchObject({
+      type: 'formula',
+      accessibleText: '𝑥= [\n100\n3\n8\n]',
+    });
+    expect(
+      vectorFormulas[0]?.type === 'formula' && vectorFormulas[0].latex,
+    ).toBe('x = \\begin{bmatrix} 100 \\\\ 3 \\\\ 8 \\end{bmatrix}');
   });
 
   it('joins wrapped Chinese and mixed-language prose into semantic paragraphs', () => {

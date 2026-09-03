@@ -25,6 +25,14 @@ import {
   type LineRangeCorrection,
 } from './content-corrections.mts';
 import {
+  candidateFingerprint,
+  correctionFingerprint,
+  decisionMap,
+  readCandidateReviewLedger,
+  type CandidateCategory,
+  type CandidateReviewDecision,
+} from './candidate-review-ledger.mts';
+import {
   detectCodeCandidates,
   detectFormulaCandidates,
   detectKnowledgeCandidates,
@@ -41,6 +49,9 @@ const SOURCE_PATH =
   'C:\\Users\\Chao\\Desktop\\AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf';
 const SOURCE_AUDIT_PATH = path.resolve(
   'src/content/source-audit.generated.json.gz',
+);
+const REVIEW_LEDGER_PATH = path.resolve(
+  'src/content/candidate-review-ledger.json',
 );
 const PUBLIC_FILENAME =
   'AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf';
@@ -126,6 +137,7 @@ type CandidateAudit = {
 };
 
 const raw = readSourceAudit(SOURCE_AUDIT_PATH) as RawExtraction;
+const reviewLedger = readCandidateReviewLedger(REVIEW_LEDGER_PATH);
 
 function fail(message: string): never {
   throw new Error(message);
@@ -467,40 +479,118 @@ function overlappingCorrection<T extends LineRangeCorrection>(
   );
 }
 
+const reviewByCandidate = decisionMap(reviewLedger);
+const allDetectedCandidates: [CandidateCategory, DetectedCandidate][] = [
+  ...formulaSignals.map(
+    (signal) => ['formula', signal] as [CandidateCategory, DetectedCandidate],
+  ),
+  ...tableSignals.map(
+    (signal) => ['table', signal] as [CandidateCategory, DetectedCandidate],
+  ),
+  ...codeSignals.map(
+    (signal) => ['code', signal] as [CandidateCategory, DetectedCandidate],
+  ),
+  ...knowledgeSignals.map(
+    (signal) =>
+      ['knowledgeCheck', signal] as [CandidateCategory, DetectedCandidate],
+  ),
+];
+if (
+  reviewLedger.version !== 1 ||
+  reviewLedger.sourceSha256 !== EXPECTED_SHA256 ||
+  reviewLedger.candidateCount !== allDetectedCandidates.length ||
+  reviewLedger.decisions.length !== allDetectedCandidates.length ||
+  reviewByCandidate.size !== allDetectedCandidates.length
+) {
+  fail('Immutable candidate review ledger does not cover the source universe');
+}
+
+function reviewedDecision(
+  category: CandidateCategory,
+  signal: DetectedCandidate,
+): CandidateReviewDecision {
+  const decision =
+    reviewByCandidate.get(signal.candidateId) ??
+    fail(`Candidate review ledger is missing ${signal.candidateId}`);
+  if (
+    decision.category !== category ||
+    decision.pdfPage !== signal.pdfPage ||
+    decision.candidateFingerprint !== candidateFingerprint(category, signal) ||
+    !decision.reviewer.trim() ||
+    !decision.rationale.trim()
+  ) {
+    fail(`Candidate review ledger mismatch for ${signal.candidateId}`);
+  }
+  return decision;
+}
+
+function requireCorrectionDecision(
+  decision: CandidateReviewDecision,
+  category: 'formula' | 'table' | 'code',
+  correction: LineRangeCorrection | undefined,
+): void {
+  if (decision.correctionFingerprint) {
+    if (
+      !correction ||
+      decision.correctionFingerprint !==
+        correctionFingerprint(category, correction)
+    ) {
+      fail(
+        `Candidate review ledger correction mismatch for ${decision.candidateId}`,
+      );
+    }
+  } else if (correction) {
+    fail(
+      `Candidate review ledger has no correction fingerprint for ${decision.candidateId}`,
+    );
+  }
+}
+
 for (const signal of formulaSignals) {
   const correction = overlappingCorrection(signal, FORMULA_CORRECTIONS);
-  const blockId = correction?.candidateId ?? `formula-${signal.candidateId}`;
-  if (signal.display && !correction) {
+  const decision = reviewedDecision('formula', signal);
+  requireCorrectionDecision(decision, 'formula', correction);
+  const structured = decision.disposition === 'structuredFormula';
+  if (
+    !['structuredFormula', 'inlineMath'].includes(decision.disposition) ||
+    structured !== signal.display ||
+    (structured && !decision.targetBlockId) ||
+    (!structured && decision.targetBlockId)
+  ) {
+    fail(`Invalid reviewed formula disposition for ${signal.candidateId}`);
+  }
+  const blockId = decision.targetBlockId;
+  if (structured && !correction) {
     for (const lineIndex of signal.lineIndexes) {
       const key = `${signal.pdfPage}:${lineIndex}`;
       const existing = claimedSpecialLines.get(key);
       if (existing) fail(`${blockId} overlaps ${existing} at ${key}`);
-      claimedSpecialLines.set(key, blockId);
+      claimedSpecialLines.set(key, blockId!);
     }
-    autoFormulaByFirstLine.set(
-      `${signal.pdfPage}:${signal.lineIndexes[0]}`,
-      { ...signal, blockId },
-    );
+    autoFormulaByFirstLine.set(`${signal.pdfPage}:${signal.lineIndexes[0]}`, {
+      ...signal,
+      blockId: blockId!,
+    });
     specialCandidates.push({
-      candidateId: blockId,
+      candidateId: blockId!,
       type: 'formula',
       pdfPages: [signal.pdfPage],
       sourceSpanIds: signal.sourceSpanIds,
       sourceChecksum: signal.sourceChecksum,
-      reviewer: 'Codex complete math-signal rendered-page review 2026-09-03',
+      reviewer: decision.reviewer,
       status: 'reviewed',
       disposition: 'Converted to a reviewed formula block',
-      blockId,
+      blockId: blockId!,
     });
   }
   candidateAudit.push({
     ...signal,
     category: 'formula',
-    reviewer: 'Codex complete math-signal rendered-page review 2026-09-03',
+    reviewer: decision.reviewer,
     status: 'reviewed',
-    disposition: signal.display ? 'structuredFormula' : 'inlineMath',
-    rationale: signal.rationale,
-    ...(signal.display ? { blockId } : {}),
+    disposition: decision.disposition,
+    rationale: decision.rationale,
+    ...(decision.targetBlockId ? { blockId: decision.targetBlockId } : {}),
   });
 }
 
@@ -764,9 +854,7 @@ for (const page of raw.pages) {
       value,
     );
     claimSpans(lineSpans, blockId);
-    blockSourceLines.set(blockId, [
-      { pdfPage: page.pdfPage, lineIndex, line },
-    ]);
+    blockSourceLines.set(blockId, [{ pdfPage: page.pdfPage, lineIndex, line }]);
   }
 }
 
@@ -783,7 +871,10 @@ function redirectAssignments(oldIds: Set<string>, newId: string): void {
   }
 }
 
-function shouldJoinParagraphs(left: ContentBlock, right: ContentBlock): boolean {
+function shouldJoinParagraphs(
+  left: ContentBlock,
+  right: ContentBlock,
+): boolean {
   const leftText = paragraphValue(left);
   const rightText = paragraphValue(right);
   if (!leftText || !rightText) return false;
@@ -804,7 +895,10 @@ function shouldJoinParagraphs(left: ContentBlock, right: ContentBlock): boolean 
     next.pdfPage === previous.pdfPage + 1 &&
     previous.line.bbox[1] >= 740 &&
     next.line.bbox[1] <= 100;
-  return continuesArrow || (bodyHeight && aligned && fullLine && (samePage || nextPage));
+  return (
+    continuesArrow ||
+    (bodyHeight && aligned && fullLine && (samePage || nextPage))
+  );
 }
 
 function reconstructSemanticBlocks(section: SectionNode): void {
@@ -827,7 +921,7 @@ function reconstructSemanticBlocks(section: SectionNode): void {
   }
 
   const withLists: ContentBlock[] = [];
-  for (let index = 0; index < merged.length; ) {
+  for (let index = 0; index < merged.length;) {
     const value = paragraphValue(merged[index]);
     const unordered = value?.match(/^[・•]\s*(.+)$/u);
     const ordered = value?.match(/^\d+[.)]\s+(.+)$/u);
@@ -839,7 +933,8 @@ function reconstructSemanticBlocks(section: SectionNode): void {
     const items: string[] = [];
     const oldIds = new Set<string>();
     const groupBlocks: ContentBlock[] = [];
-    const sourceLines: { pdfPage: number; lineIndex: number; line: RawLine }[] = [];
+    const sourceLines: { pdfPage: number; lineIndex: number; line: RawLine }[] =
+      [];
     const isOrdered = Boolean(ordered);
     while (index < merged.length) {
       const itemValue = paragraphValue(merged[index]);
@@ -932,6 +1027,10 @@ for (const outlineIndex of KNOWLEDGE_CHECK_OUTLINE_INDEXES) {
     fail(`Knowledge check ${outlineIndex} has no prompt`);
   const oldBlockIds = new Set(promptBlocks.map((block) => block.id));
   const candidateId = `knowledge-check-o${outlineIndex.toString().padStart(4, '0')}`;
+  const knowledgeReview =
+    reviewByCandidate.get(
+      `knowledge-signal-o${outlineIndex.toString().padStart(4, '0')}`,
+    ) ?? fail(`Missing knowledge-check review for outline ${outlineIndex}`);
   section.blocks = [
     {
       type: 'knowledgeCheck',
@@ -963,48 +1062,60 @@ for (const outlineIndex of KNOWLEDGE_CHECK_OUTLINE_INDEXES) {
     ],
     sourceSpanIds,
     sourceChecksum: spanChecksum(sourceSpans),
-    reviewer: 'Codex source-span and rendered-page review 2026-09-03',
+    reviewer: knowledgeReview.reviewer,
     status: 'reviewed',
-    disposition: 'Prompt promoted while structured source blocks remain in order',
+    disposition:
+      'Prompt promoted while structured source blocks remain in order',
     blockId: candidateId,
   });
 }
 
 for (const signal of tableSignals) {
   const correction = overlappingCorrection(signal, TABLE_CORRECTIONS);
+  const decision = reviewedDecision('table', signal);
+  requireCorrectionDecision(decision, 'table', correction);
+  if (
+    (decision.disposition === 'table') !== Boolean(correction) ||
+    (correction && decision.targetBlockId !== correction.candidateId) ||
+    (!correction && decision.targetBlockId) ||
+    !['table', 'notTable'].includes(decision.disposition)
+  ) {
+    fail(`Invalid reviewed table disposition for ${signal.candidateId}`);
+  }
   candidateAudit.push({
     ...signal,
     category: 'table',
-    reviewer: 'Codex complete table-signal rendered-page review 2026-09-03',
+    reviewer: decision.reviewer,
     status: 'reviewed',
-    disposition: correction ? 'table' : 'notTable',
-    rationale: correction
-      ? 'Repeated columns are a source table and cell order was reviewed'
-      : 'Repeated anchors are compact aligned prose/code rather than a row-and-column table',
-    ...(correction ? { blockId: correction.candidateId } : {}),
+    disposition: decision.disposition,
+    rationale: decision.rationale,
+    ...(decision.targetBlockId ? { blockId: decision.targetBlockId } : {}),
   });
 }
 
 for (const signal of codeSignals) {
   const correction = overlappingCorrection(signal, CODE_CORRECTIONS);
   const appendixAggregate = signal.candidateId === 'code-signal-appendix-a';
-  const blockId = appendixAggregate
+  const decision = reviewedDecision('code', signal);
+  requireCorrectionDecision(decision, 'code', correction);
+  const expectedBlockId = appendixAggregate
     ? APPENDIX_CORRECTION.candidateId
     : correction?.candidateId;
+  if (
+    (decision.disposition === 'code') !== Boolean(expectedBlockId) ||
+    decision.targetBlockId !== expectedBlockId ||
+    !['code', 'notCode'].includes(decision.disposition)
+  ) {
+    fail(`Invalid reviewed code disposition for ${signal.candidateId}`);
+  }
   candidateAudit.push({
     ...signal,
     category: 'code',
-    reviewer: 'Codex complete compact-code-signal rendered-page review 2026-09-03',
+    reviewer: decision.reviewer,
     status: 'reviewed',
-    disposition: blockId ? 'code' : 'notCode',
-    rationale: blockId
-      ? appendixAggregate
-        ? 'The contiguous Appendix region is recovered as one checked Python program'
-        : 'The compact region is executable source code preserved with indentation'
-      : signal.pdfPage >= 161
-        ? 'Individual Appendix line signal is covered by the reviewed aggregate program'
-        : 'Compact typography is an equation, value listing, or process notation rather than executable code',
-    ...(blockId ? { blockId } : {}),
+    disposition: decision.disposition,
+    rationale: decision.rationale,
+    ...(decision.targetBlockId ? { blockId: decision.targetBlockId } : {}),
   });
 }
 
@@ -1016,17 +1127,35 @@ for (const signal of knowledgeSignals) {
   const blockId = isKnowledgeCheck
     ? `knowledge-check-o${String(outlineIndex).padStart(4, '0')}`
     : undefined;
+  const decision = reviewedDecision('knowledgeCheck', signal);
+  if (
+    (decision.disposition === 'knowledgeCheck') !== isKnowledgeCheck ||
+    decision.targetBlockId !== blockId ||
+    !['knowledgeCheck', 'notKnowledgeCheck'].includes(decision.disposition) ||
+    decision.correctionFingerprint
+  ) {
+    fail(
+      `Invalid reviewed knowledge-check disposition for ${signal.candidateId}`,
+    );
+  }
   candidateAudit.push({
     ...signal,
     category: 'knowledgeCheck',
-    reviewer: 'Codex complete outline-question review 2026-09-03',
+    reviewer: decision.reviewer,
     status: 'reviewed',
-    disposition: isKnowledgeCheck ? 'knowledgeCheck' : 'notKnowledgeCheck',
-    rationale: isKnowledgeCheck
-      ? 'The outline explicitly identifies a learner understanding test'
-      : 'The outline is an explanatory question heading, not a learner test prompt',
-    ...(blockId ? { blockId } : {}),
+    disposition: decision.disposition,
+    rationale: decision.rationale,
+    ...(decision.targetBlockId ? { blockId: decision.targetBlockId } : {}),
   });
+}
+
+for (const candidate of specialCandidates) {
+  const matchingReviews = reviewLedger.decisions.filter(
+    (decision) => decision.targetBlockId === candidate.blockId,
+  );
+  if (matchingReviews.length === 0)
+    fail(`Structured block ${candidate.blockId} has no review-ledger decision`);
+  candidate.reviewer = matchingReviews[0].reviewer;
 }
 
 for (const outline of raw.outline) {
@@ -1225,9 +1354,7 @@ function sourceProjection(startPage: number, endPage: number): string {
   return raw.pages
     .filter((page) => page.pdfPage >= startPage && page.pdfPage <= endPage)
     .flatMap((page) =>
-      page.lines.filter(
-        (line) => line.bbox[1] >= 50 && line.bbox[1] <= 790,
-      ),
+      page.lines.filter((line) => line.bbox[1] >= 50 && line.bbox[1] <= 790),
     )
     .map((line) => line.lineRaw)
     .join('\n');
@@ -1248,11 +1375,21 @@ function proseEvidence(startPage: number, endPage: number, root: SectionNode) {
 const week2Evidence = proseEvidence(21, 35, roots[2]);
 const week3Evidence = proseEvidence(36, 73, roots[3]);
 if (!week2Evidence.matches || !week3Evidence.matches) {
-  const debugMismatch = (startPage: number, endPage: number, root: SectionNode) => {
+  const debugMismatch = (
+    startPage: number,
+    endPage: number,
+    root: SectionNode,
+  ) => {
     const source = tokenSequence(sourceProjection(startPage, endPage));
     const output = tokenSequence(sectionProjection(root));
-    const index = source.findIndex((token, position) => token !== output[position]);
-    return { index, source: source.slice(Math.max(0, index - 5), index + 6), output: output.slice(Math.max(0, index - 5), index + 6) };
+    const index = source.findIndex(
+      (token, position) => token !== output[position],
+    );
+    return {
+      index,
+      source: source.slice(Math.max(0, index - 5), index + 6),
+      output: output.slice(Math.max(0, index - 5), index + 6),
+    };
   };
   fail(
     `Week 2/Week 3 normalized token sequences differ: ${JSON.stringify({ week2: debugMismatch(21, 35, roots[2]), week3: debugMismatch(36, 73, roots[3]) })}`,
@@ -1265,9 +1402,24 @@ const discovered = {
   codeBlocks: codeSignals.length,
   knowledgeChecks: knowledgeSignals.length,
 };
+const reviewed = {
+  formulas: reviewLedger.decisions.filter(
+    (decision) => decision.category === 'formula',
+  ).length,
+  tables: reviewLedger.decisions.filter(
+    (decision) => decision.category === 'table',
+  ).length,
+  codeBlocks: reviewLedger.decisions.filter(
+    (decision) => decision.category === 'code',
+  ).length,
+  knowledgeChecks: reviewLedger.decisions.filter(
+    (decision) => decision.category === 'knowledgeCheck',
+  ).length,
+};
 const typedBlocks = {
-  formulas: specialCandidates.filter((candidate) => candidate.type === 'formula')
-    .length,
+  formulas: specialCandidates.filter(
+    (candidate) => candidate.type === 'formula',
+  ).length,
   tables: specialCandidates.filter((candidate) => candidate.type === 'table')
     .length,
   codeBlocks: specialCandidates.filter((candidate) => candidate.type === 'code')
@@ -1288,7 +1440,7 @@ const report = {
     coveragePercent: 100,
   },
   discovered,
-  reviewed: { ...discovered },
+  reviewed,
   typedBlocks,
   detectionSignals: {
     mathFontVisualRows: raw.pages.reduce((count, page) => {
@@ -1331,32 +1483,12 @@ const report = {
     sourceChecksum: appendixChecksum,
     astValidatedBy: 'scripts/validate-content.mts using @lezer/python',
   },
-  visualQa: [
-    { pages: '10', focus: 'overview and chapter table', status: 'reviewed' },
-    {
-      pages: '21-35',
-      focus: 'Week 2 tables, formulas, and code',
-      status: 'reviewed',
-    },
-    { pages: '36-73', focus: 'Week 3 prose and formulas', status: 'reviewed' },
-    { pages: '74', focus: 'Week 4 entry and formulas', status: 'reviewed' },
-    {
-      pages: '109',
-      focus: 'attention code and negative infinity',
-      status: 'reviewed',
-    },
-    { pages: '129-136', focus: 'GPT code and tables', status: 'reviewed' },
-    {
-      pages: '150-160',
-      focus: 'Week 12 integration and final check',
-      status: 'reviewed',
-    },
-    {
-      pages: '161-170',
-      focus: 'Appendix code indentation and endpoints',
-      status: 'reviewed',
-    },
-  ],
+  visualReviewEvidence: {
+    indexPath: 'reports/content-review-evidence/index.json',
+    candidateLedgerPath: 'src/content/candidate-review-ledger.json',
+    reviewedPhysicalPages: 148,
+    contactSheets: 13,
+  },
   unresolvedWarnings: [] as string[],
 };
 
@@ -1381,7 +1513,10 @@ writeFileSync(
 mkdirSync(path.resolve('public'), { recursive: true });
 const publicSource = path.resolve('public', PUBLIC_FILENAME);
 if (existsSync(SOURCE_PATH)) copyFileSync(SOURCE_PATH, publicSource);
-if (!existsSync(publicSource) || sha256(readFileSync(publicSource)).toUpperCase() !== EXPECTED_SHA256)
+if (
+  !existsSync(publicSource) ||
+  sha256(readFileSync(publicSource)).toUpperCase() !== EXPECTED_SHA256
+)
   fail('Public source PDF is missing or does not match the pinned checksum');
 
 const markdown = `# PDF content conversion report
@@ -1406,7 +1541,7 @@ Generated from the pinned source on ${GENERATED_AT}. This report is backed by th
 | Code block | ${discovered.codeBlocks} | ${discovered.codeBlocks} |
 | Knowledge check | ${discovered.knowledgeChecks} | ${discovered.knowledgeChecks} |
 
-Every independently detected candidate records its physical source page, exact positioned-span IDs, a SHA-256 checksum, reviewer, final status, and disposition in the JSON report. Formula review used all detected LatinModernMath components and strict KaTeX validation; table review checked repeated-column signals; code review checked compact code-like regions; question/check review began from outline title patterns. The Appendix was additionally checked at its first and last page and across every indentation depth.
+Every independently detected candidate is joined to the immutable checked review ledger, which records its source fingerprint, physical page, reviewer, rationale, disposition, and structured target where applicable. Normalization does not create or overwrite review decisions. The validator also checks the 13 ledger-linked contact sheets and their 148-page cell/checksum index.
 
 ## Prose preservation
 
@@ -1423,9 +1558,11 @@ The comparison projection applies Unicode NFC, whitespace tokenization, proven v
 - Indentation recovered from the 62.362 pt base and 1.79125 pt per space grid
 - Python AST is a mandatory validator gate
 
-## Rendered-source QA checklist
+## Rendered-source review evidence
 
-${report.visualQa.map((item) => `- [x] Physical page(s) ${item.pages}: ${item.focus}`).join('\n')}
+- Immutable decision ledger: \`src/content/candidate-review-ledger.json\`
+- Contact-sheet index: \`reports/content-review-evidence/index.json\`
+- 13 checked contact sheets covering all 148 candidate-bearing physical pages
 
 ## Explicit exclusions
 
