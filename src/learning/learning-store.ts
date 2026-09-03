@@ -3,26 +3,41 @@ import { createStore, type StoreApi } from 'zustand/vanilla';
 import { flattenSections } from '@/src/content/load-course';
 import type { Course, SectionNode, WeekUnit } from '@/src/content/schema';
 import type { LearningStateV1 } from './state-schema';
-import type { StorageAdapter } from './storage-adapter';
+import type { ImportResult, PersistResult, StorageAdapter } from './storage-adapter';
 
 type Location = { unitId: string; sectionId: string };
 type Progress = { completed: number; total: number; percent: number };
 type UndoNote = { sectionId: string; note: LearningStateV1['notesBySection'][string] } | null;
 
+function snapshot(state: LearningStateV1): LearningStateV1 {
+  return {
+    schemaVersion: state.schemaVersion,
+    contentVersion: state.contentVersion,
+    lastLocation: state.lastLocation,
+    completedSectionIds: state.completedSectionIds,
+    appendixReadSectionIds: state.appendixReadSectionIds,
+    bookmarks: state.bookmarks,
+    notesBySection: state.notesBySection,
+    quizAttemptsByQuestion: state.quizAttemptsByQuestion,
+    preferences: state.preferences,
+    updatedAt: state.updatedAt,
+  };
+}
+
 export type LearningStore = LearningStateV1 & {
-  flushPendingNotes(): void;
-  completeSection(sectionId: string): void;
-  reopenSection(sectionId: string): void;
-  visitSection(unitId: string, sectionId: string): void;
-  toggleBookmark(sectionId: string, excerpt: string): void;
-  saveNote(sectionId: string, text: string): void;
-  removeNote(sectionId: string): void;
-  undoRemoveNote(): void;
-  assessQuestion(questionId: string, status: 'understood' | 'review'): void;
-  setPreference<K extends keyof LearningStateV1['preferences']>(key: K, value: LearningStateV1['preferences'][K]): void;
-  importState(serialized: string): void;
+  flushPendingNotes(): PersistResult;
+  completeSection(sectionId: string): PersistResult;
+  reopenSection(sectionId: string): PersistResult;
+  visitSection(unitId: string, sectionId: string): PersistResult;
+  toggleBookmark(sectionId: string, excerpt: string): PersistResult;
+  saveNote(sectionId: string, text: string): PersistResult;
+  removeNote(sectionId: string): PersistResult;
+  undoRemoveNote(): PersistResult;
+  assessQuestion(questionId: string, status: 'understood' | 'review'): PersistResult;
+  setPreference<K extends keyof LearningStateV1['preferences']>(key: K, value: LearningStateV1['preferences'][K]): PersistResult;
+  importState(serialized: string): ImportResult;
   exportState(): string;
-  resetState(): void;
+  resetState(): PersistResult;
 };
 
 function leaves(root: SectionNode): SectionNode[] {
@@ -61,54 +76,61 @@ export function createLearningStore({ course, adapter, clock = () => new Date() 
   const persist = (next: LearningStateV1) => adapter.persist(next);
   let undoNote: UndoNote = null;
   return createStore<LearningStore>((set, get) => {
-    const immediate = (change: (current: LearningStore) => Partial<LearningStateV1>) => {
-      const next = { ...get(), ...change(get()), updatedAt: timestamp() } as LearningStateV1;
+    const immediate = (change: (current: LearningStore) => Partial<LearningStateV1>): PersistResult => {
+      const next = { ...snapshot(get()), ...change(get()), updatedAt: timestamp() } as LearningStateV1;
       set(next);
-      persist(next);
+      return persist(next);
     };
     return {
       ...state,
-      flushPendingNotes: () => { adapter.flushPendingNotes(); },
+      flushPendingNotes: () => adapter.flushPendingNotes(),
       completeSection(sectionId) {
         const isAppendix = course.units.filter((unit) => unit.kind === 'appendix').flatMap(leaves).some((section) => section.id === sectionId);
-        immediate((current) => isAppendix
+        return immediate((current) => isAppendix
           ? { appendixReadSectionIds: [...new Set([...current.appendixReadSectionIds, sectionId])] }
           : { completedSectionIds: [...new Set([...current.completedSectionIds, sectionId])] });
       },
-      reopenSection(sectionId) { immediate((current) => ({ completedSectionIds: current.completedSectionIds.filter((id) => id !== sectionId), appendixReadSectionIds: current.appendixReadSectionIds.filter((id) => id !== sectionId) })); },
-      visitSection(unitId, sectionId) { immediate(() => ({ lastLocation: { unitId, sectionId } })); },
+      reopenSection(sectionId) { return immediate((current) => ({ completedSectionIds: current.completedSectionIds.filter((id) => id !== sectionId), appendixReadSectionIds: current.appendixReadSectionIds.filter((id) => id !== sectionId) })); },
+      visitSection(unitId, sectionId) { return immediate(() => ({ lastLocation: { unitId, sectionId } })); },
       toggleBookmark(sectionId, excerpt) {
-        immediate((current) => {
+        return immediate((current) => {
           const existing = current.bookmarks.find((bookmark) => bookmark.sectionId === sectionId);
           return { bookmarks: existing ? current.bookmarks.filter((bookmark) => bookmark.sectionId !== sectionId) : [...current.bookmarks, { id: `${sectionId}:${timestamp()}`, sectionId, excerpt, createdAt: timestamp() }] };
         });
       },
       saveNote(sectionId, text) {
         if (Array.from(text).length > 20_000) throw new Error('Notes cannot exceed 20,000 code points');
-        const next = { ...get(), notesBySection: text === '' ? Object.fromEntries(Object.entries(get().notesBySection).filter(([id]) => id !== sectionId)) : { ...get().notesBySection, [sectionId]: { text, updatedAt: timestamp() } }, updatedAt: timestamp() } as LearningStateV1;
+        const next = { ...snapshot(get()), notesBySection: text === '' ? Object.fromEntries(Object.entries(get().notesBySection).filter(([id]) => id !== sectionId)) : { ...get().notesBySection, [sectionId]: { text, updatedAt: timestamp() } }, updatedAt: timestamp() } as LearningStateV1;
         set(next);
         adapter.queueNotes(next);
+        return { ok: true };
       },
       removeNote(sectionId) {
         const note = get().notesBySection[sectionId];
-        if (!note) return;
-        const next = { ...get(), notesBySection: Object.fromEntries(Object.entries(get().notesBySection).filter(([id]) => id !== sectionId)), updatedAt: timestamp() } as LearningStateV1;
+        if (!note) return { ok: true };
+        const next = { ...snapshot(get()), notesBySection: Object.fromEntries(Object.entries(get().notesBySection).filter(([id]) => id !== sectionId)), updatedAt: timestamp() } as LearningStateV1;
         undoNote = { sectionId, note };
         set(next);
         adapter.queueNotes(next);
+        return { ok: true };
       },
       undoRemoveNote() {
-        if (!undoNote) return;
-        const next = { ...get(), notesBySection: { ...get().notesBySection, [undoNote.sectionId]: undoNote.note }, updatedAt: timestamp() } as LearningStateV1;
+        if (!undoNote) return { ok: true };
+        const next = { ...snapshot(get()), notesBySection: { ...get().notesBySection, [undoNote.sectionId]: undoNote.note }, updatedAt: timestamp() } as LearningStateV1;
         undoNote = null;
         set(next);
         adapter.queueNotes(next);
+        return { ok: true };
       },
-      assessQuestion(questionId, status) { immediate((current) => ({ quizAttemptsByQuestion: { ...current.quizAttemptsByQuestion, [questionId]: { status, reviewedAt: timestamp() } } })); },
-      setPreference(key, value) { immediate((current) => ({ preferences: { ...current.preferences, [key]: value } })); },
-      importState(serialized) { set(adapter.import(serialized)); },
-      exportState() { return adapter.export(get()); },
-      resetState() { const result = adapter.reset(); if (result.ok) set(adapter.load()); },
+      assessQuestion(questionId, status) { return immediate((current) => ({ quizAttemptsByQuestion: { ...current.quizAttemptsByQuestion, [questionId]: { status, reviewedAt: timestamp() } } })); },
+      setPreference(key, value) { return immediate((current) => ({ preferences: { ...current.preferences, [key]: value } })); },
+      importState(serialized) {
+        const result = adapter.import(serialized);
+        if (result.ok) set(result.state);
+        return result;
+      },
+      exportState() { return adapter.export(snapshot(get())); },
+      resetState() { const result = adapter.reset(); if (result.ok) set(adapter.load()); return result; },
     };
   });
 }

@@ -5,10 +5,13 @@ import {
   MAX_NOTE_CODE_POINTS,
   createStorageAdapter,
 } from '@/src/learning/storage-adapter';
+import { createInitialLearningState } from '@/src/learning/state-schema';
 
 class MemoryStorage implements Storage {
   #values = new Map<string, string>();
   throwOnSet = false;
+  throwOnGet = false;
+  throwOnRemove = false;
 
   get length() {
     return this.#values.size;
@@ -17,12 +20,14 @@ class MemoryStorage implements Storage {
     this.#values.clear();
   }
   getItem(key: string) {
+    if (this.throwOnGet) throw new DOMException('blocked', 'SecurityError');
     return this.#values.get(key) ?? null;
   }
   key(index: number) {
     return [...this.#values.keys()][index] ?? null;
   }
   removeItem(key: string) {
+    if (this.throwOnRemove) throw new DOMException('blocked', 'SecurityError');
     this.#values.delete(key);
   }
   setItem(key: string, value: string) {
@@ -84,8 +89,8 @@ describe('StorageAdapter', () => {
     storage.setItem(
       LEARNING_STATE_KEY,
       JSON.stringify({
+        ...(() => { const { schemaVersion: _schemaVersion, ...state } = createInitialLearningState('old', '2025-01-01T00:00:00.000Z'); return state; })(),
         schemaVersion: 0,
-        contentVersion: 'old',
         completedSectionIds: ['old-section'],
         notesBySection: {
           'old-section': { text: 'older', updatedAt: '2025-01-01T00:00:00.000Z' },
@@ -146,6 +151,64 @@ describe('StorageAdapter', () => {
     expect(storage.getItem(LEARNING_STATE_KEY)).toBe(before);
   });
 
+  it('keeps active state and old storage during a quota-failed import while retaining a canonical retry payload', () => {
+    const storage = new MemoryStorage();
+    const adapter = createStorageAdapter({ storage, contentVersion: 'course-1' });
+    const oldState = { ...adapter.load(), completedSectionIds: ['old'] };
+    adapter.persist(oldState);
+    const rawBefore = storage.getItem(LEARNING_STATE_KEY);
+    const candidate = { ...oldState, completedSectionIds: ['candidate'] };
+    storage.throwOnSet = true;
+
+    const result = adapter.import(JSON.stringify(candidate));
+
+    expect(result).toMatchObject({ ok: false, reason: 'quota' });
+    expect(adapter.load()).toEqual(oldState);
+    expect(storage.getItem(LEARNING_STATE_KEY)).toBe(rawBefore);
+    expect(adapter.getRecovery()).toContain('candidate');
+    expect(adapter.getRecovery()).toEqual(result.ok ? undefined : result.recoverablePayload);
+    storage.throwOnSet = false;
+    expect(adapter.import(adapter.getRecovery() ?? '')).toMatchObject({ ok: true, state: candidate });
+    expect(adapter.load()).toEqual(candidate);
+  });
+
+  it('treats throwing browser storage reads as unavailable', () => {
+    const storage = new MemoryStorage();
+    storage.throwOnGet = true;
+    const adapter = createStorageAdapter({ storage, contentVersion: 'course-1' });
+
+    expect(adapter.load()).toMatchObject({ completedSectionIds: [] });
+    expect(adapter.persist(adapter.load())).toMatchObject({ ok: false, reason: 'unavailable' });
+  });
+
+  it('keeps in-memory state when reset cannot remove browser storage', () => {
+    const storage = new MemoryStorage();
+    const adapter = createStorageAdapter({ storage, contentVersion: 'course-1' });
+    const state = { ...adapter.load(), completedSectionIds: ['safe'] };
+    adapter.persist(state);
+    storage.throwOnRemove = true;
+
+    expect(adapter.reset()).toEqual({ ok: false, reason: 'unavailable' });
+    expect(adapter.load()).toEqual(state);
+  });
+
+  it.each([
+    [{ ...createInitialLearningState('course-1'), extra: true }, 'V1 unknown key'],
+    [{ ...createInitialLearningState('course-1'), preferences: { ...createInitialLearningState('course-1').preferences, extra: true } }, 'V1 nested unknown key'],
+    [{ ...createInitialLearningState('course-1'), schemaVersion: 0, extra: true }, 'V0 unknown key'],
+    [{ ...createInitialLearningState('course-1'), schemaVersion: 0, completedSectionIds: 'bad' }, 'V0 malformed field'],
+  ])('rejects strict %s payloads without replacing recoverable storage', (payload: unknown, _label: string) => {
+    const storage = new MemoryStorage();
+    const serialized = JSON.stringify(payload);
+    storage.setItem(LEARNING_STATE_KEY, serialized);
+    const adapter = createStorageAdapter({ storage, contentVersion: 'course-1' });
+
+    expect(adapter.load()).toMatchObject({ completedSectionIds: [] });
+    expect(adapter.getRecovery()).toBe(serialized);
+    expect(() => adapter.import(serialized)).toThrow(/invalid/i);
+    expect(storage.getItem(LEARNING_STATE_KEY)).toBe(serialized);
+  });
+
   it('round-trips a valid export and flushes queued notes on pagehide', () => {
     vi.useFakeTimers();
     const storage = new MemoryStorage();
@@ -160,7 +223,7 @@ describe('StorageAdapter', () => {
     expect(JSON.parse(storage.getItem(LEARNING_STATE_KEY) ?? '')).toMatchObject({
       notesBySection: { section: { text: 'draft' } },
     });
-    expect(adapter.import(adapter.export(state))).toEqual(state);
+    expect(adapter.import(adapter.export(state))).toEqual({ ok: true, state });
     vi.useRealTimers();
   });
 });

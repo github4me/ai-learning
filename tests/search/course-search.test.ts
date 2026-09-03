@@ -10,17 +10,23 @@ describe('course search', () => {
   const index = createCourseSearch(course);
 
   it('finds generated bilingual material with useful deterministic metadata', () => {
-    expect(searchCourse(index, '梯度')[0]?.sectionId).toContain('gradient');
-    expect(searchCourse(index, '神经网络')[0]?.weekNumber).toBe(3);
-    expect(searchCourse(index, 'Attention')[0]?.weekNumber).toBe(7);
-    expect(searchCourse(index, 'CrossEntropyLoss').length).toBeGreaterThan(0);
+    expect(searchCourse(index, '梯度')[0]?.sectionId).toBe('o0048-9-gradient-descent');
+    expect(searchCourse(index, '梯度')[0]?.excerpt).toContain('梯度下降');
+    expect(searchCourse(index, '神经网络')[0]?.sectionId).toBe('o0077-week-3-neural-network-neuron');
+    expect(searchCourse(index, 'Attention')[0]?.sectionId).toBe('o0254-week-7-attention-token');
+    expect(searchCourse(index, 'CrossEntropyLoss')[0]?.sectionId).toBe('o0243-12-pytorch-crossentropyloss-logits');
   });
 
   it('normalizes NFKC case and hyphens, including the CJK fallback', () => {
     expect(searchCourse(index, 'ＡＴＴＥＮＴＩＯＮ').map((result) => result.sectionId)).toEqual(searchCourse(index, 'attention').map((result) => result.sectionId));
     expect(searchCourse(index, 'Cross‑EntropyLoss').length).toBeGreaterThan(0);
-    const fallback = createCourseSearch(course, { segmenter: false });
-    expect(searchCourse(fallback, '神经网络')[0]?.weekNumber).toBe(3);
+    const original = Intl.Segmenter;
+    Object.defineProperty(Intl, 'Segmenter', { configurable: true, value: undefined });
+    try {
+      expect(searchCourse(createCourseSearch(course), '神经网络')[0]?.sectionId).toBe('o0077-week-3-neural-network-neuron');
+    } finally {
+      Object.defineProperty(Intl, 'Segmenter', { configurable: true, value: original });
+    }
   });
 
   it('returns source-stable escaped plain-text excerpts capped at 140 characters', () => {

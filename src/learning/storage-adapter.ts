@@ -13,11 +13,14 @@ export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 export type PersistResult =
   | { ok: true }
   | { ok: false; reason: 'quota' | 'unavailable' | 'invalid'; recoverablePayload?: string };
+export type ImportResult =
+  | { ok: true; state: LearningStateV1 }
+  | { ok: false; reason: 'quota' | 'unavailable' | 'invalid'; recoverablePayload: string };
 
 export interface StorageAdapter {
   load(): LearningStateV1;
   persist(state: LearningStateV1): PersistResult;
-  import(serialized: string): LearningStateV1;
+  import(serialized: string): ImportResult;
   export(state: LearningStateV1): string;
   reset(): PersistResult;
   flushPendingNotes(): PersistResult;
@@ -48,7 +51,7 @@ export function createStorageAdapter(options: Options): StorageAdapter {
   const initial = () => createInitialLearningState(options.contentVersion, (options.clock?.() ?? new Date()).toISOString());
   let current = initial();
   let hydrated = false;
-  let lastValidSerialized: string | undefined;
+  let available = storage !== undefined;
   let recovery: string | undefined;
   let pending: LearningStateV1 | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -63,10 +66,9 @@ export function createStorageAdapter(options: Options): StorageAdapter {
     return parsed.success ? JSON.stringify(parsed.data) : undefined;
   };
   const write = (serialized: string): PersistResult => {
-    if (!storage) return { ok: false, reason: 'unavailable', recoverablePayload: serialized };
+    if (!storage || !available) return { ok: false, reason: 'unavailable', recoverablePayload: serialized };
     try {
       storage.setItem(LEARNING_STATE_KEY, serialized);
-      lastValidSerialized = serialized;
       return { ok: true };
     } catch (error) {
       return { ok: false, reason: isQuota(error) ? 'quota' : 'unavailable', recoverablePayload: serialized };
@@ -80,8 +82,8 @@ export function createStorageAdapter(options: Options): StorageAdapter {
       const serialized = storage.getItem(LEARNING_STATE_KEY);
       if (!serialized) return current;
       current = parseLearningState(JSON.parse(serialized), options.contentVersion, aliases);
-      lastValidSerialized = serialized;
     } catch {
+      available = false;
       try { recovery = storage.getItem(LEARNING_STATE_KEY) ?? undefined; } catch { /* unavailable storage still has a clean state */ }
       current = initial();
     }
@@ -97,8 +99,9 @@ export function createStorageAdapter(options: Options): StorageAdapter {
   const persist = (state: LearningStateV1): PersistResult => {
     load();
     const serialized = validate(state);
-    if (!serialized) return { ok: false, reason: 'invalid' };
+    if (!serialized) return { ok: false, reason: 'invalid', recoverablePayload: JSON.stringify(state) };
     const result = write(serialized);
+    if (!result.ok) recovery = serialized;
     current = state;
     return result;
   };
@@ -120,8 +123,7 @@ export function createStorageAdapter(options: Options): StorageAdapter {
     load,
     persist,
     import(serialized) {
-      clearTimer();
-      pending = undefined;
+      load();
       if (new TextEncoder().encode(serialized).byteLength > MAX_IMPORT_BYTES) throw new Error('Import exceeds 5 MiB limit');
       let candidate: LearningStateV1;
       try {
@@ -132,14 +134,15 @@ export function createStorageAdapter(options: Options): StorageAdapter {
       }
       const canonical = validate(candidate);
       if (!canonical) throw new Error('Invalid learning-state import');
-      const before = current;
       const result = write(canonical);
       if (!result.ok) {
-        current = before;
-        throw new Error(`Could not import learning state: ${result.reason}`);
+        recovery = canonical;
+        return { ...result, recoverablePayload: canonical };
       }
+      clearTimer();
+      pending = undefined;
       current = candidate;
-      return current;
+      return { ok: true, state: current };
     },
     export(state) {
       const serialized = validate(state);
@@ -147,13 +150,13 @@ export function createStorageAdapter(options: Options): StorageAdapter {
       return serialized;
     },
     reset() {
-      clearTimer();
-      pending = undefined;
       if (!storage) return { ok: false, reason: 'unavailable' };
       try {
         storage.removeItem(LEARNING_STATE_KEY);
+        clearTimer();
+        pending = undefined;
         current = initial();
-        lastValidSerialized = undefined;
+        recovery = undefined;
         return { ok: true };
       } catch {
         return { ok: false, reason: 'unavailable' };
@@ -161,6 +164,6 @@ export function createStorageAdapter(options: Options): StorageAdapter {
     },
     flushPendingNotes,
     queueNotes,
-    getRecovery: () => recovery ?? lastValidSerialized,
+    getRecovery: () => recovery,
   };
 }

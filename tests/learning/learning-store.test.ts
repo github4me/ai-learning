@@ -64,4 +64,26 @@ describe('learning store', () => {
     expect(store.getState().notesBySection['one-a']?.text).toBe('draft');
     vi.useRealTimers();
   });
+
+  it('returns persistence outcomes and retains memory when reset storage removal fails', () => {
+    const storage = {
+      length: 0, clear() {}, key() { return null; }, getItem() { return null; },
+      removeItem() { throw new DOMException('blocked', 'SecurityError'); },
+      setItem() { throw new DOMException('quota', 'QuotaExceededError'); },
+    };
+    const store = createLearningStore({ course, adapter: createStorageAdapter({ contentVersion: 'course-1', storage }) });
+
+    expect(store.getState().completeSection('one-a')).toMatchObject({ ok: false, reason: 'quota' });
+    expect(store.getState().flushPendingNotes()).toEqual({ ok: true });
+    const beforeImport = store.getState().completedSectionIds;
+    const importPayload = JSON.parse(store.getState().exportState());
+    const importResult = store.getState().importState(JSON.stringify({
+      ...importPayload,
+      completedSectionIds: ['one-b'],
+    }));
+    expect(importResult).toMatchObject({ ok: false, reason: 'quota' });
+    expect(store.getState().completedSectionIds).toEqual(beforeImport);
+    expect(store.getState().resetState()).toEqual({ ok: false, reason: 'unavailable' });
+    expect(store.getState().completedSectionIds).toEqual(['one-a']);
+  });
 });

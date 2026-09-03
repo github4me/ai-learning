@@ -5,7 +5,7 @@ import type { ContentBlock, Course, InlineNode } from '@/src/content/schema';
 
 const HYPHENS = /[‐‑‒–−]/g;
 export type SearchResult = { sectionId: string; unitId: string; unitTitle: string; weekNumber?: number; anchor: string; title: string; excerpt: string; group: { unitId: string; title: string } };
-type SearchDocument = Omit<SearchResult, 'excerpt'> & { id: string; text: string; order: number };
+type SearchDocument = Omit<SearchResult, 'excerpt'> & { id: string; text: string; order: number; isUnitRoot: boolean };
 export type CourseSearchIndex = { miniSearch: MiniSearch<SearchDocument>; documents: SearchDocument[]; segmenter: boolean };
 
 function normalize(value: string): string {
@@ -53,7 +53,7 @@ function escapedExcerpt(text: string, query: string): string {
 }
 
 export function createCourseSearch(course: Course, options: { segmenter?: boolean } = {}): CourseSearchIndex {
-  const useSegmenter = options.segmenter ?? true;
+  const useSegmenter = options.segmenter !== false && typeof Intl.Segmenter !== 'undefined';
   const documents: SearchDocument[] = [];
   let order = 0;
   const roots = [course.overview, ...course.units];
@@ -65,13 +65,13 @@ export function createCourseSearch(course: Course, options: { segmenter?: boolea
       const result: SearchDocument = {
         id: section.id, sectionId: section.id, unitId: root.id, unitTitle: root.title,
         weekNumber: unit.kind === 'week' ? unit.weekNumber : undefined,
-        anchor: `#${section.id}`, title: section.title, text: rawText, order: order++, group: { unitId: root.id, title: root.title },
+        anchor: `#${section.id}`, title: section.title, text: rawText, order: order++, isUnitRoot: section.id === root.id, group: { unitId: root.id, title: root.title },
       };
       documents.push(result);
     }
   }
   const miniSearch = new MiniSearch<SearchDocument>({
-    fields: ['title', 'unitTitle', 'text'], storeFields: ['sectionId', 'unitId', 'unitTitle', 'weekNumber', 'anchor', 'title', 'text', 'order', 'group'],
+    fields: ['title', 'unitTitle', 'text'], storeFields: ['sectionId', 'unitId', 'unitTitle', 'weekNumber', 'anchor', 'title', 'text', 'order', 'isUnitRoot', 'group'],
     tokenize: (value) => tokens(value, useSegmenter),
   });
   miniSearch.addAll(documents);
@@ -81,6 +81,7 @@ export function createCourseSearch(course: Course, options: { segmenter?: boolea
 export function searchCourse(index: CourseSearchIndex, query: string): SearchResult[] {
   if (!query.trim()) return [];
   const normalized = normalize(query);
+  const compactQuery = normalized.replaceAll('-', '');
   const matches = index.miniSearch.search(normalized, {
     prefix: true,
     fuzzy: 0.2,
@@ -88,7 +89,8 @@ export function searchCourse(index: CourseSearchIndex, query: string): SearchRes
   }) as unknown as Array<SearchDocument & { score: number }>;
   return matches
     .sort((left, right) => {
-      return right.score - left.score || left.order - right.order || left.sectionId.localeCompare(right.sectionId);
+      const rootTitleBoost = (document: SearchDocument) => document.isUnitRoot && normalize(document.title).replaceAll('-', '').includes(compactQuery) ? 20 : 0;
+      return (right.score + rootTitleBoost(right)) - (left.score + rootTitleBoost(left)) || left.order - right.order || left.sectionId.localeCompare(right.sectionId);
     })
     .slice(0, 30)
     .map(({ text, ...result }) => ({ ...result, excerpt: escapedExcerpt(text, normalized) }));

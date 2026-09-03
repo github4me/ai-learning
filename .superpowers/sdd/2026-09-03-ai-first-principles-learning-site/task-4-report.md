@@ -47,3 +47,23 @@ successfully (with Vinext's pre-existing informational dynamic-route notice).
 - Normalized MiniSearch indexing for visible course sections, recursive plain-text
   extraction, CJK segmentation fallback, deterministic source-stable results, and
   safe capped excerpts.
+
+## Review fix round 1
+
+### RED
+
+Added regressions for quota-failed import recovery/retry, strict V0/V1 and nested
+unknown-key rejection, throwing `getItem`/`removeItem`, returned store persistence
+outcomes, real `Intl.Segmenter` absence, and exact generated search targets. The
+focused run failed on the prior import throw/rollback, non-strict parsing,
+unsurfaced store results, missing automatic CJK fallback, and Attention ranking.
+
+### GREEN
+
+`StorageAdapter` now validates and canonicalizes imports before the one storage
+write. A failed import returns a structured result and retains the canonical
+candidate only in its recovery slot; the active state and local-storage value stay
+unchanged. V0/V1 and all nested records are strict, store mutations return typed
+persistence outcomes, and the CJK fallback activates whenever `Intl.Segmenter` is
+actually unavailable. Exact target assertions pass for gradient descent, neural
+network, Attention, and CrossEntropyLoss.

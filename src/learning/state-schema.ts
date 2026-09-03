@@ -5,22 +5,31 @@ export const PreferenceSchema = z.object({
   fontSize: z.enum(['compact', 'default', 'large']),
   lineWidth: z.enum(['narrow', 'default', 'wide']),
   focusMode: z.boolean(),
-});
+}).strict();
+
+const LocationSchema = z.object({ unitId: z.string(), sectionId: z.string() }).strict();
+const BookmarkSchema = z.object({ id: z.string(), sectionId: z.string(), excerpt: z.string(), createdAt: z.string() }).strict();
+const NoteSchema = z.object({ text: z.string(), updatedAt: z.string() }).strict();
+const QuizAttemptSchema = z.object({ status: z.enum(['understood', 'review']), reviewedAt: z.string() }).strict();
 
 export const LearningStateV1Schema = z.object({
   schemaVersion: z.literal(1),
   contentVersion: z.string(),
-  lastLocation: z.object({ unitId: z.string(), sectionId: z.string() }).nullable(),
+  lastLocation: LocationSchema.nullable(),
   completedSectionIds: z.array(z.string()),
   appendixReadSectionIds: z.array(z.string()),
-  bookmarks: z.array(z.object({ id: z.string(), sectionId: z.string(), excerpt: z.string(), createdAt: z.string() })),
-  notesBySection: z.record(z.string(), z.object({ text: z.string(), updatedAt: z.string() })),
-  quizAttemptsByQuestion: z.record(z.string(), z.object({ status: z.enum(['understood', 'review']), reviewedAt: z.string() })),
+  bookmarks: z.array(BookmarkSchema),
+  notesBySection: z.record(z.string(), NoteSchema),
+  quizAttemptsByQuestion: z.record(z.string(), QuizAttemptSchema),
   preferences: PreferenceSchema,
   updatedAt: z.string(),
-});
+}).strict();
 
 export type LearningStateV1 = z.infer<typeof LearningStateV1Schema>;
+export const LearningStateV0Schema = LearningStateV1Schema
+  .omit({ schemaVersion: true })
+  .extend({ schemaVersion: z.literal(0) })
+  .strict();
 export type SectionAliases = Record<string, string>;
 
 export function createInitialLearningState(contentVersion: string, now = new Date().toISOString()): LearningStateV1 {
@@ -79,24 +88,11 @@ export function applyAliases(state: LearningStateV1, aliases: SectionAliases): L
 
 /** Parses V1 and the intentionally small V0 compatibility shape before applying aliases. */
 export function parseLearningState(value: unknown, contentVersion: string, aliases: SectionAliases = {}): LearningStateV1 {
-  const source = z.record(z.string(), z.unknown()).parse(value);
-  const version = source.schemaVersion;
-  if (typeof version === 'number' && version > 1) throw new Error('Unsupported learning-state schema version');
+  const version = z.looseObject({ schemaVersion: z.number() }).parse(value).schemaVersion;
+  if (version > 1) throw new Error('Unsupported learning-state schema version');
   if (version === 0) {
-    const initial = createInitialLearningState(contentVersion);
-    const migrated = {
-      ...initial,
-      contentVersion: typeof source.contentVersion === 'string' ? source.contentVersion : contentVersion,
-      lastLocation: z.object({ unitId: z.string(), sectionId: z.string() }).nullable().catch(null).parse(source.lastLocation),
-      completedSectionIds: z.array(z.string()).catch([]).parse(source.completedSectionIds),
-      appendixReadSectionIds: z.array(z.string()).catch([]).parse(source.appendixReadSectionIds),
-      bookmarks: z.array(z.object({ id: z.string(), sectionId: z.string(), excerpt: z.string(), createdAt: z.string() })).catch([]).parse(source.bookmarks),
-      notesBySection: z.record(z.string(), z.object({ text: z.string(), updatedAt: z.string() })).catch({}).parse(source.notesBySection),
-      quizAttemptsByQuestion: z.record(z.string(), z.object({ status: z.enum(['understood', 'review']), reviewedAt: z.string() })).catch({}).parse(source.quizAttemptsByQuestion),
-      preferences: PreferenceSchema.catch(initial.preferences).parse(source.preferences),
-      updatedAt: z.string().catch(initial.updatedAt).parse(source.updatedAt),
-    };
-    return applyAliases(LearningStateV1Schema.parse(migrated), aliases);
+    const v0 = LearningStateV0Schema.parse(value);
+    return applyAliases(LearningStateV1Schema.parse({ ...v0, schemaVersion: 1 }), aliases);
   }
-  return applyAliases(LearningStateV1Schema.parse(source), aliases);
+  return applyAliases(LearningStateV1Schema.parse(value), aliases);
 }
