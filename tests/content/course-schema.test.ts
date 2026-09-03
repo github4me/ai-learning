@@ -5,6 +5,7 @@ import {
   flattenSections,
   loadCourse,
 } from '@/src/content/load-course';
+import { PageManifestSchema } from '@/src/content/schema';
 
 const source = { pdfPage: 1 };
 
@@ -66,6 +67,22 @@ const fixture = {
   description: 'A minimal course fixture.',
   sourceFilename: 'source.pdf',
   version: '1.0.0',
+  overview: {
+    id: 'overview',
+    aliases: [],
+    title: 'Read me',
+    navDepth: 1,
+    showInToc: true,
+    isCompletable: false,
+    source: { pdfPage: 10, printedPageLabel: '1' },
+    blocks: [
+      {
+        ...paragraph('overview-content'),
+        source: { pdfPage: 10, printedPageLabel: '1' },
+      },
+    ],
+    children: [],
+  },
   units: [
     ...Array.from({ length: 12 }, (_, index) => week(index + 1)),
     {
@@ -86,9 +103,17 @@ const fixture = {
 };
 
 describe('course schema', () => {
+  it('retains the source overview separately from the learning units', () => {
+    const course = loadCourse(fixture);
+
+    expect(course).toHaveProperty('overview.id', 'overview');
+    expect(course.units).toHaveLength(13);
+  });
+
   it('traverses nested sections in source order and resolves stable aliases', () => {
     const course = loadCourse(fixture);
 
+    expect(findSection(course, 'overview')?.id).toBe('overview');
     expect(flattenSections(course.units[0]).map((item) => item.id)).toEqual([
       'week-01',
       'week-01-scalars',
@@ -171,5 +196,29 @@ describe('course schema', () => {
         ),
       }),
     ).toThrow(/duplicate stable identifier/i);
+  });
+});
+
+describe('page manifest schema', () => {
+  it('retains printed labels separately from physical PDF pages', () => {
+    const manifest = PageManifestSchema.parse([
+      {
+        pdfPage: 10,
+        printedPageLabel: '1',
+        classification: 'content',
+        sectionId: 'overview',
+      },
+    ]);
+
+    expect(manifest[0]).toMatchObject({
+      pdfPage: 10,
+      printedPageLabel: '1',
+    });
+  });
+
+  it('requires an audit reason whenever a page is not content', () => {
+    expect(() =>
+      PageManifestSchema.parse([{ pdfPage: 1, classification: 'frontMatter' }]),
+    ).toThrow(/reason/i);
   });
 });

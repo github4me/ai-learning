@@ -1,0 +1,1013 @@
+[
+  {
+    "pdfPage": 1,
+    "classification": "frontMatter",
+    "reason": "Cover represented by course metadata"
+  },
+  {
+    "pdfPage": 2,
+    "classification": "navigationReplaced",
+    "reason": "Printed table of contents replaced by accessible recursive web navigation"
+  },
+  {
+    "pdfPage": 3,
+    "classification": "navigationReplaced",
+    "reason": "Printed table of contents replaced by accessible recursive web navigation"
+  },
+  {
+    "pdfPage": 4,
+    "classification": "navigationReplaced",
+    "reason": "Printed table of contents replaced by accessible recursive web navigation"
+  },
+  {
+    "pdfPage": 5,
+    "classification": "navigationReplaced",
+    "reason": "Printed table of contents replaced by accessible recursive web navigation"
+  },
+  {
+    "pdfPage": 6,
+    "classification": "navigationReplaced",
+    "reason": "Printed table of contents replaced by accessible recursive web navigation"
+  },
+  {
+    "pdfPage": 7,
+    "classification": "navigationReplaced",
+    "reason": "Printed table of contents replaced by accessible recursive web navigation"
+  },
+  {
+    "pdfPage": 8,
+    "classification": "navigationReplaced",
+    "reason": "Printed table of contents replaced by accessible recursive web navigation"
+  },
+  {
+    "pdfPage": 9,
+    "classification": "navigationReplaced",
+    "reason": "Printed table of contents replaced by accessible recursive web navigation"
+  },
+  {
+    "pdfPage": 10,
+    "printedPageLabel": "1",
+    "classification": "content",
+    "sectionId": "o0000-readme"
+  },
+  {
+    "pdfPage": 11,
+    "printedPageLabel": "2",
+    "classification": "content",
+    "sectionId": "o0005-1-ai"
+  },
+  {
+    "pdfPage": 12,
+    "printedPageLabel": "3",
+    "classification": "content",
+    "sectionId": "o0008-vector-list"
+  },
+  {
+    "pdfPage": 13,
+    "printedPageLabel": "4",
+    "classification": "content",
+    "sectionId": "o0011-5-weight"
+  },
+  {
+    "pdfPage": 14,
+    "printedPageLabel": "5",
+    "classification": "content",
+    "sectionId": "o0013-6-dot-product"
+  },
+  {
+    "pdfPage": 15,
+    "printedPageLabel": "6",
+    "classification": "content",
+    "sectionId": "o0017-8-function"
+  },
+  {
+    "pdfPage": 16,
+    "printedPageLabel": "7",
+    "classification": "content",
+    "sectionId": "o0023-10-matrix"
+  },
+  {
+    "pdfPage": 17,
+    "printedPageLabel": "8",
+    "classification": "content",
+    "sectionId": "o0026-12"
+  },
+  {
+    "pdfPage": 18,
+    "printedPageLabel": "9",
+    "classification": "content",
+    "sectionId": "o0034-14-ai"
+  },
+  {
+    "pdfPage": 19,
+    "printedPageLabel": "10",
+    "classification": "content",
+    "sectionId": "o0036-16-week-1-6"
+  },
+  {
+    "pdfPage": 20,
+    "printedPageLabel": "11",
+    "classification": "content",
+    "sectionId": "o0038-18-week-1-week-2"
+  },
+  {
+    "pdfPage": 21,
+    "printedPageLabel": "12",
+    "classification": "content",
+    "sectionId": "o0041-2-model-feature-parameter"
+  },
+  {
+    "pdfPage": 22,
+    "printedPageLabel": "13",
+    "classification": "content",
+    "sectionId": "o0044-5-mse"
+  },
+  {
+    "pdfPage": 23,
+    "printedPageLabel": "14",
+    "classification": "content",
+    "sectionId": "o0047-8-gradient"
+  },
+  {
+    "pdfPage": 24,
+    "printedPageLabel": "15",
+    "classification": "content",
+    "sectionId": "o0049-10-learning-rate"
+  },
+  {
+    "pdfPage": 25,
+    "printedPageLabel": "16",
+    "classification": "content",
+    "sectionId": "o0053-step-3-gradient"
+  },
+  {
+    "pdfPage": 26,
+    "printedPageLabel": "17",
+    "classification": "content",
+    "sectionId": "o0056-13-bias-b-partial-derivative"
+  },
+  {
+    "pdfPage": 27,
+    "printedPageLabel": "18",
+    "classification": "content",
+    "sectionId": "o0058-15-second-derivative"
+  },
+  {
+    "pdfPage": 28,
+    "printedPageLabel": "19",
+    "classification": "content",
+    "sectionId": "o0060-17-python"
+  },
+  {
+    "pdfPage": 29,
+    "printedPageLabel": "20",
+    "classification": "content",
+    "sectionId": "o0061-18"
+  },
+  {
+    "pdfPage": 30,
+    "printedPageLabel": "21",
+    "classification": "content",
+    "sectionId": "o0065-22-linear-regression-gpt"
+  },
+  {
+    "pdfPage": 31,
+    "printedPageLabel": "22",
+    "classification": "content",
+    "sectionId": "o0066-23-week-2"
+  },
+  {
+    "pdfPage": 32,
+    "printedPageLabel": "23",
+    "classification": "content",
+    "sectionId": "o0068-25-mental-model"
+  },
+  {
+    "pdfPage": 33,
+    "printedPageLabel": "24",
+    "classification": "content",
+    "sectionId": "o0071-2-parameter-parameters"
+  },
+  {
+    "pdfPage": 34,
+    "printedPageLabel": "25",
+    "classification": "content",
+    "sectionId": "o0075-6"
+  },
+  {
+    "pdfPage": 35,
+    "printedPageLabel": "26",
+    "classification": "content",
+    "sectionId": "o0076-7"
+  },
+  {
+    "pdfPage": 36,
+    "printedPageLabel": "27",
+    "classification": "content",
+    "sectionId": "o0078-1-neural-network"
+  },
+  {
+    "pdfPage": 37,
+    "printedPageLabel": "28",
+    "classification": "content",
+    "sectionId": "o0080-3-week-2-linear-regression"
+  },
+  {
+    "pdfPage": 38,
+    "printedPageLabel": "29",
+    "classification": "content",
+    "sectionId": "o0083-artificial-neuron"
+  },
+  {
+    "pdfPage": 39,
+    "printedPageLabel": "30",
+    "classification": "content",
+    "sectionId": "o0085-7-neuron"
+  },
+  {
+    "pdfPage": 40,
+    "printedPageLabel": "31",
+    "classification": "content",
+    "sectionId": "o0086-8"
+  },
+  {
+    "pdfPage": 41,
+    "printedPageLabel": "32",
+    "classification": "content",
+    "sectionId": "o0088-10-activation-function"
+  },
+  {
+    "pdfPage": 42,
+    "printedPageLabel": "33",
+    "classification": "content",
+    "sectionId": "o0092-12-activation-relu"
+  },
+  {
+    "pdfPage": 43,
+    "printedPageLabel": "34",
+    "classification": "content",
+    "sectionId": "o0094-13-relu"
+  },
+  {
+    "pdfPage": 44,
+    "printedPageLabel": "35",
+    "classification": "content",
+    "sectionId": "o0096-15-relu-neuron"
+  },
+  {
+    "pdfPage": 45,
+    "printedPageLabel": "36",
+    "classification": "content",
+    "sectionId": "o0097-16-weight"
+  },
+  {
+    "pdfPage": 46,
+    "printedPageLabel": "37",
+    "classification": "content",
+    "sectionId": "o0100-18-layer"
+  },
+  {
+    "pdfPage": 47,
+    "printedPageLabel": "38",
+    "classification": "content",
+    "sectionId": "o0102-20-hidden-layer"
+  },
+  {
+    "pdfPage": 48,
+    "printedPageLabel": "39",
+    "classification": "content",
+    "sectionId": "o0105-22-deep-learning-deep"
+  },
+  {
+    "pdfPage": 49,
+    "printedPageLabel": "40",
+    "classification": "content",
+    "sectionId": "o0108-24-hidden-neuron-1"
+  },
+  {
+    "pdfPage": 50,
+    "printedPageLabel": "41",
+    "classification": "content",
+    "sectionId": "o0109-25-hidden-neuron-2"
+  },
+  {
+    "pdfPage": 51,
+    "printedPageLabel": "42",
+    "classification": "content",
+    "sectionId": "o0112-27-output-layer"
+  },
+  {
+    "pdfPage": 52,
+    "printedPageLabel": "43",
+    "classification": "content",
+    "sectionId": "o0115-29-prediction"
+  },
+  {
+    "pdfPage": 53,
+    "printedPageLabel": "44",
+    "classification": "content",
+    "sectionId": "o0116-30-neural-network-training"
+  },
+  {
+    "pdfPage": 54,
+    "printedPageLabel": "45",
+    "classification": "content",
+    "sectionId": "o0119-32-backprop-computational-graph"
+  },
+  {
+    "pdfPage": 55,
+    "printedPageLabel": "46",
+    "classification": "content",
+    "sectionId": "o0123-backward"
+  },
+  {
+    "pdfPage": 56,
+    "printedPageLabel": "47",
+    "classification": "content",
+    "sectionId": "o0126-35-matrix"
+  },
+  {
+    "pdfPage": 57,
+    "printedPageLabel": "48",
+    "classification": "content",
+    "sectionId": "o0128-37-python-neuron"
+  },
+  {
+    "pdfPage": 58,
+    "printedPageLabel": "49",
+    "classification": "content",
+    "sectionId": "o0129-38-layer"
+  },
+  {
+    "pdfPage": 59,
+    "printedPageLabel": "50",
+    "classification": "content",
+    "sectionId": "o0132-40-neural-network"
+  },
+  {
+    "pdfPage": 60,
+    "printedPageLabel": "51",
+    "classification": "content",
+    "sectionId": "o0134-41-parameter"
+  },
+  {
+    "pdfPage": 61,
+    "printedPageLabel": "52",
+    "classification": "content",
+    "sectionId": "o0136-43"
+  },
+  {
+    "pdfPage": 62,
+    "printedPageLabel": "53",
+    "classification": "content",
+    "sectionId": "o0139-neural-network"
+  },
+  {
+    "pdfPage": 63,
+    "printedPageLabel": "54",
+    "classification": "content",
+    "sectionId": "o0147-46-relu-activation"
+  },
+  {
+    "pdfPage": 64,
+    "printedPageLabel": "55",
+    "classification": "content",
+    "sectionId": "o0152-47-sigmoid"
+  },
+  {
+    "pdfPage": 65,
+    "printedPageLabel": "56",
+    "classification": "content",
+    "sectionId": "o0156-49-loss-function"
+  },
+  {
+    "pdfPage": 66,
+    "printedPageLabel": "57",
+    "classification": "content",
+    "sectionId": "o0159-51-traditional-programming-vs-machine-learning"
+  },
+  {
+    "pdfPage": 67,
+    "printedPageLabel": "58",
+    "classification": "content",
+    "sectionId": "o0161-53-week-2-gpt"
+  },
+  {
+    "pdfPage": 68,
+    "printedPageLabel": "59",
+    "classification": "content",
+    "sectionId": "o0162-54-week-3-7"
+  },
+  {
+    "pdfPage": 69,
+    "printedPageLabel": "60",
+    "classification": "content",
+    "sectionId": "o0167-56"
+  },
+  {
+    "pdfPage": 70,
+    "printedPageLabel": "61",
+    "classification": "content",
+    "sectionId": "o0168-57-software-engineer-week-3"
+  },
+  {
+    "pdfPage": 71,
+    "printedPageLabel": "62",
+    "classification": "content",
+    "sectionId": "o0169-58-week-3-week-4"
+  },
+  {
+    "pdfPage": 72,
+    "printedPageLabel": "63",
+    "classification": "content",
+    "sectionId": "o0173-2-weighted-sum-activation"
+  },
+  {
+    "pdfPage": 73,
+    "printedPageLabel": "64",
+    "classification": "content",
+    "sectionId": "o0178-7-forward-learning"
+  },
+  {
+    "pdfPage": 74,
+    "printedPageLabel": "65",
+    "classification": "content",
+    "sectionId": "o0182-2-computational-graph"
+  },
+  {
+    "pdfPage": 75,
+    "printedPageLabel": "66",
+    "classification": "content",
+    "sectionId": "o0183-3-forward-pass"
+  },
+  {
+    "pdfPage": 76,
+    "printedPageLabel": "67",
+    "classification": "content",
+    "sectionId": "o0184-4-local-derivative"
+  },
+  {
+    "pdfPage": 77,
+    "printedPageLabel": "68",
+    "classification": "content",
+    "sectionId": "o0184-4-local-derivative"
+  },
+  {
+    "pdfPage": 78,
+    "printedPageLabel": "69",
+    "classification": "content",
+    "sectionId": "o0185-5-chain-rule"
+  },
+  {
+    "pdfPage": 79,
+    "printedPageLabel": "70",
+    "classification": "content",
+    "sectionId": "o0187-7-output-layer-gradients"
+  },
+  {
+    "pdfPage": 80,
+    "printedPageLabel": "71",
+    "classification": "content",
+    "sectionId": "o0190-10-hidden-layer-gradients"
+  },
+  {
+    "pdfPage": 81,
+    "printedPageLabel": "72",
+    "classification": "content",
+    "sectionId": "o0193-13"
+  },
+  {
+    "pdfPage": 82,
+    "printedPageLabel": "73",
+    "classification": "content",
+    "sectionId": "o0194-14-parameter"
+  },
+  {
+    "pdfPage": 83,
+    "printedPageLabel": "74",
+    "classification": "content",
+    "sectionId": "o0197-17-vanishing-exploding-gradient"
+  },
+  {
+    "pdfPage": 84,
+    "printedPageLabel": "75",
+    "classification": "content",
+    "sectionId": "o0200-20-week-4-week-5"
+  },
+  {
+    "pdfPage": 85,
+    "printedPageLabel": "76",
+    "classification": "content",
+    "sectionId": "o0204-2-dimension-shape"
+  },
+  {
+    "pdfPage": 86,
+    "printedPageLabel": "77",
+    "classification": "content",
+    "sectionId": "o0206-4-tensor-layer"
+  },
+  {
+    "pdfPage": 87,
+    "printedPageLabel": "78",
+    "classification": "content",
+    "sectionId": "o0207-5-broadcasting-2-4-2"
+  },
+  {
+    "pdfPage": 88,
+    "printedPageLabel": "79",
+    "classification": "content",
+    "sectionId": "o0209-7-requires-grad-true"
+  },
+  {
+    "pdfPage": 89,
+    "printedPageLabel": "80",
+    "classification": "content",
+    "sectionId": "o0211-9-gradient"
+  },
+  {
+    "pdfPage": 90,
+    "printedPageLabel": "81",
+    "classification": "content",
+    "sectionId": "o0214-12-nn-module-parameters-forward"
+  },
+  {
+    "pdfPage": 91,
+    "printedPageLabel": "82",
+    "classification": "content",
+    "sectionId": "o0216-14-pytorch-training-loop"
+  },
+  {
+    "pdfPage": 92,
+    "printedPageLabel": "83",
+    "classification": "content",
+    "sectionId": "o0219-17-week-5-6"
+  },
+  {
+    "pdfPage": 93,
+    "printedPageLabel": "84",
+    "classification": "content",
+    "sectionId": "o0220-18-week-5-week-6"
+  },
+  {
+    "pdfPage": 94,
+    "printedPageLabel": "85",
+    "classification": "content",
+    "sectionId": "o0225-2-embedding"
+  },
+  {
+    "pdfPage": 95,
+    "printedPageLabel": "86",
+    "classification": "content",
+    "sectionId": "o0228-3-embedding-matrix"
+  },
+  {
+    "pdfPage": 96,
+    "printedPageLabel": "87",
+    "classification": "content",
+    "sectionId": "o0231-embedding-row"
+  },
+  {
+    "pdfPage": 97,
+    "printedPageLabel": "88",
+    "classification": "content",
+    "sectionId": "o0234-7-autoregressive"
+  },
+  {
+    "pdfPage": 98,
+    "printedPageLabel": "89",
+    "classification": "content",
+    "sectionId": "o0239-10-softmax-logits-probability"
+  },
+  {
+    "pdfPage": 99,
+    "printedPageLabel": "90",
+    "classification": "content",
+    "sectionId": "o0241-11-cross-entropy-probability"
+  },
+  {
+    "pdfPage": 100,
+    "printedPageLabel": "91",
+    "classification": "content",
+    "sectionId": "o0244-13-bigram-language-model"
+  },
+  {
+    "pdfPage": 101,
+    "printedPageLabel": "92",
+    "classification": "content",
+    "sectionId": "o0249-sampling"
+  },
+  {
+    "pdfPage": 102,
+    "printedPageLabel": "93",
+    "classification": "content",
+    "sectionId": "o0253-19-week-6-week-7"
+  },
+  {
+    "pdfPage": 103,
+    "printedPageLabel": "94",
+    "classification": "content",
+    "sectionId": "o0253-19-week-6-week-7"
+  },
+  {
+    "pdfPage": 104,
+    "printedPageLabel": "95",
+    "classification": "content",
+    "sectionId": "o0258-2-q-k-v"
+  },
+  {
+    "pdfPage": 105,
+    "printedPageLabel": "96",
+    "classification": "content",
+    "sectionId": "o0261-4-query-key-dot-product"
+  },
+  {
+    "pdfPage": 106,
+    "printedPageLabel": "97",
+    "classification": "content",
+    "sectionId": "o0264-6-values"
+  },
+  {
+    "pdfPage": 107,
+    "printedPageLabel": "98",
+    "classification": "content",
+    "sectionId": "o0268-9-self-attention-shape"
+  },
+  {
+    "pdfPage": 108,
+    "printedPageLabel": "99",
+    "classification": "content",
+    "sectionId": "o0271-training-mask"
+  },
+  {
+    "pdfPage": 109,
+    "printedPageLabel": "100",
+    "classification": "content",
+    "sectionId": "o0275-projection"
+  },
+  {
+    "pdfPage": 110,
+    "printedPageLabel": "101",
+    "classification": "content",
+    "sectionId": "o0279-15-multi-head-attention"
+  },
+  {
+    "pdfPage": 111,
+    "printedPageLabel": "102",
+    "classification": "content",
+    "sectionId": "o0284-19-week-7-week-8"
+  },
+  {
+    "pdfPage": 112,
+    "printedPageLabel": "103",
+    "classification": "content",
+    "sectionId": "o0284-19-week-7-week-8"
+  },
+  {
+    "pdfPage": 113,
+    "printedPageLabel": "104",
+    "classification": "content",
+    "sectionId": "o0289-attention"
+  },
+  {
+    "pdfPage": 114,
+    "printedPageLabel": "105",
+    "classification": "content",
+    "sectionId": "o0295-5-feed-forward-network"
+  },
+  {
+    "pdfPage": 115,
+    "printedPageLabel": "106",
+    "classification": "content",
+    "sectionId": "o0299-7-residual-connection"
+  },
+  {
+    "pdfPage": 116,
+    "printedPageLabel": "107",
+    "classification": "content",
+    "sectionId": "o0302-9-layer-normalization"
+  },
+  {
+    "pdfPage": 117,
+    "printedPageLabel": "108",
+    "classification": "content",
+    "sectionId": "o0306-11-transformer-block"
+  },
+  {
+    "pdfPage": 118,
+    "printedPageLabel": "109",
+    "classification": "content",
+    "sectionId": "o0308-13-transformer-output-vocabulary-logits"
+  },
+  {
+    "pdfPage": 119,
+    "printedPageLabel": "110",
+    "classification": "content",
+    "sectionId": "o0314-16-transformer"
+  },
+  {
+    "pdfPage": 120,
+    "printedPageLabel": "111",
+    "classification": "content",
+    "sectionId": "o0317-19-week-8-week-9"
+  },
+  {
+    "pdfPage": 121,
+    "printedPageLabel": "112",
+    "classification": "content",
+    "sectionId": "o0325-token"
+  },
+  {
+    "pdfPage": 122,
+    "printedPageLabel": "113",
+    "classification": "content",
+    "sectionId": "o0331-4-character-tokenizer"
+  },
+  {
+    "pdfPage": 123,
+    "printedPageLabel": "114",
+    "classification": "content",
+    "sectionId": "o0334-6-token"
+  },
+  {
+    "pdfPage": 124,
+    "printedPageLabel": "115",
+    "classification": "content",
+    "sectionId": "o0339-encoding"
+  },
+  {
+    "pdfPage": 125,
+    "printedPageLabel": "116",
+    "classification": "content",
+    "sectionId": "o0342-11-padding-attention-mask"
+  },
+  {
+    "pdfPage": 126,
+    "printedPageLabel": "117",
+    "classification": "content",
+    "sectionId": "o0345-14-token-stream-example"
+  },
+  {
+    "pdfPage": 127,
+    "printedPageLabel": "118",
+    "classification": "content",
+    "sectionId": "o0349-18-week-9-week-10"
+  },
+  {
+    "pdfPage": 128,
+    "printedPageLabel": "119",
+    "classification": "content",
+    "sectionId": "o0349-18-week-9-week-10"
+  },
+  {
+    "pdfPage": 129,
+    "printedPageLabel": "120",
+    "classification": "content",
+    "sectionId": "o0353-configuration"
+  },
+  {
+    "pdfPage": 130,
+    "printedPageLabel": "121",
+    "classification": "content",
+    "sectionId": "o0356-forward-training-inference"
+  },
+  {
+    "pdfPage": 131,
+    "printedPageLabel": "122",
+    "classification": "content",
+    "sectionId": "o0357-4-causal-self-attention-class"
+  },
+  {
+    "pdfPage": 132,
+    "printedPageLabel": "123",
+    "classification": "content",
+    "sectionId": "o0360-6-feedforward-block"
+  },
+  {
+    "pdfPage": 133,
+    "printedPageLabel": "124",
+    "classification": "content",
+    "sectionId": "o0361-7-gpt-model"
+  },
+  {
+    "pdfPage": 134,
+    "printedPageLabel": "125",
+    "classification": "content",
+    "sectionId": "o0364-9-parameter"
+  },
+  {
+    "pdfPage": 135,
+    "printedPageLabel": "126",
+    "classification": "content",
+    "sectionId": "o0369-block-ffn"
+  },
+  {
+    "pdfPage": 136,
+    "printedPageLabel": "127",
+    "classification": "content",
+    "sectionId": "o0372-12-shape"
+  },
+  {
+    "pdfPage": 137,
+    "printedPageLabel": "128",
+    "classification": "content",
+    "sectionId": "o0375-15-week-2-gpt"
+  },
+  {
+    "pdfPage": 138,
+    "printedPageLabel": "129",
+    "classification": "content",
+    "sectionId": "o0377-17-week-10-week-11"
+  },
+  {
+    "pdfPage": 139,
+    "printedPageLabel": "130",
+    "classification": "content",
+    "sectionId": "o0382-training-step"
+  },
+  {
+    "pdfPage": 140,
+    "printedPageLabel": "131",
+    "classification": "content",
+    "sectionId": "o0385-adamw-gradient"
+  },
+  {
+    "pdfPage": 141,
+    "printedPageLabel": "132",
+    "classification": "content",
+    "sectionId": "o0388-section"
+  },
+  {
+    "pdfPage": 142,
+    "printedPageLabel": "133",
+    "classification": "content",
+    "sectionId": "o0390-6-loss"
+  },
+  {
+    "pdfPage": 143,
+    "printedPageLabel": "134",
+    "classification": "content",
+    "sectionId": "o0393-8-validation"
+  },
+  {
+    "pdfPage": 144,
+    "printedPageLabel": "135",
+    "classification": "content",
+    "sectionId": "o0396-11-overfit-one-batch-test"
+  },
+  {
+    "pdfPage": 145,
+    "printedPageLabel": "136",
+    "classification": "content",
+    "sectionId": "o0398-13-inference-training"
+  },
+  {
+    "pdfPage": 146,
+    "printedPageLabel": "137",
+    "classification": "content",
+    "sectionId": "o0401-16-temperature"
+  },
+  {
+    "pdfPage": 147,
+    "printedPageLabel": "138",
+    "classification": "content",
+    "sectionId": "o0403-18-generation-loop"
+  },
+  {
+    "pdfPage": 148,
+    "printedPageLabel": "139",
+    "classification": "content",
+    "sectionId": "o0410-validation"
+  },
+  {
+    "pdfPage": 149,
+    "printedPageLabel": "140",
+    "classification": "content",
+    "sectionId": "o0412-22-week-11-week-12"
+  },
+  {
+    "pdfPage": 150,
+    "printedPageLabel": "141",
+    "classification": "content",
+    "sectionId": "o0416-2-pipeline"
+  },
+  {
+    "pdfPage": 151,
+    "printedPageLabel": "142",
+    "classification": "content",
+    "sectionId": "o0418-4-training-batch"
+  },
+  {
+    "pdfPage": 152,
+    "printedPageLabel": "143",
+    "classification": "content",
+    "sectionId": "o0421-7-q-k-v-shape-trace"
+  },
+  {
+    "pdfPage": 153,
+    "printedPageLabel": "144",
+    "classification": "content",
+    "sectionId": "o0424-10-backward-trace"
+  },
+  {
+    "pdfPage": 154,
+    "printedPageLabel": "145",
+    "classification": "content",
+    "sectionId": "o0427-13-training"
+  },
+  {
+    "pdfPage": 155,
+    "printedPageLabel": "146",
+    "classification": "content",
+    "sectionId": "o0430-16"
+  },
+  {
+    "pdfPage": 156,
+    "printedPageLabel": "147",
+    "classification": "content",
+    "sectionId": "o0435-18-character-tokenizer-subword"
+  },
+  {
+    "pdfPage": 157,
+    "printedPageLabel": "148",
+    "classification": "content",
+    "sectionId": "o0441-gradient"
+  },
+  {
+    "pdfPage": 158,
+    "printedPageLabel": "149",
+    "classification": "content",
+    "sectionId": "o0454-week-10"
+  },
+  {
+    "pdfPage": 159,
+    "printedPageLabel": "150",
+    "classification": "content",
+    "sectionId": "o0458-23"
+  },
+  {
+    "pdfPage": 160,
+    "printedPageLabel": "151",
+    "classification": "content",
+    "sectionId": "o0459-24"
+  },
+  {
+    "pdfPage": 161,
+    "printedPageLabel": "152",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 162,
+    "printedPageLabel": "153",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 163,
+    "printedPageLabel": "154",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 164,
+    "printedPageLabel": "155",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 165,
+    "printedPageLabel": "156",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 166,
+    "printedPageLabel": "157",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 167,
+    "printedPageLabel": "158",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 168,
+    "printedPageLabel": "159",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 169,
+    "printedPageLabel": "160",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  },
+  {
+    "pdfPage": 170,
+    "printedPageLabel": "161",
+    "classification": "content",
+    "sectionId": "o0460-a-mini-gpt"
+  }
+]

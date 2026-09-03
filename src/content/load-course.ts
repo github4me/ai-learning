@@ -2,7 +2,6 @@ import {
   CourseSchema,
   type ContentBlock,
   type Course,
-  type CourseUnit,
   type SectionNode,
 } from './schema';
 
@@ -49,6 +48,7 @@ function assertCourseInvariants(course: Course): void {
   const ids = new Set<string>();
   const aliases = new Set<string>();
   const sections: SectionNode[] = [];
+  collectSections(course.overview, sections);
   for (const unit of course.units) collectSections(unit, sections);
   for (const section of sections) {
     if (ids.has(section.id) || aliases.has(section.id))
@@ -82,11 +82,11 @@ export function flattenSections(unit: SectionNode): readonly SectionNode[] {
 }
 
 export function findSection(
-  course: Pick<Course, 'units'>,
+  course: Pick<Course, 'overview' | 'units'>,
   idOrAlias: string,
 ): SectionNode | undefined {
-  for (const unit of course.units) {
-    for (const section of flattenSections(unit)) {
+  for (const root of [course.overview, ...course.units]) {
+    for (const section of flattenSections(root)) {
       if (section.id === idOrAlias || section.aliases.includes(idOrAlias))
         return section;
     }

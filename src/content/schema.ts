@@ -213,6 +213,7 @@ export interface Course {
   description: string;
   sourceFilename: string;
   version: string;
+  overview: SectionNode;
   units: CourseUnit[];
   glossary?: GlossaryEntry[];
 }
@@ -221,20 +222,31 @@ export const CourseSchema: z.ZodType<Course> = z.object({
   description: nonEmptyText,
   sourceFilename: nonEmptyText,
   version: nonEmptyText,
+  overview: SectionNodeSchema,
   units: z.array(z.union([WeekUnitSchema, AppendixUnitSchema])),
   glossary: z.array(GlossaryEntrySchema).optional(),
 });
 
-export const PageManifestEntrySchema = z.object({
-  pdfPage: z.int().min(1).max(170),
-  classification: z.enum([
-    'content',
-    'frontMatter',
-    'navigationReplaced',
-    'merged',
-  ]),
-  sectionId: stableId.optional(),
-  mergedIntoSectionId: stableId.optional(),
-});
+export const PageManifestEntrySchema = z
+  .object({
+    pdfPage: z.int().min(1).max(170),
+    printedPageLabel: nonEmptyText.optional(),
+    classification: z.enum([
+      'content',
+      'frontMatter',
+      'navigationReplaced',
+      'merged',
+    ]),
+    reason: nonEmptyText.optional(),
+    sectionId: stableId.optional(),
+    mergedIntoSectionId: stableId.optional(),
+  })
+  .refine(
+    (entry) => entry.classification === 'content' || entry.reason !== undefined,
+    {
+      message: 'A non-content page classification requires a reason',
+      path: ['reason'],
+    },
+  );
 export const PageManifestSchema = z.array(PageManifestEntrySchema);
 export type PageManifestEntry = z.infer<typeof PageManifestEntrySchema>;

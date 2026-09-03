@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "normalize:content": "tsx scripts/normalize-course.mts",
     "validate:content": "tsx scripts/validate-content.mts"
   },
   "dependencies": {
