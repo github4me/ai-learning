@@ -22,8 +22,9 @@ function inlineText(nodes: readonly InlineNode[]): string {
       switch (node.type) {
         case 'text':
         case 'inlineCode':
-        case 'inlineMath':
           return node.value;
+        case 'inlineMath':
+          return node.accessibleText;
         case 'strong':
         case 'emphasis':
         case 'link':

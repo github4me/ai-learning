@@ -18,10 +18,16 @@ import type {
 import {
   APPENDIX_CORRECTION,
   CODE_CORRECTIONS,
+  COURSE_CONTENT_CORRECTIONS,
   FORMULA_CORRECTIONS,
   KNOWLEDGE_CHECK_OUTLINE_INDEXES,
   TABLE_CORRECTIONS,
+  assertCourseContentCorrectionLedger,
+  courseContentCorrectionFingerprint,
+  courseContentCorrectionOutcome,
+  type CorrectionAuditEntry,
   type LineRangeCorrection,
+  type ReviewedCourseCorrection,
 } from './content-corrections.mts';
 import {
   assertCorrectionBackedDecision,
@@ -780,11 +786,27 @@ for (const page of raw.pages) {
   }
 }
 
+function inlineProjection(nodes: readonly InlineNode[]): string {
+  return nodes
+    .map((node) => {
+      switch (node.type) {
+        case 'strong':
+        case 'emphasis':
+        case 'link':
+          return inlineProjection(node.children);
+        case 'inlineMath':
+          return node.accessibleText;
+        case 'text':
+        case 'inlineCode':
+          return node.value;
+      }
+    })
+    .join('');
+}
+
 function paragraphValue(block: ContentBlock): string | undefined {
   if (block.type !== 'paragraph') return undefined;
-  return block.children
-    .map((node) => ('value' in node ? node.value : ''))
-    .join('');
+  return inlineProjection(block.children);
 }
 
 function redirectAssignments(oldIds: Set<string>, newId: string): void {
@@ -1107,6 +1129,1055 @@ for (const outline of raw.outline) {
   }
 }
 
+type CurrentTargetSnapshot =
+  | {
+      kind: 'paragraph';
+      sectionId: string;
+      blockIndex: number;
+      blockId: string;
+      children: InlineNode[];
+    }
+  | {
+      kind: 'paragraphs';
+      targets: {
+        sectionId: string;
+        blockIndex: number;
+        blockId: string;
+        children: InlineNode[];
+      }[];
+    }
+  | {
+      kind: 'list';
+      sectionId: string;
+      blockIndex: number;
+      blockId: string;
+      ordered: boolean;
+      items: InlineNode[][];
+    }
+  | {
+      kind: 'listItem';
+      sectionId: string;
+      blockIndex: number;
+      blockId: string;
+      itemIndex: number;
+      children: InlineNode[];
+    }
+  | { kind: 'sectionTitle'; sectionId: string; title: string }
+  | {
+      kind: 'conceptChain';
+      sectionId: string;
+      blockIndex: number;
+      blockId: string;
+      steps: string[];
+    }
+  | {
+      kind: 'formulaAbsorption';
+      sectionId: string;
+      blocks: (
+        | {
+            blockIndex: number;
+            blockId: string;
+            type: 'formula';
+            latex: string;
+            accessibleText: string;
+          }
+        | {
+            blockIndex: number;
+            blockId: string;
+            type: 'paragraph';
+            children: InlineNode[];
+          }
+      )[];
+    }
+  | {
+      kind: 'formulaReference';
+      formulas: {
+        candidateId: string;
+        blockId: string;
+        contentCorrectionId: string | null;
+        latex: string;
+        accessibleText: string;
+        sourceGeometryChecksum: string;
+      }[];
+    }
+  | {
+      kind: 'sourceOnlyNoop';
+      sectionId: string;
+      title: string;
+      introBlockId: string;
+      introChildren: InlineNode[];
+      codeBlockId: string;
+      language: string;
+      filename: string;
+      codeSha256: string;
+    };
+
+type DirectBlockLocation = {
+  section: SectionNode;
+  container: ContentBlock[];
+  block: ContentBlock;
+  blockIndex: number;
+};
+
+type CourseCorrectionPreflight = {
+  correction: ReviewedCourseCorrection;
+  snapshot: CurrentTargetSnapshot | null;
+  actualTargetFingerprint: string | null;
+  target: CorrectionAuditEntry['target'];
+};
+
+function sameOrderedValues<T>(
+  actual: readonly T[],
+  expected: readonly T[],
+): boolean {
+  return (
+    actual.length === expected.length &&
+    actual.every((value, index) => value === expected[index])
+  );
+}
+
+function uniqueInOrder(values: readonly string[]): string[] {
+  return [...new Set(values)];
+}
+
+function cloneInlineNodes(nodes: readonly InlineNode[]): InlineNode[] {
+  return nodes.map((node): InlineNode => {
+    switch (node.type) {
+      case 'text':
+      case 'inlineCode':
+        return { type: node.type, value: node.value };
+      case 'inlineMath':
+        return {
+          type: 'inlineMath',
+          value: node.value,
+          accessibleText: node.accessibleText,
+        };
+      case 'strong':
+      case 'emphasis':
+        return { type: node.type, children: cloneInlineNodes(node.children) };
+      case 'link':
+        return {
+          type: 'link',
+          href: node.href,
+          children: cloneInlineNodes(node.children),
+        };
+    }
+  });
+}
+
+function indexSectionTree(
+  rootsToIndex: readonly SectionNode[],
+): Map<string, SectionNode> {
+  const result = new Map<string, SectionNode>();
+  const visit = (section: SectionNode): void => {
+    if (result.has(section.id)) fail(`Duplicate section ID ${section.id}`);
+    result.set(section.id, section);
+    section.children.forEach(visit);
+  };
+  rootsToIndex.forEach(visit);
+  return result;
+}
+
+function indexCourseBlocks(
+  sectionById: ReadonlyMap<string, SectionNode>,
+): Map<string, DirectBlockLocation> {
+  const result = new Map<string, DirectBlockLocation>();
+  const visit = (
+    section: SectionNode,
+    container: ContentBlock[],
+    block: ContentBlock,
+    blockIndex: number,
+  ): void => {
+    if (result.has(block.id)) fail(`Duplicate block ID ${block.id}`);
+    result.set(block.id, { section, container, block, blockIndex });
+    if (block.type === 'callout') {
+      block.blocks.forEach((child, index) =>
+        visit(section, block.blocks, child, index),
+      );
+    }
+    if (block.type === 'knowledgeCheck' && block.answer) {
+      block.answer.forEach((child, index) =>
+        visit(section, block.answer!, child, index),
+      );
+    }
+  };
+  for (const section of sectionById.values()) {
+    section.blocks.forEach((block, index) =>
+      visit(section, section.blocks, block, index),
+    );
+  }
+  return result;
+}
+
+function resolveSection(
+  sectionById: ReadonlyMap<string, SectionNode>,
+  sectionIdToResolve: string,
+): SectionNode {
+  return (
+    sectionById.get(sectionIdToResolve) ??
+    fail(`Course correction target section ${sectionIdToResolve} is missing`)
+  );
+}
+
+function resolveDirectBlock(
+  blockById: ReadonlyMap<string, DirectBlockLocation>,
+  sectionIdToResolve: string,
+  blockId: string,
+  expectedType: ContentBlock['type'],
+): DirectBlockLocation {
+  const location =
+    blockById.get(blockId) ??
+    fail(`Course correction target block ${blockId} is missing`);
+  if (
+    location.section.id !== sectionIdToResolve ||
+    location.container !== location.section.blocks ||
+    location.block.type !== expectedType
+  ) {
+    fail(
+      `Course correction target ${blockId} is not one direct ${expectedType} block in ${sectionIdToResolve}`,
+    );
+  }
+  return location;
+}
+
+function correctionEvidenceIncludesPage(
+  correction: ReviewedCourseCorrection,
+  pdfPage: number,
+): boolean {
+  return correction.sourceEvidence.some((evidence) =>
+    evidence.kind === 'lineSpans'
+      ? evidence.pdfPage === pdfPage
+      : pdfPage >= evidence.pageRange[0] && pdfPage <= evidence.pageRange[1],
+  );
+}
+
+function assertCorrectionTargetPage(
+  correction: ReviewedCourseCorrection,
+  pdfPage: number,
+  targetId: string,
+): void {
+  if (!correctionEvidenceIncludesPage(correction, pdfPage)) {
+    fail(
+      `${correction.correctionId} target ${targetId} is on unguarded physical page ${pdfPage}`,
+    );
+  }
+}
+
+function paragraphTargetLocations(
+  correction: ReviewedCourseCorrection & {
+    target: Extract<ReviewedCourseCorrection['target'], { kind: 'paragraph' }>;
+  },
+  blockById: ReadonlyMap<string, DirectBlockLocation>,
+): DirectBlockLocation[] {
+  const { target } = correction;
+  if (
+    target.patches.length === 0 ||
+    new Set(target.patches.map((patch) => patch.blockId)).size !==
+      target.patches.length
+  ) {
+    fail(`${correction.correctionId} has invalid paragraph patches`);
+  }
+  const patchByBlockId = new Map(
+    target.patches.map((patch) => [patch.blockId, patch]),
+  );
+  let locations: DirectBlockLocation[];
+  if (target.guardBlockIds) {
+    const sectionIds = uniqueInOrder(
+      target.patches.map((patch) => patch.sectionId),
+    );
+    if (
+      sectionIds.length !== 1 ||
+      target.guardBlockIds.length === 0 ||
+      new Set(target.guardBlockIds).size !== target.guardBlockIds.length ||
+      target.patches.some(
+        (patch) => !target.guardBlockIds!.includes(patch.blockId),
+      )
+    ) {
+      fail(`${correction.correctionId} has invalid paragraph context guards`);
+    }
+    locations = target.guardBlockIds.map((blockId) =>
+      resolveDirectBlock(blockById, sectionIds[0], blockId, 'paragraph'),
+    );
+  } else {
+    locations = target.patches.map((patch) =>
+      resolveDirectBlock(
+        blockById,
+        patch.sectionId,
+        patch.blockId,
+        'paragraph',
+      ),
+    );
+  }
+  for (const location of locations) {
+    const patch = patchByBlockId.get(location.block.id);
+    if (patch && patch.sectionId !== location.section.id) {
+      fail(`${correction.correctionId} paragraph section assignment changed`);
+    }
+    assertCorrectionTargetPage(
+      correction,
+      location.block.source.pdfPage,
+      location.block.id,
+    );
+  }
+  return locations;
+}
+
+function preflightCourseCorrection(
+  correction: ReviewedCourseCorrection,
+  sectionById: ReadonlyMap<string, SectionNode>,
+  blockById: ReadonlyMap<string, DirectBlockLocation>,
+  formulaByBlockId: ReturnType<
+    typeof assertCourseContentCorrectionLedger
+  >['formulaByBlockId'],
+): CourseCorrectionPreflight {
+  const { target } = correction;
+  let snapshot: CurrentTargetSnapshot | null;
+  let auditTarget: CorrectionAuditEntry['target'];
+
+  switch (target.kind) {
+    case 'paragraph': {
+      const locations = paragraphTargetLocations(
+        correction as ReviewedCourseCorrection & { target: typeof target },
+        blockById,
+      );
+      const targets = locations.map((location) => {
+        if (location.block.type !== 'paragraph')
+          return fail(`${location.block.id} stopped being a paragraph`);
+        return {
+          sectionId: location.section.id,
+          blockIndex: location.blockIndex,
+          blockId: location.block.id,
+          children: cloneInlineNodes(location.block.children),
+        };
+      });
+      snapshot =
+        targets.length === 1
+          ? { kind: 'paragraph', ...targets[0] }
+          : { kind: 'paragraphs', targets };
+      auditTarget = {
+        kind: target.kind,
+        sectionIds: uniqueInOrder(
+          locations.map((location) => location.section.id),
+        ),
+        blockIds: locations.map((location) => location.block.id),
+      };
+      break;
+    }
+    case 'list': {
+      const location = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.blockId,
+        'list',
+      );
+      if (location.block.type !== 'list')
+        return fail('Unreachable list target');
+      assertCorrectionTargetPage(
+        correction,
+        location.block.source.pdfPage,
+        location.block.id,
+      );
+      snapshot = {
+        kind: 'list',
+        sectionId: target.sectionId,
+        blockIndex: location.blockIndex,
+        blockId: target.blockId,
+        ordered: location.block.ordered,
+        items: location.block.items.map(cloneInlineNodes),
+      };
+      auditTarget = {
+        kind: target.kind,
+        sectionIds: [target.sectionId],
+        blockIds: [target.blockId],
+      };
+      break;
+    }
+    case 'listItem': {
+      const location = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.blockId,
+        'list',
+      );
+      if (location.block.type !== 'list')
+        return fail('Unreachable list-item target');
+      const children =
+        location.block.items[target.itemIndex] ??
+        fail(`${correction.correctionId} list item is missing`);
+      assertCorrectionTargetPage(
+        correction,
+        location.block.source.pdfPage,
+        location.block.id,
+      );
+      snapshot = {
+        kind: 'listItem',
+        sectionId: target.sectionId,
+        blockIndex: location.blockIndex,
+        blockId: target.blockId,
+        itemIndex: target.itemIndex,
+        children: cloneInlineNodes(children),
+      };
+      auditTarget = {
+        kind: target.kind,
+        sectionIds: [target.sectionId],
+        blockIds: [target.blockId],
+        itemIndex: target.itemIndex,
+      };
+      break;
+    }
+    case 'sectionTitle': {
+      const section = resolveSection(sectionById, target.sectionId);
+      assertCorrectionTargetPage(
+        correction,
+        section.source.pdfPage,
+        section.id,
+      );
+      snapshot = {
+        kind: 'sectionTitle',
+        sectionId: target.sectionId,
+        title: section.title,
+      };
+      auditTarget = {
+        kind: target.kind,
+        sectionIds: [target.sectionId],
+        blockIds: [],
+      };
+      break;
+    }
+    case 'conceptChain': {
+      const location = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.blockId,
+        'conceptChain',
+      );
+      if (location.block.type !== 'conceptChain')
+        return fail('Unreachable concept-chain target');
+      assertCorrectionTargetPage(
+        correction,
+        location.block.source.pdfPage,
+        location.block.id,
+      );
+      snapshot = {
+        kind: 'conceptChain',
+        sectionId: target.sectionId,
+        blockIndex: location.blockIndex,
+        blockId: target.blockId,
+        steps: [...location.block.steps],
+      };
+      auditTarget = {
+        kind: target.kind,
+        sectionIds: [target.sectionId],
+        blockIds: [target.blockId],
+      };
+      break;
+    }
+    case 'formulaAbsorption': {
+      if (
+        target.absorbedBlockIds.length !== 2 ||
+        new Set([target.formulaBlockId, ...target.absorbedBlockIds]).size !== 3
+      ) {
+        return fail(`${correction.correctionId} has invalid absorption IDs`);
+      }
+      const locations = [
+        resolveDirectBlock(
+          blockById,
+          target.sectionId,
+          target.formulaBlockId,
+          'formula',
+        ),
+        ...target.absorbedBlockIds.map((blockId) =>
+          resolveDirectBlock(blockById, target.sectionId, blockId, 'paragraph'),
+        ),
+      ].sort((left, right) => left.blockIndex - right.blockIndex);
+      if (
+        locations.some(
+          (location, index) =>
+            location.blockIndex !== locations[0].blockIndex + index,
+        )
+      ) {
+        return fail(
+          `${correction.correctionId} absorption blocks are not adjacent`,
+        );
+      }
+      for (const location of locations) {
+        assertCorrectionTargetPage(
+          correction,
+          location.block.source.pdfPage,
+          location.block.id,
+        );
+      }
+      snapshot = {
+        kind: 'formulaAbsorption',
+        sectionId: target.sectionId,
+        blocks: locations.map((location) => {
+          if (location.block.type === 'formula') {
+            return {
+              blockIndex: location.blockIndex,
+              blockId: location.block.id,
+              type: 'formula' as const,
+              latex: location.block.latex,
+              accessibleText: location.block.accessibleText,
+            };
+          }
+          if (location.block.type === 'paragraph') {
+            return {
+              blockIndex: location.blockIndex,
+              blockId: location.block.id,
+              type: 'paragraph' as const,
+              children: cloneInlineNodes(location.block.children),
+            };
+          }
+          return fail(`${correction.correctionId} absorption type changed`);
+        }),
+      };
+      auditTarget = {
+        kind: target.kind,
+        sectionIds: [target.sectionId],
+        blockIds: [target.formulaBlockId, ...target.absorbedBlockIds],
+      };
+      break;
+    }
+    case 'formulaReference': {
+      if (
+        target.blockIds.length === 0 ||
+        new Set(target.blockIds).size !== target.blockIds.length
+      ) {
+        return fail(
+          `${correction.correctionId} has invalid formula references`,
+        );
+      }
+      const formulas = target.blockIds.map((blockId) => {
+        const formula =
+          formulaByBlockId.get(blockId) ??
+          fail(`${correction.correctionId} formula ${blockId} is missing`);
+        const location =
+          blockById.get(blockId) ??
+          fail(
+            `${correction.correctionId} runtime formula ${blockId} is missing`,
+          );
+        if (
+          location.container !== location.section.blocks ||
+          location.block.type !== 'formula' ||
+          location.block.source.pdfPage !== formula.pdfPage ||
+          location.block.latex !== formula.latex ||
+          location.block.accessibleText !== formula.accessibleText ||
+          formula.blockId !== blockId
+        ) {
+          fail(`${correction.correctionId} runtime formula ${blockId} drifted`);
+        }
+        assertCorrectionTargetPage(correction, formula.pdfPage, blockId);
+        return {
+          candidateId: formula.candidateId,
+          blockId: formula.blockId,
+          contentCorrectionId: formula.contentCorrectionId ?? null,
+          latex: formula.latex,
+          accessibleText: formula.accessibleText,
+          sourceGeometryChecksum: formula.sourceGeometryChecksum,
+        };
+      });
+      snapshot = { kind: 'formulaReference', formulas };
+      auditTarget = {
+        kind: target.kind,
+        sectionIds: uniqueInOrder(
+          target.blockIds.map((blockId) => blockById.get(blockId)!.section.id),
+        ),
+        blockIds: [...target.blockIds],
+      };
+      break;
+    }
+    case 'excludedNavigation':
+      if (
+        !correction.candidateId ||
+        blockById.has(correction.candidateId) ||
+        sectionById.has(correction.candidateId)
+      ) {
+        return fail(
+          `${correction.correctionId} navigation exclusion resolved to runtime content`,
+        );
+      }
+      snapshot = null;
+      auditTarget = { kind: target.kind, sectionIds: [], blockIds: [] };
+      break;
+    case 'sourceOnlyNoop': {
+      if (
+        target.comparisonBlockIds.length !== 2 ||
+        new Set(target.comparisonBlockIds).size !== 2
+      ) {
+        return fail(`${correction.correctionId} has invalid comparison blocks`);
+      }
+      const section = resolveSection(sectionById, target.sectionId);
+      const intro = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.comparisonBlockIds[0],
+        'paragraph',
+      );
+      const code = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.comparisonBlockIds[1],
+        'code',
+      );
+      if (intro.block.type !== 'paragraph' || code.block.type !== 'code')
+        return fail('Unreachable source-only target');
+      assertCorrectionTargetPage(
+        correction,
+        intro.block.source.pdfPage,
+        intro.block.id,
+      );
+      assertCorrectionTargetPage(
+        correction,
+        code.block.source.pdfPage,
+        code.block.id,
+      );
+      snapshot = {
+        kind: 'sourceOnlyNoop',
+        sectionId: target.sectionId,
+        title: section.title,
+        introBlockId: intro.block.id,
+        introChildren: cloneInlineNodes(intro.block.children),
+        codeBlockId: code.block.id,
+        language: code.block.language,
+        filename:
+          code.block.filename ??
+          fail(`${correction.correctionId} comparison code has no filename`),
+        codeSha256: sha256(code.block.code),
+      };
+      auditTarget = {
+        kind: target.kind,
+        sectionIds: [target.sectionId],
+        blockIds: [...target.comparisonBlockIds],
+      };
+      break;
+    }
+  }
+
+  if (correction.sourceProjection.kind === 'replace') {
+    for (const fragment of correction.sourceProjection.targetFragments) {
+      if ('sectionId' in fragment) {
+        resolveSection(sectionById, fragment.sectionId);
+        if (!auditTarget.sectionIds.includes(fragment.sectionId)) {
+          fail(`${correction.correctionId} projects to an unguarded section`);
+        }
+        continue;
+      }
+      const location =
+        blockById.get(fragment.blockId) ??
+        fail(`${correction.correctionId} projection block is missing`);
+      if (
+        location.container !== location.section.blocks ||
+        !auditTarget.blockIds.includes(fragment.blockId) ||
+        (fragment.field === 'children' &&
+          location.block.type !== 'paragraph') ||
+        (fragment.field === 'item' &&
+          (location.block.type !== 'list' ||
+            location.block.items[fragment.itemIndex] === undefined)) ||
+        (fragment.field === 'steps' &&
+          location.block.type !== 'conceptChain') ||
+        (fragment.field === 'accessibleText' &&
+          location.block.type !== 'formula')
+      ) {
+        fail(`${correction.correctionId} has an invalid target projection`);
+      }
+    }
+  }
+
+  const actualTargetFingerprint =
+    snapshot === null ? null : courseContentCorrectionFingerprint(snapshot);
+  if (actualTargetFingerprint !== correction.expectedTargetFingerprint) {
+    fail(
+      `${correction.correctionId} target fingerprint mismatch: expected ${correction.expectedTargetFingerprint}, got ${actualTargetFingerprint}`,
+    );
+  }
+  return {
+    correction,
+    snapshot,
+    actualTargetFingerprint,
+    target: auditTarget,
+  };
+}
+
+function mutableDirectBlock(
+  sectionById: ReadonlyMap<string, SectionNode>,
+  sectionIdToResolve: string,
+  blockId: string,
+  expectedType: ContentBlock['type'],
+): ContentBlock {
+  const section = resolveSection(sectionById, sectionIdToResolve);
+  const indexes = section.blocks
+    .map((block, index) => (block.id === blockId ? index : -1))
+    .filter((index) => index >= 0);
+  if (
+    indexes.length !== 1 ||
+    section.blocks[indexes[0]].type !== expectedType
+  ) {
+    return fail(
+      `Course correction target ${blockId} is not one direct ${expectedType} block in ${sectionIdToResolve}`,
+    );
+  }
+  return section.blocks[indexes[0]];
+}
+
+function applyCourseCorrection(
+  correction: ReviewedCourseCorrection,
+  sectionById: ReadonlyMap<string, SectionNode>,
+  assignments?: { spanId: string; blockId: string }[],
+): void {
+  if (courseContentCorrectionOutcome(correction) !== 'applied') return;
+  const { target } = correction;
+  switch (target.kind) {
+    case 'paragraph':
+      for (const patch of target.patches) {
+        const block = mutableDirectBlock(
+          sectionById,
+          patch.sectionId,
+          patch.blockId,
+          'paragraph',
+        );
+        if (block.type !== 'paragraph')
+          return fail('Unreachable paragraph patch');
+        block.children = cloneInlineNodes(patch.children);
+      }
+      return;
+    case 'list': {
+      const block = mutableDirectBlock(
+        sectionById,
+        target.sectionId,
+        target.blockId,
+        'list',
+      );
+      if (block.type !== 'list') return fail('Unreachable list patch');
+      block.items = target.items.map(cloneInlineNodes);
+      return;
+    }
+    case 'listItem': {
+      const block = mutableDirectBlock(
+        sectionById,
+        target.sectionId,
+        target.blockId,
+        'list',
+      );
+      if (block.type !== 'list') return fail('Unreachable list-item patch');
+      if (block.items[target.itemIndex] === undefined)
+        return fail(`${correction.correctionId} list item is missing`);
+      block.items[target.itemIndex] = cloneInlineNodes(target.children);
+      return;
+    }
+    case 'sectionTitle':
+      resolveSection(sectionById, target.sectionId).title = target.title;
+      return;
+    case 'conceptChain': {
+      const block = mutableDirectBlock(
+        sectionById,
+        target.sectionId,
+        target.blockId,
+        'conceptChain',
+      );
+      if (block.type !== 'conceptChain')
+        return fail('Unreachable concept-chain patch');
+      block.steps = [...target.steps];
+      return;
+    }
+    case 'formulaAbsorption': {
+      const section = resolveSection(sectionById, target.sectionId);
+      const blockIds = new Set([
+        target.formulaBlockId,
+        ...target.absorbedBlockIds,
+      ]);
+      const indexes = section.blocks
+        .map((block, index) => (blockIds.has(block.id) ? index : -1))
+        .filter((index) => index >= 0)
+        .sort((left, right) => left - right);
+      if (
+        indexes.length !== 3 ||
+        indexes.some((index, offset) => index !== indexes[0] + offset)
+      ) {
+        return fail(`${correction.correctionId} absorption targets drifted`);
+      }
+      const formula = section.blocks.find(
+        (block) => block.id === target.formulaBlockId,
+      );
+      if (
+        formula?.type !== 'formula' ||
+        target.absorbedBlockIds.some(
+          (blockId) =>
+            section.blocks.find((block) => block.id === blockId)?.type !==
+            'paragraph',
+        )
+      ) {
+        return fail(
+          `${correction.correctionId} absorption target types drifted`,
+        );
+      }
+      formula.latex = target.latex;
+      formula.accessibleText = target.accessibleText;
+      section.blocks.splice(indexes[0], 3, formula);
+      if (assignments) {
+        const removedIds = new Set(target.absorbedBlockIds);
+        for (const assignment of assignments) {
+          if (removedIds.has(assignment.blockId)) {
+            assignment.blockId = target.formulaBlockId;
+          }
+        }
+      }
+      return;
+    }
+    case 'formulaReference':
+    case 'excludedNavigation':
+    case 'sourceOnlyNoop':
+      return;
+  }
+}
+
+function assertAppliedReplacement(
+  preflight: CourseCorrectionPreflight,
+  sectionById: ReadonlyMap<string, SectionNode>,
+  blockById: ReadonlyMap<string, DirectBlockLocation>,
+  formulaByBlockId: ReturnType<
+    typeof assertCourseContentCorrectionLedger
+  >['formulaByBlockId'],
+): void {
+  const { correction } = preflight;
+  if (courseContentCorrectionOutcome(correction) !== 'applied') {
+    const post = preflightCourseCorrection(
+      correction,
+      sectionById,
+      blockById,
+      formulaByBlockId,
+    );
+    if (post.actualTargetFingerprint !== preflight.actualTargetFingerprint) {
+      fail(`${correction.correctionId} non-mutating target changed`);
+    }
+    return;
+  }
+  const { target } = correction;
+  switch (target.kind) {
+    case 'paragraph':
+      for (const patch of target.patches) {
+        const location = resolveDirectBlock(
+          blockById,
+          patch.sectionId,
+          patch.blockId,
+          'paragraph',
+        );
+        if (
+          location.block.type !== 'paragraph' ||
+          JSON.stringify(location.block.children) !==
+            JSON.stringify(patch.children)
+        ) {
+          fail(`${correction.correctionId} paragraph replacement failed`);
+        }
+      }
+      return;
+    case 'list': {
+      const location = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.blockId,
+        'list',
+      );
+      if (
+        location.block.type !== 'list' ||
+        location.block.ordered !== target.ordered ||
+        JSON.stringify(location.block.items) !== JSON.stringify(target.items)
+      ) {
+        fail(`${correction.correctionId} list replacement failed`);
+      }
+      return;
+    }
+    case 'listItem': {
+      const location = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.blockId,
+        'list',
+      );
+      if (
+        location.block.type !== 'list' ||
+        JSON.stringify(location.block.items[target.itemIndex]) !==
+          JSON.stringify(target.children)
+      ) {
+        fail(`${correction.correctionId} list-item replacement failed`);
+      }
+      return;
+    }
+    case 'sectionTitle':
+      if (
+        resolveSection(sectionById, target.sectionId).title !== target.title
+      ) {
+        fail(`${correction.correctionId} section-title replacement failed`);
+      }
+      return;
+    case 'conceptChain': {
+      const location = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.blockId,
+        'conceptChain',
+      );
+      if (
+        location.block.type !== 'conceptChain' ||
+        !sameOrderedValues(location.block.steps, target.steps)
+      ) {
+        fail(`${correction.correctionId} concept-chain replacement failed`);
+      }
+      return;
+    }
+    case 'formulaAbsorption': {
+      const location = resolveDirectBlock(
+        blockById,
+        target.sectionId,
+        target.formulaBlockId,
+        'formula',
+      );
+      if (
+        location.block.type !== 'formula' ||
+        location.block.latex !== target.latex ||
+        location.block.accessibleText !== target.accessibleText ||
+        target.absorbedBlockIds.some((blockId) => blockById.has(blockId))
+      ) {
+        fail(`${correction.correctionId} formula absorption failed`);
+      }
+      return;
+    }
+    case 'formulaReference':
+    case 'excludedNavigation':
+    case 'sourceOnlyNoop':
+      return fail(`${correction.correctionId} has an invalid applied outcome`);
+  }
+}
+
+const courseCorrectionIndex = assertCourseContentCorrectionLedger(
+  raw as SourceAudit,
+  reviewLedger.decisions,
+  formulaReviewLedger,
+);
+const courseCorrectionRoots = raw.outline
+  .filter((outline) => outline.depth === 0)
+  .map(
+    (outline) =>
+      sections.get(outline.outlineIndex) ??
+      fail(`Missing correction-pass root ${outline.outlineIndex}`),
+  );
+const correctionSectionById = indexSectionTree(courseCorrectionRoots);
+if (correctionSectionById.size !== sections.size) {
+  fail('Correction-pass section index does not cover every section');
+}
+const correctionBlockById = indexCourseBlocks(correctionSectionById);
+const sectionIdsBeforeCorrections = [...correctionSectionById.keys()];
+const blockIdsBeforeCorrections = [...correctionBlockById.keys()];
+const correctionPreflights = COURSE_CONTENT_CORRECTIONS.map((correction) =>
+  preflightCourseCorrection(
+    correction,
+    correctionSectionById,
+    correctionBlockById,
+    courseCorrectionIndex.formulaByBlockId,
+  ),
+);
+const expectedAbsorbedAssignmentOwners = new Map<string, string>();
+for (const correction of COURSE_CONTENT_CORRECTIONS) {
+  if (correction.target.kind !== 'formulaAbsorption') continue;
+  const absorbedIds = new Set(correction.target.absorbedBlockIds);
+  const absorbedAssignments = assigned.filter((assignment) =>
+    absorbedIds.has(assignment.blockId),
+  );
+  if (absorbedAssignments.length === 0) {
+    fail(`${correction.correctionId} has no absorbed source assignments`);
+  }
+  for (const assignment of absorbedAssignments) {
+    if (expectedAbsorbedAssignmentOwners.has(assignment.spanId)) {
+      fail(`Absorbed source span ${assignment.spanId} is guarded twice`);
+    }
+    expectedAbsorbedAssignmentOwners.set(
+      assignment.spanId,
+      correction.target.formulaBlockId,
+    );
+  }
+}
+if (expectedAbsorbedAssignmentOwners.size !== 6) {
+  fail('Expected exactly six absorbed paragraph source assignments');
+}
+
+const expectedCorrectionRoots = structuredClone(courseCorrectionRoots);
+const expectedCorrectionSections = indexSectionTree(expectedCorrectionRoots);
+for (const correction of COURSE_CONTENT_CORRECTIONS) {
+  applyCourseCorrection(correction, expectedCorrectionSections);
+}
+for (const correction of COURSE_CONTENT_CORRECTIONS) {
+  applyCourseCorrection(correction, correctionSectionById, assigned);
+}
+if (
+  JSON.stringify(courseCorrectionRoots) !==
+  JSON.stringify(expectedCorrectionRoots)
+) {
+  fail('Course corrections changed content outside the reviewed targets');
+}
+
+const postCorrectionSections = indexSectionTree(courseCorrectionRoots);
+const postCorrectionBlocks = indexCourseBlocks(postCorrectionSections);
+const absorbedParagraphIds = COURSE_CONTENT_CORRECTIONS.flatMap((correction) =>
+  correction.target.kind === 'formulaAbsorption'
+    ? [...correction.target.absorbedBlockIds]
+    : [],
+);
+if (
+  !sameOrderedValues(
+    [...postCorrectionSections.keys()],
+    sectionIdsBeforeCorrections,
+  ) ||
+  !sameOrderedValues(
+    [...postCorrectionBlocks.keys()],
+    blockIdsBeforeCorrections.filter(
+      (blockId) => !absorbedParagraphIds.includes(blockId),
+    ),
+  ) ||
+  assigned.some((assignment) =>
+    absorbedParagraphIds.includes(assignment.blockId),
+  ) ||
+  [...expectedAbsorbedAssignmentOwners].some(
+    ([spanId, formulaBlockId]) =>
+      assigned.filter(
+        (assignment) =>
+          assignment.spanId === spanId && assignment.blockId === formulaBlockId,
+      ).length !== 1,
+  )
+) {
+  fail(
+    'Course correction IDs or absorbed source assignments changed unexpectedly',
+  );
+}
+for (const preflight of correctionPreflights) {
+  assertAppliedReplacement(
+    preflight,
+    postCorrectionSections,
+    postCorrectionBlocks,
+    courseCorrectionIndex.formulaByBlockId,
+  );
+}
+
+const correctionAudit: CorrectionAuditEntry[] = correctionPreflights.map(
+  ({ correction, actualTargetFingerprint, target }) => ({
+    correctionId: correction.correctionId,
+    category: correction.category,
+    ...(correction.candidateId ? { candidateId: correction.candidateId } : {}),
+    ...(correction.contentCorrectionId
+      ? { contentCorrectionId: correction.contentCorrectionId }
+      : {}),
+    outcome: courseContentCorrectionOutcome(correction),
+    target,
+    sourceEvidence: correction.sourceEvidence,
+    expectedTargetFingerprint: correction.expectedTargetFingerprint,
+    actualTargetFingerprint,
+    replacementFingerprint:
+      correction.target.kind === 'excludedNavigation'
+        ? null
+        : courseContentCorrectionFingerprint(correction.target),
+    reviewer: correction.reviewer,
+    status: correction.status,
+  }),
+);
+
 const allSpanIds = raw.pages.flatMap((page) =>
   page.spans.map((span) => span.id),
 );
@@ -1227,12 +2298,6 @@ const manifest: PageManifestEntry[] = raw.pages.map((page) => {
 });
 
 function blockProjection(block: ContentBlock): string {
-  const inlineProjection = (nodes: InlineNode[]): string =>
-    nodes
-      .map((node) =>
-        'children' in node ? inlineProjection(node.children) : node.value,
-      )
-      .join('');
   switch (block.type) {
     case 'paragraph':
       return inlineProjection(block.children);
@@ -1390,6 +2455,7 @@ const report = {
   }),
   specialCandidates,
   candidateAudit,
+  correctionAudit,
   spanAccounting: {
     positionedSpanCount: allSpanIds.length,
     assignedCount: assigned.length,

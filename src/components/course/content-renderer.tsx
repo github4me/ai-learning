@@ -12,6 +12,8 @@ import { FormulaBlock } from './formula-block';
 import { KnowledgeCheck } from '@/src/components/learning/knowledge-check';
 import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- KaTeX HTML+MathML needs one labelled ARIA math wrapper. */
+
 function assertNever(value: never): never {
   throw new Error(`Unsupported course content: ${JSON.stringify(value)}`);
 }
@@ -28,19 +30,24 @@ function renderInlineMath(value: string): string | undefined {
   }
 }
 
-function InlineMath({ value }: { value: string }) {
+function InlineMath({
+  value,
+  accessibleText,
+}: {
+  value: string;
+  accessibleText: string;
+}) {
   const html = renderInlineMath(value);
   if (html) {
     return (
-      <span
-        className="inline-math"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      <span className="inline-math" role="math" aria-label={accessibleText}>
+        <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} />
+      </span>
     );
   }
   return (
-    <math className="inline-math-fallback" aria-label={value}>
-      <mtext>{value}</mtext>
+    <math className="inline-math-fallback" aria-label={accessibleText}>
+      <mtext aria-hidden="true">{value}</mtext>
     </math>
   );
 }
@@ -71,7 +78,13 @@ export function renderInline(nodes: InlineNode[]): ReactNode {
       case 'inlineCode':
         return <code key={index}>{node.value}</code>;
       case 'inlineMath':
-        return <InlineMath key={index} value={node.value} />;
+        return (
+          <InlineMath
+            key={index}
+            value={node.value}
+            accessibleText={node.accessibleText}
+          />
+        );
       case 'link': {
         const children = renderInline(node.children);
         if (!isSafeContentHref(node.href)) {

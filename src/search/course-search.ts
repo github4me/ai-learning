@@ -64,9 +64,10 @@ function tokens(value: string, useSegmenter: boolean): string[] {
 }
 function inlineText(nodes: InlineNode[]): string {
   return nodes
-    .map((node) =>
-      'children' in node ? inlineText(node.children) : node.value,
-    )
+    .map((node) => {
+      if ('children' in node) return inlineText(node.children);
+      return node.type === 'inlineMath' ? node.accessibleText : node.value;
+    })
     .join('');
 }
 function blockText(block: ContentBlock): string {
@@ -76,7 +77,7 @@ function blockText(block: ContentBlock): string {
     case 'list':
       return block.items.map(inlineText).join('\n');
     case 'formula':
-      return `${block.accessibleText}\n${block.latex}`;
+      return block.accessibleText;
     case 'code':
       return `${block.filename ?? ''}\n${block.language}\n${block.code}`;
     case 'table':

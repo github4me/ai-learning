@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 const nonEmptyText = z.string().trim().min(1);
+const nonBlankInlineText = z
+  .string()
+  .refine((value) => value.trim().length > 0, {
+    message: 'Inline text must contain a non-whitespace character',
+  });
 const nonBlankSourceText = z
   .string()
   .refine((value) => value.trim().length > 0, {
@@ -59,19 +64,22 @@ export type SourceRef = z.infer<typeof SourceRefSchema>;
 export type InlineNode =
   | { type: 'text'; value: string }
   | { type: 'strong' | 'emphasis'; children: InlineNode[] }
-  | { type: 'inlineCode' | 'inlineMath'; value: string }
+  | { type: 'inlineCode'; value: string }
+  | { type: 'inlineMath'; value: string; accessibleText: string }
   | { type: 'link'; href: string; children: InlineNode[] };
 
 export const InlineNodeSchema: z.ZodType<InlineNode> = z.lazy(() =>
   z.discriminatedUnion('type', [
-    z.object({ type: z.literal('text'), value: nonEmptyText }),
+    z.object({ type: z.literal('text'), value: nonBlankInlineText }),
     z.object({
       type: z.union([z.literal('strong'), z.literal('emphasis')]),
       children: z.array(InlineNodeSchema).min(1),
     }),
+    z.object({ type: z.literal('inlineCode'), value: nonEmptyText }),
     z.object({
-      type: z.union([z.literal('inlineCode'), z.literal('inlineMath')]),
+      type: z.literal('inlineMath'),
       value: nonEmptyText,
+      accessibleText: nonEmptyText,
     }),
     z.object({
       type: z.literal('link'),
