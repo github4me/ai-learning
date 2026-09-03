@@ -9,6 +9,7 @@ export type RawSpan = {
   size: number;
   flags: number;
   bbox: [number, number, number, number];
+  origin: [number, number];
 };
 
 export type RawLine = {

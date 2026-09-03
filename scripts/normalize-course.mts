@@ -33,6 +33,7 @@ import {
 } from './candidate-review-ledger.mts';
 import { CONTENT_REVIEW_TRUST_ROOT } from './content-review-trust-root.mts';
 import { deriveSourceHeadingAnchors } from './source-heading-anchors.mts';
+import { transcribeOneLineFormula } from './formula-transcription.mts';
 import {
   detectCodeCandidates,
   detectFormulaCandidates,
@@ -41,6 +42,7 @@ import {
   readSourceAudit,
   type DetectedCandidate,
   type FormulaCandidate,
+  type RawSpan,
   type SourceAudit,
 } from './source-audit.mts';
 
@@ -58,15 +60,6 @@ const PUBLIC_FILENAME =
   'AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf';
 const GENERATED_AT = '2026-09-03';
 
-type RawSpan = {
-  id: string;
-  textRaw: string;
-  font: string;
-  size: number;
-  flags: number;
-  bbox: [number, number, number, number];
-  origin: [number, number];
-};
 type RawLine = {
   id: string;
   spanIds: string[];
@@ -755,18 +748,22 @@ for (const page of raw.pages) {
         autoFormula.pdfPage,
         autoFormula.lineIndexes,
       );
-      const accessibleText = lineText(
-        autoFormula.pdfPage,
-        autoFormula.lineIndexes,
-      );
+      const sourceText = lineText(autoFormula.pdfPage, autoFormula.lineIndexes);
+      const rendering =
+        autoFormula.lineIndexes.length === 1
+          ? transcribeOneLineFormula(formulaSpans)
+          : {
+              latex: textLatex(sourceText.replaceAll('\n', ' ')),
+              accessibleText: sourceText,
+            };
       const block: ContentBlock = {
         type: 'formula',
         id: autoFormula.blockId,
-        latex: textLatex(accessibleText.replaceAll('\n', ' ')),
-        accessibleText,
+        latex: rendering.latex,
+        accessibleText: rendering.accessibleText,
         source: sourceRef(autoFormula.pdfPage),
       };
-      addBlock(currentOutlineIndex, block, accessibleText);
+      addBlock(currentOutlineIndex, block, rendering.accessibleText);
       claimSpans(formulaSpans, block.id);
       continue;
     }
