@@ -71,11 +71,16 @@ Do not substitute a printed page label in that URL. For example, printed page
 1 is physical PDF page 10; printed labels are display metadata only.
 
 At runtime, the app reads the checked-in normalized JSON and does not parse the
-PDF in the browser. `pnpm normalize:content` is a deliberate offline maintainer
-regeneration workflow: it requires the source-audit artifacts and the recorded
-Python/PyMuPDF/pypdf extraction tooling, then should be followed by
-`pnpm validate:content`. Normal install, development, build, and local preview
-need only the Node/pnpm prerequisites above.
+PDF in the browser. `pnpm normalize:content` is a Node/tsx maintainer operation
+that consumes the checked-in source-audit, review-ledger, and review-evidence
+artifacts to regenerate the normalized course and conversion report; follow it
+with `pnpm validate:content`.
+
+Python with PyMuPDF and pypdf is required only when deliberately recreating the
+raw/source-audit evidence from the canonical PDF with `scripts/extract_pdf.py`.
+That source-extraction step precedes review of the resulting evidence and the
+Node normalization/validation sequence. Normal install, development, build, and
+local preview need only the Node/pnpm prerequisites above.
 
 ## Features and routes
 
