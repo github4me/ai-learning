@@ -873,6 +873,74 @@ function renderKatexWithoutDiagnostics(
   }
 }
 
+type FormulaSpecialCandidate = ConversionReport['specialCandidates'][number];
+
+export function assertExactFormulaReportJoin(
+  formulaLedger: FormulaReviewLedger,
+  specialCandidates: readonly FormulaSpecialCandidate[],
+  runtimeFormulaIds: readonly string[],
+): ReadonlyMap<string, FormulaSpecialCandidate> {
+  const formulaRows = specialCandidates.filter(
+    (candidate) => candidate.type === 'formula',
+  );
+  const ledgerBlockIds = formulaLedger.formulas.map((entry) => entry.blockId);
+  const reportCandidateIds = formulaRows.map((row) => row.candidateId);
+  const reportBlockIds = formulaRows.map((row) => row.blockId ?? '');
+  const exactUniqueSet = (
+    actual: readonly string[],
+    expected: readonly string[],
+  ): boolean => {
+    const actualSet = new Set(actual);
+    const expectedSet = new Set(expected);
+    return (
+      actual.length === expected.length &&
+      actualSet.size === actual.length &&
+      expectedSet.size === expected.length &&
+      actual.every((value) => value.trim().length > 0) &&
+      expected.every((value) => actualSet.has(value))
+    );
+  };
+  invariant(
+    formulaRows.length === 371 &&
+      exactUniqueSet(reportCandidateIds, ledgerBlockIds) &&
+      exactUniqueSet(reportBlockIds, ledgerBlockIds) &&
+      exactUniqueSet(runtimeFormulaIds, ledgerBlockIds),
+    'formula report rows are not an exact one-to-one ledger/runtime join',
+  );
+
+  const reportByBlockId = new Map(
+    formulaRows.map((row) => [row.blockId!, row]),
+  );
+  for (const entry of formulaLedger.formulas) {
+    const row = reportByBlockId.get(entry.blockId);
+    invariant(
+      row &&
+        exactObjectKeys(row, [
+          'candidateId',
+          'blockId',
+          'type',
+          'pdfPages',
+          'status',
+          'reviewer',
+          'disposition',
+          'sourceSpanIds',
+          'sourceChecksum',
+        ]) &&
+        row.candidateId === entry.blockId &&
+        row.blockId === entry.blockId &&
+        JSON.stringify(row.pdfPages) === JSON.stringify([entry.pdfPage]) &&
+        JSON.stringify(row.sourceSpanIds) ===
+          JSON.stringify(entry.sourceSpanIds) &&
+        row.sourceChecksum === entry.sourceChecksum &&
+        row.reviewer === 'Codex rendered-source candidate review' &&
+        row.status === 'reviewed' &&
+        row.disposition === 'Converted to a reviewed formula block',
+      `${entry.blockId} formula report row changed`,
+    );
+  }
+  return reportByBlockId;
+}
+
 function validateFormulaLedger(
   audit: SourceAudit,
   candidateLedger: CandidateReviewLedger,
@@ -937,6 +1005,11 @@ function validateFormulaLedger(
       candidateIds.every((candidateId) => !inlineCandidateIds.has(candidateId)),
     'formula ledger, decision, or runtime formula sets changed',
   );
+  const structuredReportByBlockId = assertExactFormulaReportJoin(
+    formulaLedger,
+    report.specialCandidates,
+    runtimeBlockIds,
+  );
 
   const expectedCorrections = new Map<string, string>([
     ['formula-math-p018-g003', 'CC-01'],
@@ -970,9 +1043,7 @@ function validateFormulaLedger(
     const candidateReport = report.candidateAudit.find(
       (record) => record.candidateId === entry.candidateId,
     );
-    const structuredReport = report.specialCandidates.find(
-      (record) => record.blockId === entry.blockId && record.type === 'formula',
-    );
+    const structuredReport = structuredReportByBlockId.get(entry.blockId);
     invariant(
       decision.candidateId === entry.candidateId &&
         decision.targetBlockId === entry.blockId &&
@@ -1009,11 +1080,16 @@ function validateFormulaLedger(
           JSON.stringify(entry.sourceSpanIds) &&
         candidateReport.sourceChecksum === entry.sourceChecksum &&
         structuredReport?.candidateId === entry.blockId &&
+        structuredReport.blockId === entry.blockId &&
         JSON.stringify(structuredReport.pdfPages) ===
           JSON.stringify([entry.pdfPage]) &&
         JSON.stringify(structuredReport.sourceSpanIds) ===
           JSON.stringify(entry.sourceSpanIds) &&
-        structuredReport.sourceChecksum === entry.sourceChecksum,
+        structuredReport.sourceChecksum === entry.sourceChecksum &&
+        structuredReport.reviewer === decision.reviewer &&
+        structuredReport.status === 'reviewed' &&
+        structuredReport.disposition ===
+          'Converted to a reviewed formula block',
       `${entry.candidateId} generated formula evidence changed`,
     );
     renderKatexWithoutDiagnostics(entry.latex, true, entry.blockId);
@@ -1513,6 +1589,243 @@ function courseRuntimeIndexes(course: Course): {
   return { sectionById, blockById, sectionIdByBlockId };
 }
 
+type ReplaceProjection = Extract<
+  ReviewedCourseCorrection['sourceProjection'],
+  { kind: 'replace' }
+>;
+type ReplaceTargetFragment = ReplaceProjection['targetFragments'][number];
+
+const EXPECTED_MULTI_PAGE_REPLACEMENT_PAIRS: Readonly<
+  Record<string, readonly (readonly [string, number])[]>
+> = {
+  'CC-06': [
+    ['body-01342', 58],
+    ['body-01380', 59],
+  ],
+  'CC-17': [
+    ['body-02988', 113],
+    ['body-02991', 114],
+  ],
+  'CC-19': [['body-03382', 126]],
+  'CC-23': [
+    ['body-02556', 96],
+    ['body-04366', 154],
+    ['body-04368', 154],
+  ],
+};
+
+function replacementFragmentId(fragment: ReplaceTargetFragment): string {
+  return 'sectionId' in fragment ? fragment.sectionId : fragment.blockId;
+}
+
+function replacementFragmentBoundaries(
+  correction: ReviewedCourseCorrection,
+  audit: SourceAudit,
+): readonly (readonly string[])[] {
+  invariant(
+    correction.sourceProjection.kind === 'replace',
+    `${correction.correctionId} is not a replacement projection`,
+  );
+  const projection = correction.sourceProjection;
+  const guardedSpans = correction.sourceEvidence.flatMap(
+    (evidence) => evidence.sourceSpanIds,
+  );
+  let guardIndex = -1;
+  invariant(
+    projection.sourceSpanIds.length > 0 &&
+      new Set(projection.sourceSpanIds).size ===
+        projection.sourceSpanIds.length &&
+      projection.sourceSpanIds.every((spanId) => {
+        guardIndex = guardedSpans.indexOf(spanId, guardIndex + 1);
+        return guardIndex >= 0;
+      }),
+    `${correction.correctionId} replacement spans are not an ordered guarded subsequence`,
+  );
+  const projectedSet = new Set(projection.sourceSpanIds);
+  const evidenceBoundaries = correction.sourceEvidence
+    .map((evidence) =>
+      evidence.sourceSpanIds.filter((spanId) => projectedSet.has(spanId)),
+    )
+    .filter((spanIds) => spanIds.length > 0);
+  const lineBoundaries = correction.sourceEvidence
+    .flatMap((evidence) => {
+      if (evidence.kind !== 'pageLines') return [];
+      const page = audit.pages[evidence.pdfPage - 1];
+      invariant(
+        page?.pdfPage === evidence.pdfPage,
+        `${correction.correctionId} replacement page is missing`,
+      );
+      return evidence.lineIndexes.map((lineIndex) => {
+        const line = page.lines[lineIndex];
+        invariant(
+          line,
+          `${correction.correctionId} replacement line is missing`,
+        );
+        return line.spanIds.filter((spanId) => projectedSet.has(spanId));
+      });
+    })
+    .filter((spanIds) => spanIds.length > 0);
+  const pairedBoundaries =
+    evidenceBoundaries.length === projection.targetFragments.length
+      ? evidenceBoundaries
+      : lineBoundaries.length === projection.targetFragments.length
+        ? lineBoundaries
+        : projection.targetFragments.length === 1 &&
+            evidenceBoundaries.length > 0
+          ? [projection.sourceSpanIds]
+          : undefined;
+  invariant(
+    pairedBoundaries &&
+      JSON.stringify(pairedBoundaries.flat()) ===
+        JSON.stringify(projection.sourceSpanIds),
+    `${correction.correctionId} replacement fragment boundaries changed`,
+  );
+  return pairedBoundaries;
+}
+
+export function assertReplacementFragmentPagePairing(
+  correction: ReviewedCourseCorrection,
+  audit: SourceAudit,
+  course: Course,
+): readonly (readonly [string, number])[] {
+  invariant(
+    correction.sourceProjection.kind === 'replace',
+    `${correction.correctionId} is not a replacement projection`,
+  );
+  const { sectionById, blockById } = courseRuntimeIndexes(course);
+  const spanPageById = new Map<string, number>();
+  for (const page of audit.pages) {
+    for (const span of page.spans) {
+      invariant(!spanPageById.has(span.id), `duplicate audit span ${span.id}`);
+      spanPageById.set(span.id, page.pdfPage);
+    }
+  }
+  const boundaries = replacementFragmentBoundaries(correction, audit);
+  const pairs = correction.sourceProjection.targetFragments.map(
+    (fragment, index) => {
+      const sourcePages = new Set(
+        boundaries[index].map((spanId) => {
+          const pdfPage = spanPageById.get(spanId);
+          invariant(
+            pdfPage !== undefined,
+            `${correction.correctionId} replacement span ${spanId} is missing`,
+          );
+          return pdfPage;
+        }),
+      );
+      invariant(
+        sourcePages.size === 1,
+        `${correction.correctionId} replacement fragment crosses source pages`,
+      );
+      const sourcePage = [...sourcePages][0];
+      let targetPage: number;
+      if ('sectionId' in fragment) {
+        const section = sectionById.get(fragment.sectionId);
+        invariant(
+          section,
+          `${correction.correctionId} target section ${fragment.sectionId} is missing`,
+        );
+        targetPage = section.source.pdfPage;
+      } else {
+        const block = blockById.get(fragment.blockId);
+        invariant(
+          block,
+          `${correction.correctionId} target block ${fragment.blockId} is missing`,
+        );
+        if (fragment.field === 'children') {
+          invariant(
+            block.type === 'paragraph',
+            `${correction.correctionId} target ${fragment.blockId} is not a paragraph`,
+          );
+        } else if (fragment.field === 'steps') {
+          invariant(
+            block.type === 'conceptChain',
+            `${correction.correctionId} target ${fragment.blockId} is not a concept chain`,
+          );
+        } else if (fragment.field === 'accessibleText') {
+          invariant(
+            block.type === 'formula',
+            `${correction.correctionId} target ${fragment.blockId} is not a formula`,
+          );
+        } else {
+          invariant(
+            'itemIndex' in fragment,
+            `${correction.correctionId} target ${fragment.blockId} has an unknown fragment field`,
+          );
+          invariant(
+            block.type === 'list' && Boolean(block.items[fragment.itemIndex]),
+            `${correction.correctionId} target ${fragment.blockId} list item is missing`,
+          );
+        }
+        targetPage = block.source.pdfPage;
+      }
+      invariant(
+        targetPage === sourcePage,
+        `${correction.correctionId} target ${replacementFragmentId(fragment)} source page changed`,
+      );
+      return [replacementFragmentId(fragment), sourcePage] as const;
+    },
+  );
+  const expected =
+    EXPECTED_MULTI_PAGE_REPLACEMENT_PAIRS[correction.correctionId];
+  if (expected) {
+    invariant(
+      JSON.stringify(pairs) === JSON.stringify(expected),
+      `${correction.correctionId} pinned multi-page fragment pairing changed`,
+    );
+  }
+  return pairs;
+}
+
+const EXPECTED_CC25_APPENDIX_SNAPSHOT = {
+  kind: 'sourceOnlyNoop',
+  sectionId: 'o0460-a-mini-gpt',
+  title: '附录A - 完整Mini GPT 参考代码',
+  introBlockId: 'body-04576',
+  introChildren: [
+    {
+      type: 'text',
+      value:
+        '下面代码与Week 9-12 的tokenizer、architecture、training、checkpoint 和generation 主线配套。',
+    },
+  ],
+  codeBlockId: 'code-appendix-a-mini-gpt',
+  language: 'python',
+  filename: 'mini_gpt.py',
+  codeSha256:
+    '0c1a22f8927a94f0101b4bbcf3b9d256e37c31fb91c6f92bb9b0b2d71195cdfd',
+} as const;
+const EXPECTED_CC25_APPENDIX_SNAPSHOT_SHA256 =
+  '3555afd5e8200838625ef40a67bef1029eb21df34a063452b2ef944fb2ec6803';
+
+export function assertCc25AppendixSnapshot(course: Course): void {
+  const { sectionById, blockById } = courseRuntimeIndexes(course);
+  const section = sectionById.get('o0460-a-mini-gpt');
+  const intro = blockById.get('body-04576');
+  const code = blockById.get('code-appendix-a-mini-gpt');
+  invariant(
+    section && intro?.type === 'paragraph' && code?.type === 'code',
+    'CC-25 Appendix snapshot targets are missing or have changed type',
+  );
+  const snapshot = {
+    kind: 'sourceOnlyNoop',
+    sectionId: section.id,
+    title: section.title,
+    introBlockId: intro.id,
+    introChildren: intro.children,
+    codeBlockId: code.id,
+    language: code.language,
+    filename: code.filename,
+    codeSha256: sha256(code.code),
+  };
+  const serialized = JSON.stringify(snapshot);
+  invariant(
+    serialized === JSON.stringify(EXPECTED_CC25_APPENDIX_SNAPSHOT) &&
+      sha256(serialized) === EXPECTED_CC25_APPENDIX_SNAPSHOT_SHA256,
+    'CC-25 exact Appendix no-op snapshot changed',
+  );
+}
+
 function uniqueStrings(values: readonly string[]): string[] {
   return [...new Set(values)];
 }
@@ -1818,6 +2131,9 @@ function validateCourseCorrectionAudit(
   for (const [index, correction] of COURSE_CONTENT_CORRECTIONS.entries()) {
     const entry = report.correctionAudit[index];
     validateCorrectionEvidence(correction, audit);
+    if (correction.sourceProjection.kind === 'replace') {
+      assertReplacementFragmentPagePairing(correction, audit, course);
+    }
     categoryCounts[correction.category] += 1;
     const outcome = independentCorrectionOutcome(correction);
     outcomeCounts[outcome] += 1;
@@ -2008,18 +2324,16 @@ function validateCourseCorrectionAudit(
         `${correction.correctionId} navigation exclusion changed`,
       );
     } else {
-      const section = sectionById.get(target.sectionId);
-      const intro = blockById.get(target.comparisonBlockIds[0]);
-      const code = blockById.get(target.comparisonBlockIds[1]);
       invariant(
-        section &&
-          intro?.type === 'paragraph' &&
-          code?.type === 'code' &&
-          !section.title.includes('\u2011') &&
-          !inlineText(intro.children).includes('\u2011') &&
-          !code.code.includes('\u2011'),
-        `${correction.correctionId} source-only normalization state changed`,
+        correction.correctionId === 'CC-25' &&
+          target.sectionId === 'o0460-a-mini-gpt' &&
+          correction.expectedTargetFingerprint ===
+            EXPECTED_CC25_APPENDIX_SNAPSHOT_SHA256 &&
+          JSON.stringify(target.comparisonBlockIds) ===
+            JSON.stringify(['body-04576', 'code-appendix-a-mini-gpt']),
+        `${correction.correctionId} source-only comparison targets changed`,
       );
+      assertCc25AppendixSnapshot(course);
     }
   }
   const cc23 = COURSE_CONTENT_CORRECTIONS.find(
