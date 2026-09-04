@@ -90,7 +90,6 @@ const endToEndRunner = `# week12_end_to_end.py
 # This file is a caller. It reuses, rather than redefines, Week 10/11 APIs.
 from __future__ import annotations
 
-import random
 from pathlib import Path
 
 import torch
@@ -111,15 +110,42 @@ from week11_training_and_generation import (
 )
 
 
-RAW_IDS = (
+RAW_TEXTS = (
+    "我 喜欢 AI",
+    "猫 喜欢 我",
+    "我 学习 AI",
+)
+EXPECTED_RAW_IDS = (
     (0, 1, 2),  # 我 喜欢 AI
     (4, 1, 0),  # 猫 喜欢 我
     (0, 3, 2),  # 我 学习 AI
 )
+FROZEN_STOI = {
+    token: token_id
+    for token_id, token in enumerate(CANONICAL_ORDERED_TOKENS)
+}
+assert CANONICAL_ORDERED_TOKENS == ("我", "喜欢", "AI", "学习", "猫")
+assert CANONICAL_TOKENIZER_POLICY == (
+    "whitespace-delimited;no-specials;no-pad;no-unk"
+)
+
+
+def encode_mini_gpt_v1(text: str) -> list[int]:
+    pieces = text.split()
+    if not pieces:
+        raise ValueError("mini-gpt-v1 text must contain a token")
+    try:
+        return [FROZEN_STOI[piece] for piece in pieces]
+    except KeyError as error:
+        raise ValueError(
+            f"mini-gpt-v1 has no unknown-token fallback: {error.args[0]}"
+        ) from error
 
 
 def make_fixed_batch(device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
-    raw = torch.tensor(RAW_IDS, dtype=torch.long, device=device)  # [3,3]
+    encoded_rows = [encode_mini_gpt_v1(text) for text in RAW_TEXTS]
+    assert tuple(tuple(row) for row in encoded_rows) == EXPECTED_RAW_IDS
+    raw = torch.tensor(encoded_rows, dtype=torch.long, device=device)  # [3,3]
     inputs = raw[:, :-1]   # [3,2]
     targets = raw[:, 1:]   # [3,2]
     return inputs, targets
@@ -127,7 +153,6 @@ def make_fixed_batch(device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
 
 def main() -> None:
     seed = 7
-    random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
@@ -141,6 +166,12 @@ def main() -> None:
     )
     inputs, targets = make_fixed_batch(device)
     assert inputs.shape == targets.shape == (3, 2)
+
+    # Observe the labelled [我,喜欢] -> AI row before any update.
+    model.eval()
+    with torch.no_grad():
+        before_logits, _ = model(inputs)
+        before_probs = torch.softmax(before_logits[0, 1, :], dim=-1)  # [5]
 
     completed_updates = 0
     for _ in range(100):
@@ -165,6 +196,11 @@ def main() -> None:
         reference_logits, reference_loss = model(inputs, targets)
     assert reference_logits.shape == (3, 2, 5)
     assert reference_loss is not None and reference_loss.ndim == 0
+    after_probs = torch.softmax(reference_logits[0, 1, :], dim=-1)  # [5]
+    print("observed context=[我,喜欢], target=AI")
+    print("vocabulary_order=", CANONICAL_ORDERED_TOKENS)
+    print("before_probs=", before_probs.detach().cpu().tolist())
+    print("after_probs=", after_probs.detach().cpu().tolist())
 
     path = Path("mini-gpt-training.pt")
     save_mini_gpt_training_checkpoint(
@@ -191,7 +227,11 @@ def main() -> None:
         restored_logits, _ = restored(inputs)
     torch.testing.assert_close(restored_logits, reference_logits)
 
-    prompt = torch.tensor([[0, 1]], dtype=torch.long, device=device)
+    prompt = torch.tensor(
+        [[FROZEN_STOI["我"], FROZEN_STOI["喜欢"]]],
+        dtype=torch.long,
+        device=device,
+    )
     generated_history = generate_mini_gpt_sampled(
         restored,
         prompt,
@@ -422,21 +462,28 @@ assert any(
         table(['ID', 'token'], vocabularyRows),
         code(
           'python',
-          `TOKENS = ("我", "喜欢", "AI", "学习", "猫")
-STOI = {token: index for index, token in enumerate(TOKENS)}
-ITOS = {index: token for token, index in STOI.items()}
+          `# excerpt from the assembled Week 12 caller
+RAW_TEXTS = ("我 喜欢 AI", "猫 喜欢 我", "我 学习 AI")
+EXPECTED_RAW_IDS = ((0, 1, 2), (4, 1, 0), (0, 3, 2))
+FROZEN_STOI = {
+    token: token_id
+    for token_id, token in enumerate(CANONICAL_ORDERED_TOKENS)
+}
 
-def encode(text: str) -> list[int]:
+def encode_mini_gpt_v1(text: str) -> list[int]:
     pieces = text.split()
     if not pieces:
-        raise ValueError("text must contain tokens")
+        raise ValueError("mini-gpt-v1 text must contain a token")
     try:
-        return [STOI[piece] for piece in pieces]
+        return [FROZEN_STOI[piece] for piece in pieces]
     except KeyError as error:
-        raise ValueError(f"unknown token: {error.args[0]}") from error
+        raise ValueError(
+            f"mini-gpt-v1 has no unknown-token fallback: {error.args[0]}"
+        ) from error
 
-assert encode("我 喜欢 AI") == [0, 1, 2]`,
-          'mini_gpt_walkthrough.py',
+encoded_rows = [encode_mini_gpt_v1(text) for text in RAW_TEXTS]
+assert tuple(tuple(row) for row in encoded_rows) == EXPECTED_RAW_IDS`,
+          'week12_end_to_end.py',
         ),
         formula(
           String.raw`\operatorname{encode}(\text{我 喜欢 AI})=[0,1,2]\in\mathbb N^3,\qquad X_{\mathrm{raw}}\in\mathbb N^{B\times N}=\mathbb N^{3\times3}`,
@@ -828,15 +875,59 @@ print(row_grad_norms)  # exact values depend on initialization/device
         paragraph(
           '“row 2 没有直接 token-embedding lookup gradient”不等于 AI 对 loss 完全没有作用：它作为 target 改变 untied lm_head 的 output-row gradients，并通过 logits/loss 影响上游已使用 representations。',
         ),
+        callout(
+          'Gradient 为零，不代表 Step 后参数值一定不动',
+          [
+            paragraph(
+              '本 runner 的 nn.Embedding 使用 dense parameter gradient，AdamW 又设置 weight_decay=1e-2。当前 batch 未 lookup ID 2，所以 token_embedding.weight.grad[2] 的直接 lookup contribution 为零；但 optimizer.step() 的 decoupled weight decay 仍可缩放非零 row-2 parameter value。若是 faithful resume，历史 exp_avg/exp_avg_sq moments 也可能在当前 row gradient 为零时产生更新方向。',
+            ),
+          ],
+          'principle',
+        ),
+        table(
+          ['观察时点', 'row 2 的对象', '本 trace 能说什么'],
+          [
+            [
+              'backward 后',
+              'dense .grad[2]',
+              'direct lookup contribution 为 0',
+            ],
+            [
+              'step 前',
+              'AdamW moments + weight_decay policy',
+              '与当前 .grad 是不同 state',
+            ],
+            [
+              'step 后',
+              'token_embedding.weight[2] parameter value',
+              '可能因 decay；resume 时也可能因历史 moments 而移动',
+            ],
+          ],
+        ),
+        code(
+          'python',
+          `# excerpt immediately around one fresh runner update
+optimizer.zero_grad(set_to_none=True)
+_, loss = model(inputs, targets)
+assert loss is not None
+row2_before = model.token_embedding.weight[2].detach().clone()
+loss.backward()
+row2_current_grad = model.token_embedding.weight.grad[2].detach().clone()
+assert torch.count_nonzero(row2_current_grad).item() == 0
+optimizer.step()  # AdamW uses weight_decay=1e-2 and any restored moments
+row2_after = model.token_embedding.weight[2].detach().clone()
+print("row2_moved_after_step=", not torch.equal(row2_before, row2_after))`,
+        ),
       ],
       [
         '不要把 parameter gradient 与 parameter value 混成同一对象。',
         '不要说 ID 2 对 loss 完全无作用。',
+        '不要从 current direct lookup gradient=0 推断 post-step row value 必然不变；还要检查 decoupled weight decay 与 optimizer history。',
         '若 weight tying，input/output 共用一个 table，direct-row 区分会改变；本 canonical model 明确 untied。',
       ],
       check('哪个 ID 未出现在 inputs，却出现在 targets？其直接影响在哪里？', [
         paragraph(
-          'AI/2；token_embedding row 2 没有直接 lookup gradient，但 untied lm_head row 2 会因 target scoring 得到 gradient。',
+          'AI/2；token_embedding row 2 的当前 direct lookup gradient 为零，但 untied lm_head row 2 会因 target scoring 得到 gradient。step 后 token-embedding row 2 仍可能因本 runner 的 AdamW weight_decay=1e-2 移动；faithful resume 时历史 moments 也可能推动它。',
         ),
       ]),
     ),
@@ -874,8 +965,19 @@ print(row_grad_norms)  # exact values depend on initialization/device
           ],
         ),
         formula(
-          String.raw`\theta_{u+1}=\theta_u-\eta\,d_u,\qquad d_u=\operatorname{AdamWDirection}(g_u,m_u,v_u,\mathrm{weight\ decay})`,
-          'AdamW direction 不是 raw gradient 本身；它读取 gradient 和 optimizer state。',
+          String.raw`m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\qquad v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2`,
+          'AdamW 为每个 parameter element 维护 gradient 的一阶 moving average m 与 squared-gradient 的二阶 moving average v。',
+        ),
+        formula(
+          String.raw`\widehat m_t=\frac{m_t}{1-\beta_1^t},\qquad \widehat v_t=\frac{v_t}{1-\beta_2^t}`,
+          'Early-step bias corrections 抵消从零初始化 moments 带来的缩小。',
+        ),
+        formula(
+          String.raw`\theta_t=(1-\eta\lambda)\theta_{t-1}-\eta\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}`,
+          '在 canonical AdamW 默认方向下的简化逐元素直觉：weight decay 以独立乘法缩放参数，再减去 bias-corrected adaptive direction。实际 optimizer 还受其明确 options 与数值实现约束。',
+        ),
+        paragraph(
+          'Plain SGD 的基本式是 θ_t=θ_{t-1}−ηg_t；AdamW 不直接把 raw g_t 当 update。即使当前 g_t 的某个 row 为零，decoupled factor (1−ηλ) 仍可改变非零参数；恢复的 m/v history 也可让 adaptive term 非零。',
         ),
         code(
           'python',
@@ -902,6 +1004,7 @@ completed_updates += 1  # only after the successful step returns`,
       [
         '展示一个按静态顺序可编译的 Week 12 caller。',
         '完成 fixed batch→100 successful updates→eval reference→save→strict resume→logits equality→restored generation。',
+        '在 update window 前后运行时观测同一个 labelled context 的五候选 probabilities，不预填或承诺数值方向。',
       ],
       [
         paragraph(
@@ -935,12 +1038,35 @@ completed_updates += 1  # only after the successful step returns`,
         paragraph(
           '训练 loss 的具体轨迹与生成 token 依赖初始化、device 和软件版本，因此程序只观测和验证，不在教材中捏造概率或样本。Tying 仅作概念对比：共享 5×4 table 会得到 500 parameters，却改变 gradient sharing 与 checkpoint policy；本 trace 不启用。',
         ),
+        table(
+          ['runtime observation', 'label / shape', '怎样报告'],
+          [
+            [
+              'before_probs',
+              '[我,喜欢]→AI 的 update 前 [5]',
+              '按 CANONICAL_ORDERED_TOKENS 顺序打印',
+            ],
+            [
+              'after_probs',
+              '同一 row 的 100 successful updates 后 [5]',
+              '从 reference_logits[0,1,:] 现场计算并打印',
+            ],
+            [
+              'interpretation',
+              '一次特定 seed/device/version 的观测',
+              '不 hard-code、不 assert 上升方向、不推广为普遍事实',
+            ],
+          ],
+        ),
+        paragraph(
+          'Runner 先在 eval/no_grad 下记录 before_probs，再训练；随后从 post-update reference_logits 计算 after_probs。两者都明确标为 context=[我,喜欢]、target=AI，并连同 Vocabulary order 输出，因此读者能核对这次运行发生了什么，而不是把教材数字误当保证。',
+        ),
       ],
       [
         '不要生成后才发现从未 load checkpoint；这里从 restored model 生成。',
         '不要把 zero-based loop index 保存成 update count。',
         '不要称 same fixed batch 的下降为 held-out validation。',
-        'Random seed 不保证跨不同 device/version bit-for-bit 相同。',
+        'Runner 只使用 PyTorch RNG：torch.manual_seed 与 CUDA 可用时的 manual_seed_all；它不使用 Python random。Seed 不保证跨不同 device/version bit-for-bit 相同。',
       ],
       check('为什么 saved completed_updates 是 100，而不是 99？', [
         paragraph(
@@ -1085,6 +1211,40 @@ completed_updates += 1  # only after the successful step returns`,
           ],
         ),
         formula(
+          String.raw`\mathcal L_{\mathrm{validation}}=\frac{\sum_{i\in\mathrm{held\text{-}out\ valid\ targets}}\ell_i}{\sum_{\mathrm{held\text{-}out\ batches}}\#\mathrm{valid\ targets}}`,
+          'Validation 要累加所有有效 target tokens 的 loss sum，再除以有效 target 总数；不能平均各 batch 的 mean loss。',
+        ),
+        code(
+          'python',
+          `@torch.no_grad()
+def evaluate_token_weighted(model, held_out_batches, device, ignore_index=-100):
+    was_training = model.training
+    total_loss_sum = 0.0
+    total_valid_targets = 0
+    model.eval()
+    try:
+        for inputs, targets in held_out_batches:
+            inputs, targets = inputs.to(device), targets.to(device)
+            logits, no_loss = model(inputs)  # read-only; no training targets branch
+            assert no_loss is None
+            flat_targets = targets.reshape(-1)
+            total_loss_sum += torch.nn.functional.cross_entropy(
+                logits.reshape(-1, model.config.vocab_size),
+                flat_targets,
+                ignore_index=ignore_index,
+                reduction="sum",
+            ).item()
+            total_valid_targets += int(
+                flat_targets.ne(ignore_index).sum().item()
+            )
+    finally:
+        model.train(was_training)
+    if total_valid_targets == 0:
+        raise ValueError("held-out evaluation has no valid targets")
+    return total_loss_sum / total_valid_targets`,
+          'week12_validation_excerpt.py',
+        ),
+        formula(
           String.raw`\inf\mathcal L_{\mathrm{fixed\ batch}}=\frac{-\log(1/2)-\log(1/2)}{6}=\frac{\ln(2)}{3}\approx0.231`,
           '四个无冲突 tasks 可趋近 target probability 1；两个相同 context [我] 的 empirical optimum 在 喜欢/学习 间各 0.5。有限 logits 只能趋近 ln(2)/3≈0.231 这个 infimum。',
         ),
@@ -1100,6 +1260,8 @@ completed_updates += 1  # only after the successful step returns`,
       ],
       [
         '不要把 same-corpus score 称为 validation。',
+        '不要计算 mean-of-batch-means；不同 batches 的有效 target 数可能不同。',
+        'Validation 使用 eval + no_grad + reduction=sum/valid-count，不调用 backward 或 step。',
         '不要用 sampling randomness 掩盖概率分布。',
         '不要在 pipeline assertion 失败时通过加大模型补偿。',
       ],
@@ -1119,24 +1281,56 @@ completed_updates += 1  # only after the successful step returns`,
       ],
       [
         paragraph(
-          '扩展数据时依次确认许可/隐私与 normalization，训练并冻结 tokenizer，先划分 train/held-out，再生成合法 windows。若 mapping/config 改变，默认新建 model/checkpoint。',
+          '扩展数据时先记录每个 document/source/example 的 provenance group，再按这些 group 建立 train/held-out split。随后只依据事先声明的 training-split protocol fit tokenizer 并冻结它；最后各 split 独立 encode，并只在各自 document/example 边界内建立 windows。若 mapping/config 改变，默认新建 model/checkpoint。',
+        ),
+        table(
+          ['顺序', '动作', '禁止的捷径'],
+          [
+            [
+              '1',
+              '定义 provenance groups 与许可/隐私规则',
+              '先混合全部文字再追溯来源',
+            ],
+            [
+              '2',
+              '按 document/source/example 分 train/held-out',
+              '把同源片段随机泄漏到两边',
+            ],
+            [
+              '3',
+              '按 declared training-only protocol fit tokenizer',
+              '默认用 held-out 内容学习 merges/Vocabulary',
+            ],
+            [
+              '4',
+              'freeze tokenizer artifact/version',
+              '每个 split 重新分配 IDs',
+            ],
+            [
+              '5',
+              '各 split、各 document 独立 encode/window',
+              '串接跨 split 或跨 document 的 boundary window',
+            ],
+          ],
         ),
         code(
           'python',
-          `def windows(
-    stream: torch.Tensor,
+          `def windows_within_document(
+    document_ids: torch.Tensor,
     block_size: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    if stream.dtype != torch.long or stream.numel() <= block_size:
+    if document_ids.dtype != torch.long or document_ids.numel() <= block_size:
         raise ValueError("need long IDs and block_size + 1 tokens")
-    starts = range(stream.numel() - block_size)
-    x = torch.stack([stream[i : i + block_size] for i in starts])
-    y = torch.stack([stream[i + 1 : i + block_size + 1] for i in starts])
+    starts = range(document_ids.numel() - block_size)
+    x = torch.stack([document_ids[i : i + block_size] for i in starts])
+    y = torch.stack(
+        [document_ids[i + 1 : i + block_size + 1] for i in starts]
+    )
     return x, y`,
         ),
         formula(
           String.raw`s\in\mathbb N^L,\qquad x_i=s_{i:i+T},\qquad y_i=s_{i+1:i+T+1}`,
-          '每个 length-T input window 的 target 是向右平移一位的同长度 window。',
+          '在单一 split 的单一 document/example 内，每个 length-T input window 的 target 向右平移一位；绝不跨 provenance 或 split 边界。',
         ),
         table(
           ['change', '必须重新核对'],
@@ -1151,6 +1345,7 @@ completed_updates += 1  # only after the successful step returns`,
       ],
       [
         '不要让 held-out text 无意参与 tokenizer/data fitting 后仍宣称完全隔离。',
+        '不要先 concatenate train/held-out 或不同 documents 再 window；那会制造跨边界的假监督对。',
         '不要用新 mapping 继续训练旧 embedding rows。',
         '数据更多不自动代表数据更干净或更有代表性。',
       ],
