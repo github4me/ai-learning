@@ -637,6 +637,11 @@
   .search-palette [data-slot='command-input'] {
     font-size: 1rem;
   }
+  .study-sheet input:not([type='radio']):not([type='checkbox']):not([type='file']),
+  .study-sheet textarea,
+  .study-sheet select {
+    font-size: 1rem;
+  }
 }
 
 @media print {
