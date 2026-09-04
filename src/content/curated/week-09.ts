@@ -164,12 +164,14 @@ export const week09Revision: CuratedWeekRevision = {
     '怎样把“我喜欢AI，AI也喜欢猫。”稳定地变成模型可用的整数 IDs，同时不混淆 tokenizer training、encoding 与模型学习？',
   objectives: [
     '比较 character、word、UTF-8 byte 与 subword 四种单位对 V、L、覆盖能力和计算成本的影响。',
+    '区分 code point、UTF-8 byte、BPE symbol、token 与 token ID，并说明 normalization 为什么属于 tokenizer 协议。',
     '手算 byte-level BPE 的两轮 pair count、tie break、merge 与长度变化。',
     '区分 tokenizer training 与 encoding，并把 tokenizer artifacts 与 model checkpoint 绑定。',
-    '沿 text → tokens → stream [L] → shifted examples [T] → batch [B,T] 完成一条可审计的数据路径。',
+    '沿 text → tokens → stream [L] → shifted examples [T] → padded batch [B,T] 完成一条可审计的数据路径。',
+    '分别构造 causal mask、padding mask 与 loss mask，解释它们各自阻止哪一种错误。',
     '在 Week 10 前明确结束 w09-readable-v1，并切换到不兼容的 mini-gpt-v1。',
   ],
-  estimatedReadingMinutes: 80,
+  estimatedReadingMinutes: 145,
   sections: [
     section(
       'o0319-week-9',
@@ -182,6 +184,15 @@ export const week09Revision: CuratedWeekRevision = {
       [
         paragraph(
           'Tokenizer 不是语言模型。它规定 normalization、怎样切分、Vocabulary 中有哪些 token、每个 token 对应哪个 ID，以及 IDs 怎样 decode。它在模型前把文字变成整数，也在生成后把整数还原为文字；真正可学习的 contextual patterns 位于 embedding 与 Transformer 参数中。',
+        ),
+        callout(
+          '先抓住 Token 的实际意义',
+          [
+            paragraph(
+              '一个 token 会占用一个 context position、触发一次 embedding lookup，并在 next-token training 中对应一次预测任务。Tokenizer 怎样切分，不只改变显示方式，也会改变 sequence length、可见上下文范围和训练计算量。',
+            ),
+          ],
+          'concept',
         ),
         table(
           ['概念', '本章含义', '固定句中的例子'],
@@ -215,6 +226,40 @@ export const week09Revision: CuratedWeekRevision = {
           'IDs s=[0,4,5,6,7,6,8,5,9,10,1], shape [L]=[11]',
           'decode(skip_special_tokens=True) → 我喜欢AI，AI也喜欢猫。',
         ]),
+        table(
+          ['教学 artifact', '使用位置', '基本单位 / ID space', '学习目的', '何时结束'],
+          [
+            [
+              'character-demo',
+              '第 4 节',
+              '9 个已知 code points，IDs 0..8',
+              '看清 encode、decode、dtype 与 [L]',
+              '第 4 节结束',
+            ],
+            [
+              'toy-byte-bpe',
+              '第 5–7 节',
+              'UTF-8 bytes 0..255，再建立 256、257',
+              '手算 pair count、merge、冻结与还原',
+              '第 7 节结束',
+            ],
+            [
+              'w09-readable-v1',
+              '第 8–18 节',
+              '可读 pieces，V=11，IDs 0..10',
+              '走完 special stream、window、mask 与 batch',
+              'Week 9 结束',
+            ],
+            [
+              'mini-gpt-v1',
+              'Week 10 起',
+              '五个 tokens，V=5，IDs 0..4',
+              '连接 canonical MiniGPT',
+              '按 Week 10–12 协议',
+            ],
+          ],
+          '同一个数字只能在自己的 artifact 内解释；本章不会把这几套 IDs 混在一起',
+        ),
         formula(
           String.raw`\operatorname{encode}_{A}:\mathrm{Unicode\ text}\to\{0,\ldots,V_A-1\}^{L},\qquad \operatorname{decode}_{A}:\{0,\ldots,V_A-1\}^{L}\to\mathrm{text}`,
           '在固定 tokenizer artifact A 下，encode 产生长度 L 的合法整数序列，decode 按同一 artifact 的规则重建文字。',
@@ -224,6 +269,15 @@ export const week09Revision: CuratedWeekRevision = {
           [
             paragraph(
               '后半章用教学 artifact w09-readable-v1：V=11、special IDs 0..3、完整 stream 长度 L=11、batch context T=4。它只服务 Week 9，绝不是通用或 production tokenizer。',
+            ),
+          ],
+          'principle',
+        ),
+        callout(
+          '阅读时先问自己：现在在哪个 ID space？',
+          [
+            paragraph(
+              '看到 256、257 时是在 toy-byte-bpe；看到 AI=6、猫=9 时是在 w09-readable-v1；看到 Week 10 的 AI=2 时已经切换到 mini-gpt-v1。数值相同或不同都不表达语义关系，它们只是各自表内的地址。',
             ),
           ],
           'principle',
@@ -393,6 +447,31 @@ export const week09Revision: CuratedWeekRevision = {
           String.raw`N_{\mathrm{vocab,\ canonical\ MiniGPT}}=VC+VC=2VC`,
           'Week 10 的 canonical MiniGPT 使用 bias-free、untied LM head，因此 vocabulary-facing 参数为 2VC。',
         ),
+        table(
+          ['example', 'input embedding VC', 'bias-free untied LM head VC', 'total 2VC'],
+          [
+            [
+              '本章教学尺寸 V=11, C=4',
+              '11×4=44',
+              '11×4=44',
+              '88 parameters',
+            ],
+            [
+              '示意规模 V=50,000, C=768',
+              '38,400,000',
+              '38,400,000',
+              '76,800,000 parameters',
+            ],
+          ],
+          '这里只计算两张 vocabulary-facing weight tables；不包含 Transformer blocks，也不声称这是某个真实模型配置',
+        ),
+        formula(
+          String.raw`B=2,\ T=4,\ V=11\quad\Longrightarrow\quad \#\mathrm{logits}=BTV=2\times4\times11=88`,
+          '这个教学 batch 的每个 row、每个 time position 都要为 11 个候选产生分数，因此共有 88 个 logits；这与上表恰好同为 88 只是数值巧合。',
+        ),
+        paragraph(
+          '现在可以看到 V 的双重作用：它一方面决定 embedding / LM-head 的表有多宽，另一方面决定每个 position 要比较多少个 next-token candidates；而 tokenizer 通过改变 L，又会改变要处理多少个 positions。',
+        ),
         callout(
           'Weight tying 只改 parameter accounting',
           [
@@ -508,6 +587,65 @@ assert utf8_bytes.hex(" ").upper() == (
     "41 49 E4 B9 9F E5 96 9C E6 AC A2 E7 8C AB E3 80 82"
 )`,
         ),
+        paragraph(
+          '在变成 bytes 之前，还必须回答 normalization：哪些 Unicode 序列应被当作同一种输入？例如屏幕上都像 é 的文字，可以由一个 composed code point U+00E9 表示，也可以由 e（U+0065）加 combining acute accent（U+0301）表示；identity policy 会保留差异，NFC 会把后一种规范化成前一种。',
+        ),
+        table(
+          ['visible text', 'code points before normalization', 'UTF-8 bytes', 'policy result'],
+          [
+            [
+              'é（composed）',
+              '[U+00E9]',
+              'C3 A9',
+              'identity 与 NFC 都保留 composed form',
+            ],
+            [
+              'e + ◌́（decomposed）',
+              '[U+0065,U+0301]',
+              '65 CC 81',
+              'identity 保留两点；NFC 变为 U+00E9',
+            ],
+            [
+              'ＡＩ（full-width）',
+              '[U+FF21,U+FF29]',
+              'EF BC A1 EF BC A9',
+              'NFKC 可变为 ASCII AI；NFC 不做这项兼容折叠',
+            ],
+          ],
+          '看起来接近的文字不保证拥有相同 code points 或 bytes；采用哪种 normalization 是设计选择',
+        ),
+        code(
+          'python',
+          `import unicodedata
+
+composed = "é"
+decomposed = "e\\u0301"
+
+assert composed != decomposed
+assert [f"U+{ord(ch):04X}" for ch in composed] == ["U+00E9"]
+assert [f"U+{ord(ch):04X}" for ch in decomposed] == [
+    "U+0065",
+    "U+0301",
+]
+assert composed.encode("utf-8").hex(" ").upper() == "C3 A9"
+assert decomposed.encode("utf-8").hex(" ").upper() == "65 CC 81"
+
+# NFC makes these two canonically equivalent spellings identical.
+assert unicodedata.normalize("NFC", decomposed) == composed
+
+# NFKC also performs compatibility folding, which is a stronger choice.
+assert unicodedata.normalize("NFKC", "ＡＩ") == "AI"`,
+          'unicode_normalization.py',
+        ),
+        callout(
+          'Normalization 没有一个永远正确的答案',
+          [
+            paragraph(
+              'NFC 常用于统一 canonical equivalents；NFKC 会进一步折叠某些兼容字符，可能对搜索有帮助，也可能抹掉任务需要的区别。Tokenizer 必须把所选 form、版本和执行顺序保存下来，并在训练与推理时完全一致。',
+            ),
+          ],
+          'principle',
+        ),
         formula(
           String.raw`b_i\in\{0,\ldots,255\},\qquad \mathrm{UTF8}(\text{我喜欢AI，AI也喜欢猫。})\in\{0,\ldots,255\}^{31}`,
           'byte-level base alphabet 有 256 个值；固定句初始为长度 31 的 byte vector。',
@@ -524,6 +662,7 @@ assert utf8_bytes.hex(" ").upper() == (
         '不能说“中文是三个字符的 UTF-8”；这里是某些 code points 各编码成三个 bytes。',
         '不要独立 decode 一个可能位于多-byte code point 中间的 fragment。',
         'source-file encoding 与 model tokenizer 是两个不同层次。',
+        '训练时使用 NFC、推理时使用 identity 或 NFKC，会让同一可见文字走到不同 byte/token sequence。',
       ],
       check('为什么 A 与 我 不是各占一个 UTF-8 byte？', [
         paragraph(
@@ -602,6 +741,21 @@ assert utf8_bytes.hex(" ").upper() == (
         paragraph(
           '这是一个无 pre-token boundaries 的 toy byte-level BPE training：固定句的每对相邻 bytes 都可参与计数。只列频率至少为 2 的初始 pairs；(9C,E6) 跨越 喜 的最后 byte 与 欢 的第一 byte，并在两次 喜欢 中出现。',
         ),
+        callout(
+          '先把一次 Merge 想成“给常见相邻片段起缩写”',
+          [
+            paragraph(
+              '原 stream 中两次 AI 都是相邻 bytes [41,49]。建立规则 (41,49)→256 后，每次出现都用一个新 symbol 256 替换，因此这两处各少一个 position，长度从 31 变为 29。256 只是可还原为 bytes 41 49 的新地址，不是数值相加，也不是模型已经理解 AI。',
+            ),
+            chain([
+              '… 41,49 … 41,49 …  （两次出现，各占两个 positions）',
+              '保存 merge rule：(41,49) → token ID 256',
+              '… 256 … 256 …  （两次出现，各占一个 position）',
+              'decode 256 → bytes 41 49 → UTF-8 text AI',
+            ]),
+          ],
+          'concept',
+        ),
         table(
           ['initial adjacent byte pair', 'count', 'why repeated'],
           [
@@ -669,10 +823,118 @@ total after two rounds: 31 - 2 - 2 = 27`,
           String.raw`(a_r,b_r)=\operatorname*{arg\,max}_{(a,b)}\operatorname{count}_r(a,b)\quad\text{with lexicographic integer-pair tie break}`,
           '每一轮只根据 tokenizer-training stream 与已声明 tie rule 选 pair，再替换 non-overlapping occurrences。',
         ),
+        paragraph(
+          '下面的程序不是伪代码：它从固定句的 31 个 bytes 开始，按本节声明的 count 与 tie rule 训练两轮，再把这两条 frozen merges 应用于同一句文字。最后先展开每个 learned symbol 的 bytes，拼接完整 byte stream，再统一做 UTF-8 decode。',
+        ),
+        code(
+          'python',
+          `from collections import Counter
+
+
+def count_pairs(symbols: list[int]) -> Counter:
+    return Counter(zip(symbols, symbols[1:]))
+
+
+def choose_pair(pair_counts: Counter) -> tuple[int, int]:
+    highest_count = max(pair_counts.values())
+    tied_pairs = [
+        pair
+        for pair, count in pair_counts.items()
+        if count == highest_count
+    ]
+    return min(tied_pairs)  # lexicographic integer-pair tie break
+
+
+def merge_non_overlapping(
+    symbols: list[int],
+    pair: tuple[int, int],
+    new_id: int,
+) -> tuple[list[int], int]:
+    merged: list[int] = []
+    replacements = 0
+    cursor = 0
+
+    while cursor < len(symbols):
+        if (
+            cursor + 1 < len(symbols)
+            and (symbols[cursor], symbols[cursor + 1]) == pair
+        ):
+            merged.append(new_id)
+            replacements += 1
+            cursor += 2
+        else:
+            merged.append(symbols[cursor])
+            cursor += 1
+
+    return merged, replacements
+
+
+text = "我喜欢AI，AI也喜欢猫。"
+training_symbols = list(text.encode("utf-8"))
+history: list[tuple[tuple[int, int], int, int, int]] = []
+
+assert len(training_symbols) == 31
+
+for new_id in (256, 257):
+    pair_counts = count_pairs(training_symbols)
+    chosen_pair = choose_pair(pair_counts)
+    before_length = len(training_symbols)
+    training_symbols, replacements = merge_non_overlapping(
+        training_symbols,
+        chosen_pair,
+        new_id,
+    )
+    assert len(training_symbols) == before_length - replacements
+    history.append(
+        (chosen_pair, new_id, replacements, len(training_symbols))
+    )
+
+assert history == [
+    ((0x41, 0x49), 256, 2, 29),
+    ((0x96, 0x9C), 257, 2, 27),
+]
+
+
+def encode_with_frozen_merges(
+    value: str,
+    merges: list[tuple[tuple[int, int], int, int, int]],
+) -> list[int]:
+    symbols = list(value.encode("utf-8"))
+    for pair, new_id, _training_replacements, _training_length in merges:
+        symbols, _ = merge_non_overlapping(symbols, pair, new_id)
+    return symbols
+
+
+encoded = encode_with_frozen_merges(text, history)
+assert encoded == training_symbols
+assert len(encoded) == 27
+
+# A learned token stores a byte sequence, so decoding expands first.
+token_bytes = {byte_id: bytes([byte_id]) for byte_id in range(256)}
+for pair, new_id, _count, _length in history:
+    left, right = pair
+    token_bytes[new_id] = token_bytes[left] + token_bytes[right]
+
+restored_bytes = b"".join(token_bytes[token_id] for token_id in encoded)
+restored_text = restored_bytes.decode("utf-8", errors="strict")
+assert restored_text == text`,
+          'toy_byte_bpe.py',
+        ),
+        table(
+          ['stage', 'selected pair', 'replacements', 'stream length', 'what changed'],
+          [
+            ['initial bytes', '—', '—', '31', '只有 base byte IDs 0..255'],
+            ['round 1', '(41,49)→256', '2', '29', '两次 AI 各缩短一个 position'],
+            ['round 2', '(96,9C)→257', '2', '27', '两次 喜 的后两个 bytes 各缩短一个 position'],
+            ['encoding', '按 256 再 257 的顺序应用', '由输入决定', '本句仍为 27', '不重新训练、不改变 rules'],
+          ],
+          '训练决定 merge list；之后的 encoding 只按固定顺序重放它',
+        ),
       ],
       [
         '漏掉 (9C,E6) 会把 byte-stream adjacency 错当成 visible-character boundaries。',
         'Round 1 后必须 recount；不能沿用旧排名而不检查新 symbols。',
+        '若 pair 可以重叠（例如 [A,A,A] 中的 (A,A)），pair count 与一次 non-overlapping replacement 数不一定相同。',
         '两轮后的 喜 仍是 E5 与 [96 9C] 两个 symbols，不是完整 token。',
         'Inference prompt 不会触发重新计数或创建 token 258。',
         '新 token 的整数 256/257 是地址，不表达“更重要”或“更有语义”。',
@@ -729,6 +991,26 @@ total after two rounds: 31 - 2 - 2 = 27`,
         ),
         paragraph(
           '下面把 w09-readable-v1 写成一个最小、具体的 teaching artifact，而不是调用未配置的通用 library tokenizer。它使用 identity normalization、显式 ordered Vocabulary，以及固定的 longest-first content routes；无法匹配的一个 Unicode code point 映射为 <UNK>。这个 routing 是教学约定，不声称由前面两轮 toy BPE 直接产生。',
+        ),
+        callout(
+          '这里切换到新的可读 artifact',
+          [
+            paragraph(
+              '上一节的 256、257 属于 toy-byte-bpe，现在停止使用。下面为了让 special tokens、document stream 和 batch 能逐项读懂，改用独立的 w09-readable-v1：AI=6、猫=9、V=11。它不是前两轮 BPE 的训练结果，也不能与那套 IDs 混合。',
+            ),
+          ],
+          'principle',
+        ),
+        chain([
+          '① TOKENS 冻结 ordered Vocabulary 与 special IDs',
+          '② CONTENT_ROUTES 规定最长优先的内容切分',
+          '③ segment_content 只返回 token strings',
+          '④ encode_content 把 strings lookup 成 IDs，不添加边界',
+          '⑤ encode_document 恰好添加一次 BOS 与 EOS',
+          '⑥ decode 按同一 ID table 重建文字',
+        ]),
+        paragraph(
+          '第一次阅读下面代码时，只追踪固定句从 cursor=0 到 cursor=len(text) 的移动；第二次再检查 special-token ownership 与 error branches。这样可以先看懂数据流，再看防御性细节。',
         ),
         code(
           'python',
@@ -854,6 +1136,36 @@ assert W09_READABLE_V1.decode(
 
 # These calls never mutate vocabulary, routes, or IDs.`,
           'w09_readable_v1.py',
+        ),
+        table(
+          ['fixed input', 'method', 'output', 'artifact mutation'],
+          [
+            [
+              runningText,
+              'segment_content',
+              '[我,喜欢,AI,，,AI,也,喜欢,猫,。]',
+              'none',
+            ],
+            [
+              runningText,
+              'encode_content',
+              '[4,5,6,7,6,8,5,9,10]',
+              'none',
+            ],
+            [
+              runningText,
+              'encode_document',
+              '[0,4,5,6,7,6,8,5,9,10,1]',
+              'none',
+            ],
+            [
+              '[0,4,5,6,7,6,8,5,9,10,1]',
+              'decode(skip_special_tokens=True)',
+              runningText,
+              'none',
+            ],
+          ],
+          'encoding 与 decoding 都只应用 frozen artifact，不产生新 Vocabulary entry',
         ),
       ],
       [
@@ -1107,6 +1419,106 @@ assert W09_READABLE_V1.decode(
           String.raw`\mathrm{input\_ids},\mathrm{attention\_mask}\in\mathbb{Z}^{B\times T_{\mathrm{pad}}},\qquad M_{\mathrm{causal}}\in\{0,1\}^{T_{\mathrm{pad}}\times T_{\mathrm{pad}}}`,
           'input / padding-validity mask 是 batch-by-time；causal mask 是 query-by-key positions，并可 broadcast 到 batch/head axes。',
         ),
+        paragraph(
+          '接下来把规则落到一个较短的 T_mask=7 next-token batch。Row 0 从主句取连续八个 source IDs，形成七组 input→target；Row 1 的完整短文档只有六个 IDs，所以 input 补一个 PAD，同时把“EOS 后没有本文件内 next token”和 PAD 对应的 targets 都设为 -100。',
+        ),
+        table(
+          ['row', 'input_ids [7]', 'attention_mask [7]', 'next-token targets [7]'],
+          [
+            [
+              '0: 主句 prefix',
+              '[0,4,5,6,7,6,8]',
+              '[1,1,1,1,1,1,1]',
+              '[4,5,6,7,6,8,5]',
+            ],
+            [
+              '1: 完整短文档',
+              '[0,4,5,6,10,1,2]',
+              '[1,1,1,1,1,1,0]',
+              '[4,5,6,10,1,-100,-100]',
+            ],
+          ],
+          'ID 2 是模型输入中的 PAD；-100 不是 Vocabulary ID，而是本例交给 Cross Entropy 的 ignore_index sentinel',
+        ),
+        table(
+          ['control', '它回答的问题', 'row 1 的具体效果'],
+          [
+            [
+              'causal mask',
+              'query t 能否读取 future key j>t？',
+              't=4（。）只能读取 key positions 0..4',
+            ],
+            [
+              'padding mask',
+              'query 能否把无效 PAD key 当作上下文？',
+              '所有 query 都不能读取 position 6 的 PAD key',
+            ],
+            [
+              'loss mask / ignore_index',
+              '这个 position 的预测要不要计分并产生 gradient？',
+              'positions 5、6 的 targets=-100，不参与平均 loss',
+            ],
+          ],
+          '三个控制作用于不同对象：可见的时间方向、有效的 key，以及需要计分的 target',
+        ),
+        code(
+          'python',
+          `import torch
+import torch.nn.functional as F
+
+input_ids = torch.tensor([
+    [0, 4, 5, 6, 7, 6, 8],
+    [0, 4, 5, 6, 10, 1, 2],
+], dtype=torch.long)
+
+attention_mask = torch.tensor([
+    [1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0],
+], dtype=torch.bool)
+
+targets = torch.tensor([
+    [4, 5, 6, 7, 6, 8, 5],
+    [4, 5, 6, 10, 1, -100, -100],
+], dtype=torch.long)
+
+B, T = input_ids.shape
+causal = torch.tril(torch.ones(T, T, dtype=torch.bool))
+
+# allowed[b,t,j]: query t may read key j only when j is not
+# in the future and row b says that key j is real rather than PAD.
+allowed = causal.unsqueeze(0) & attention_mask[:, None, :]
+assert tuple(allowed.shape) == (2, 7, 7)
+assert allowed[1, 4].tolist() == [
+    True, True, True, True, True, False, False
+]
+
+valid_targets = targets.ne(-100)
+assert int(valid_targets.sum()) == 12  # row 0: 7, row 1: 5
+
+# Zero logits mean a uniform distribution over V=11 candidates.
+# Cross Entropy averages only the 12 valid targets.
+logits = torch.zeros(B, T, 11)
+loss = F.cross_entropy(
+    logits.reshape(B * T, 11),
+    targets.reshape(B * T),
+    ignore_index=-100,
+)
+assert torch.isclose(loss, torch.log(torch.tensor(11.0)))`,
+          'padding_and_loss_masks.py',
+        ),
+        formula(
+          String.raw`N_{\mathrm{scored}}=7+5=12,\qquad \mathcal{L}=\frac{1}{12}\sum_{(b,t):Y_{b,t}\ne-100}-\log p\!\left(Y_{b,t}\mid X_{b,\le t}\right)`,
+          'Loss 的分母只计算 12 个有效 next-token targets；PAD slot 与本例中 EOS 后的无标签 slot 都不计分。',
+        ),
+        callout(
+          '为什么 padding query 仍可能产生一行输出？',
+          [
+            paragraph(
+              '上面的 allowed rule 只排除 PAD keys；位于 PAD slot 的 query 仍可能读到左边真实 keys。只要它的 target 被 -100 忽略，该输出不会进入本例 loss。某些模型 API 会进一步处理 padded queries，必须以具体实现的 contract 为准。',
+            ),
+          ],
+          'concept',
+        ),
         callout('Padding conventions 会变化', [
           paragraph(
             '有些 API 左 pad、有些右 pad；有些组合 additive mask，有些接收 booleans。必须读取模型 contract，而不是根据 0 的外观猜它是 token ID、attention flag 还是 ignored target。',
@@ -1116,6 +1528,7 @@ assert W09_READABLE_V1.decode(
       [
         '只在 loss 中忽略 PAD 仍可能允许 Attention 把 PAD 当作 context。',
         'attention_mask 的 0 是控制 flag，不是“token ID 0=<BOS>”。',
+        '-100 是 loss sentinel，不得拿去做 embedding lookup 或 decode。',
         'causal mask 与 padding mask 解决不同问题。',
         'EOS 与 padding 的相对顺序必须由 document/padding policy 定义。',
       ],
@@ -1164,6 +1577,33 @@ assert stream_tensor.dtype == torch.long`,
           String.raw`s^{(d)}\in\{0,\ldots,V-1\}^{L_d},\qquad s=\operatorname{concat}\!\left(s^{(1)},\ldots,s^{(D)}\right)\in\{0,\ldots,V-1\}^{L},\qquad L=\sum_{d=1}^{D}L_d`,
           '每份 document sequence 已包含约定边界，按 document order 串接后得到一维 stream。',
         ),
+        table(
+          ['multi-document policy', 'boundary example', '会训练哪种 transition', 'trade-off'],
+          [
+            [
+              '连续串接 boundary tokens',
+              '…内容,<EOS>,<BOS>,下一篇…',
+              '内容末尾→EOS，也可能包含 EOS→BOS',
+              '实现简单；需要接受控制 token 间的跨文档 transition',
+            ],
+            [
+              '每篇文档内单独切 windows',
+              'window 不跨 document',
+              '只监督同一文档内与内容末尾→EOS',
+              '语义边界清楚；短尾部可能浪费 positions',
+            ],
+            [
+              'packing + boundary-aware masks',
+              '一张矩形 batch 放多篇文档',
+              '用 attention/loss policy 阻断不需要的跨文档连接',
+              '利用率高，但实现与审计更复杂',
+            ],
+          ],
+          '边界 token 让模型看见边界，但是否允许跨边界 Attention 或 loss 仍是独立的数据管线决策',
+        ),
+        paragraph(
+          '本章单文档 stream 不会触发上述差异。扩展到多文档时，必须在数据规范中选定一种 policy；不能只插入 EOS 就声称所有跨文档信息流都已经被阻断。',
+        ),
         callout(
           '另一种合法 API，但不能混合使用',
           [
@@ -1178,6 +1618,7 @@ assert stream_tensor.dtype == torch.long`,
         'ID tensor 必须是 integer / torch.long；float32 ID 不能作为普通 embedding indices。',
         '按 token 随机 shuffle 会摧毁原始 next-token adjacency。',
         '忘记 document boundary 可能让一个 document 的最后 token 直接预测下一篇无关文档的首 token。',
+        '插入 EOS/BOS 能显式标记边界，但不会自动阻止 window、Attention 或 loss 跨越它。',
         '[L]=[11] 不是 [B,T]，也不是 embedding [11,C]。',
       ],
       check('固定句刚变为 stream_tensor 时 shape 与 dtype 是什么？', [
@@ -1452,20 +1893,22 @@ assert inputs.shape == targets.shape == (2, 4)`,
     ),
     section(
       'o0348-17-week-9-7',
-      '17. Week 9 最应该理解的 7 件事',
+      '17. Week 9 最应该理解的 9 件事',
       'Vocabulary、BPE、special IDs、stream 和 batch 若只作为独立术语记忆，容易在真正接 model 时混用 artifacts 或把 target shift 写错。',
       [
-        '用恰好七条可由固定句验证的陈述回收整条数据链。',
+        '用九条可由固定句和本章数值例子验证的陈述回收整条数据链。',
         '把 tokenizer training / encoding 与 stream / batch 两组最常见混淆再次分开。',
       ],
       [
         list(
           [
-            'Token 是 tokenizer-defined compute unit，不一定是 word。',
+            'Token 是 tokenizer-defined compute unit，不一定是 word；一个 token 通常占一个 model position。',
+            'Code point、UTF-8 byte 与 token 是不同单位；normalization 决定编码前是否折叠某些 Unicode 差异。',
             'Subword 在 Vocabulary size 与 sequence length 之间折中；token count 属于具体 tokenizer。',
             'Encode 把 text 映射到 IDs；decode 按 frozen tokenizer policy 返回 text。',
             'Tokenizer training 构建 artifacts；encoding 只应用它们，不改变它们。',
-            'Tokenizer ID mapping 与 special-token policy 必须匹配 model checkpoint。',
+            'Tokenizer ID mapping、normalization 与 special-token policy 必须匹配 model checkpoint。',
+            'Causal mask、padding mask 与 loss ignore mask 分别控制未来 keys、PAD keys 与需要计分的 targets。',
             'Token stream 通过右移一位提供 inputs 与 next-token targets。',
             'Batch 把连续、已右移的 windows stack 为 inputs,targets:[B,T]。',
           ],
@@ -1476,7 +1919,7 @@ assert inputs.shape == targets.shape == (2, 4)`,
           '从固定句到 logits 的每一步只改变已说明的单位或 axes。',
         ),
         paragraph(
-          '用 AI 自查第 4 与第 6 条：BPE training 学到 (41,49)→256 后，encoding 两次出现的 AI 只应用该 rule，不重新计数；在 i=0 的可读 stream example 中，AI 是 t=3 的 input，右移 target 是 ，。',
+          '用 AI 自查第 5 与第 8 条：BPE training 学到 (41,49)→256 后，encoding 两次出现的 AI 只应用该 rule，不重新计数；在 i=0 的可读 stream example 中，AI 是 t=3 的 input，右移 target 是 ，。',
         ),
         callout(
           '本章固定 artifact recap',
@@ -1489,13 +1932,13 @@ assert inputs.shape == targets.shape == (2, 4)`,
         ),
       ],
       [
-        '七条不能缩写成“token=word”或“BPE 学懂常用词”。',
+        '九条不能缩写成“token=word”或“BPE 学懂常用词”。',
         'Readable snapshot 与两轮 toy BPE 的 token inventory 是两个明确标注的教学 artifacts。',
         'Shape 相同不能修复 ID mapping 不一致。',
       ],
-      check('请用固定句中的 AI 解释第 4 与第 6 条。', [
+      check('请用固定句中的 AI 解释第 5 与第 8 条。', [
         paragraph(
-          '第 4 条：encoding 只应用已冻结的 AI merge，不更新 pair counts。第 6 条：i=0 时 AI 作为 input ID 6 对齐下一 stream ID 7（，）作为 target。',
+          '第 5 条：encoding 只应用已冻结的 AI merge，不更新 pair counts。第 8 条：i=0 时 AI 作为 input ID 6 对齐下一 stream ID 7（，）作为 target。',
         ),
       ]),
     ),
