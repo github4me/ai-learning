@@ -9,7 +9,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vinext dev",
-    "build": "pnpm validate:content && vinext build",
+    "build": "pnpm validate:content && pnpm validate:curated && vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint",
     "format": "oxfmt",
@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "normalize:content": "tsx scripts/normalize-course.mts",
-    "validate:content": "tsx scripts/validate-content.mts"
+    "validate:content": "tsx scripts/validate-content.mts",
+    "validate:curated": "tsx scripts/validate-curated-content.mts"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

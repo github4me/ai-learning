@@ -1,8 +1,10 @@
 import courseData from './course.generated.json';
+import { applyCuratedContent } from './curated';
 import { findSection, flattenSections, loadCourse } from './load-course';
 import type { Course, CourseUnit, SectionNode } from './schema';
 
-const course = loadCourse(courseData);
+const generatedCourse = loadCourse(courseData);
+const course = loadCourse(applyCuratedContent(generatedCourse));
 
 export function getCourse(): Course {
   return course;

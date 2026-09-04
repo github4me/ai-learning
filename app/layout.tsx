@@ -9,6 +9,7 @@ import '@fontsource-variable/noto-sans-sc/wght.css';
 import 'katex/dist/katex.min.css';
 import './globals.css';
 import { Providers } from '@/src/components/providers';
+import { COURSE_CONTENT_VERSION } from '@/src/content/content-version';
 
 export const metadata: Metadata = {
   applicationName: 'AI First Principles / AI 第一性原理',
@@ -26,13 +27,16 @@ export const metadata: Metadata = {
 
 const preferenceBootstrap = `
 (() => {
+  const storageKey = 'ai-first-principles:learning-state';
+  const contentVersion = '${COURSE_CONTENT_VERSION}';
   const fallback = { theme: 'system', fontSize: 'default', lineWidth: 'default', focusMode: false };
   let preferences = fallback;
   try {
-    const serialized = window.localStorage.getItem('ai-first-principles:learning-state');
+    const serialized = window.localStorage.getItem(storageKey);
     if (serialized) {
       const envelope = JSON.parse(serialized);
-      const candidate = envelope && (envelope.schemaVersion === 0 || envelope.schemaVersion === 1)
+      const candidate = envelope && envelope.contentVersion === contentVersion
+        && (envelope.schemaVersion === 0 || envelope.schemaVersion === 1)
         ? envelope.preferences
         : undefined;
       if (candidate && typeof candidate === 'object') {
@@ -42,9 +46,13 @@ const preferenceBootstrap = `
           lineWidth: ['narrow', 'default', 'wide'].includes(candidate.lineWidth) ? candidate.lineWidth : fallback.lineWidth,
           focusMode: typeof candidate.focusMode === 'boolean' ? candidate.focusMode : fallback.focusMode,
         };
+      } else {
+        window.localStorage.removeItem(storageKey);
       }
     }
-  } catch {}
+  } catch {
+    try { window.localStorage.removeItem(storageKey); } catch {}
+  }
   const root = document.documentElement;
   root.dataset.theme = preferences.theme;
   root.dataset.fontSize = preferences.fontSize;

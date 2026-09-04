@@ -151,11 +151,19 @@ export function createStorageAdapter(
     }
     if (!serialized) return current;
     try {
-      current = parseLearningState(
+      const parsed = parseLearningState(
         JSON.parse(serialized),
         options.contentVersion,
         aliases,
       );
+      if (parsed.contentVersion !== options.contentVersion) {
+        clearTimer();
+        pending = undefined;
+        current = initial();
+        write(JSON.stringify(current));
+        return current;
+      }
+      current = parsed;
     } catch {
       recovery = {
         kind: 'corrupt-load',
@@ -224,8 +232,13 @@ export function createStorageAdapter(
         options.contentVersion,
         aliases,
       );
+      if (candidate.contentVersion !== options.contentVersion)
+        throw new Error('Import has a different course content version');
     } catch (error) {
-      if (error instanceof Error && /unsupported/i.test(error.message))
+      if (
+        error instanceof Error &&
+        /unsupported|different course content version/i.test(error.message)
+      )
         throw error;
       throw new Error(
         `Invalid learning-state import: ${error instanceof Error ? error.message : 'unknown error'}`,
