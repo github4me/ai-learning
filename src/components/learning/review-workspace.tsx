@@ -1,9 +1,20 @@
 'use client';
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
+/* oxlint-disable typescript/unbound-method -- Zustand actions are stable function values. */
 
-import { Bookmark, FileText } from 'lucide-react';
+import { Bookmark, FileText, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   useFlushPendingNotes,
   useLearningStore,
@@ -74,21 +85,36 @@ export function LearningItemGroups({
   kinds = ['note', 'bookmark'],
   compact = false,
   onNavigate,
+  onNoteDeleted,
 }: {
   course?: Course;
   kinds?: Array<'note' | 'bookmark'>;
   compact?: boolean;
   onNavigate?: () => void;
+  onNoteDeleted?: (sectionId: string) => void;
 }) {
   const state = useLearningStore((current) => ({
     notesBySection: current.notesBySection,
     bookmarks: current.bookmarks,
   }));
+  const removeNote = useLearningStore((current) => current.removeNote);
+  const clearUndoRemoveNote = useLearningStore(
+    (current) => current.clearUndoRemoveNote,
+  );
   const flushPendingNotes = useFlushPendingNotes();
+  const [noteToDelete, setNoteToDelete] = React.useState<ReviewItem>();
   const items = React.useMemo(() => {
     const allowed = new Set(kinds);
     return collectItems(course, state).filter((item) => allowed.has(item.kind));
   }, [course, kinds, state]);
+
+  function confirmNoteDelete() {
+    if (!noteToDelete || noteToDelete.kind !== 'note') return;
+    removeNote(noteToDelete.sectionId);
+    clearUndoRemoveNote();
+    onNoteDeleted?.(noteToDelete.sectionId);
+    setNoteToDelete(undefined);
+  }
 
   if (items.length === 0) {
     return (
@@ -131,14 +157,26 @@ export function LearningItemGroups({
           <ul>
             {groupItems.map((item) => (
               <li key={item.key} className="learning-item">
-                <p className="learning-item-kind">
-                  {item.kind === 'note' ? (
-                    <FileText aria-hidden="true" />
-                  ) : (
-                    <Bookmark aria-hidden="true" />
+                <div className="learning-item-header">
+                  <p className="learning-item-kind">
+                    {item.kind === 'note' ? (
+                      <FileText aria-hidden="true" />
+                    ) : (
+                      <Bookmark aria-hidden="true" />
+                    )}
+                    {item.kind === 'note' ? 'Note' : 'Bookmark'}
+                  </p>
+                  {item.kind === 'note' && (
+                    <button
+                      type="button"
+                      className="learning-button danger learning-item-delete"
+                      aria-label={`Delete note for ${item.title}`}
+                      onClick={() => setNoteToDelete(item)}
+                    >
+                      <Trash2 aria-hidden="true" /> Delete
+                    </button>
                   )}
-                  {item.kind === 'note' ? 'Note' : 'Bookmark'}
-                </p>
+                </div>
                 {item.href ? (
                   <a
                     href={item.href}
@@ -159,6 +197,31 @@ export function LearningItemGroups({
           </ul>
         </section>
       ))}
+      <AlertDialog
+        open={noteToDelete !== undefined}
+        onOpenChange={(open) => {
+          if (!open) setNoteToDelete(undefined);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this note?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes the note for “{noteToDelete?.title}”
+              from this browser. Other notes and bookmarks will not be changed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={confirmNoteDelete}
+            >
+              <Trash2 aria-hidden="true" /> Delete note
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

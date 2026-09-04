@@ -93,6 +93,13 @@ function NotesPanel({
     if (undoTimer.current !== undefined) clearTimeout(undoTimer.current);
   }
 
+  function handleListedNoteDelete(deletedSectionId: string) {
+    if (undoTimer.current !== undefined) clearTimeout(undoTimer.current);
+    setUndoAvailable(false);
+    deletedText.current = '';
+    if (deletedSectionId === sectionId) setText('');
+  }
+
   const persistenceMessage =
     persistence.status === 'saving'
       ? 'Saving…'
@@ -157,6 +164,7 @@ function NotesPanel({
         kinds={['note']}
         compact
         onNavigate={onSectionNavigate}
+        onNoteDeleted={handleListedNoteDelete}
       />
     </div>
   );
