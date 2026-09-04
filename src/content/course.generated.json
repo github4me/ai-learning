@@ -2,7 +2,7 @@
   "title": "AI First Principles · 核心教程深度扩展版",
   "description": "从数据、参数与梯度一路学习到可运行的 Mini GPT。",
   "sourceFilename": "AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf",
-  "version": "2026-09-03",
+  "version": "2026-09-04",
   "overview": {
     "id": "o0000-readme",
     "aliases": [],
@@ -1512,8 +1512,8 @@
             {
               "type": "formula",
               "id": "formula-math-p013-g000",
-              "latex": "\\text{X= [[ [ 100 3 8 80 2 15 140 4 6 95 3 11 ]] ]}",
-              "accessibleText": "𝑋= ⎡⎢\n⎣\n100 3\n8\n80\n2 15\n140 4\n6\n95\n3 11\n⎤⎥\n⎦",
+              "latex": "X = \\begin{bmatrix} 100 & 3 & 8 \\\\ 80 & 2 & 15 \\\\ 140 & 4 & 6 \\\\ 95 & 3 & 11 \\end{bmatrix}",
+              "accessibleText": "X = matrix [[100, 3, 8], [80, 2, 15], [140, 4, 6], [95, 3, 11]]",
               "source": {
                 "pdfPage": 13,
                 "printedPageLabel": "4"
@@ -1777,8 +1777,8 @@
             {
               "type": "formula",
               "id": "formula-math-p013-g001",
-              "latex": "\\text{w= [ 0.7 0.5 -0.4 ]}",
-              "accessibleText": "𝑤= [\n0.7\n0.5\n-0.4\n]",
+              "latex": "w = \\begin{bmatrix} 0.7 \\\\ 0.5 \\\\ -0.4 \\end{bmatrix}",
+              "accessibleText": "w = column vector [0.7, 0.5, -0.4]",
               "source": {
                 "pdfPage": 13,
                 "printedPageLabel": "4"
@@ -2049,8 +2049,8 @@
             {
               "type": "formula",
               "id": "formula-math-p014-g000",
-              "latex": "\\text{w} \\cdot \\text{x= w1x1 + w2x2 + w3x3}",
-              "accessibleText": "𝑤⋅𝑥= 𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3",
+              "latex": "w \\cdot x = w_1x_1 + w_2x_2 + w_3x_3",
+              "accessibleText": "w · x = w_1x_1 + w_2x_2 + w_3x_3",
               "source": {
                 "pdfPage": 14,
                 "printedPageLabel": "5"
@@ -2199,8 +2199,8 @@
             {
               "type": "formula",
               "id": "formula-math-p014-g001",
-              "latex": "\\text{w} \\cdot \\text{x= (0.7)(0.8) + (0.5)(0.6) + (-0.4)(0.2)}",
-              "accessibleText": "𝑤⋅𝑥= (0.7)(0.8) + (0.5)(0.6) + (-0.4)(0.2)",
+              "latex": "w \\cdot x = (0.7)(0.8) + (0.5)(0.6) + (-0.4)(0.2)",
+              "accessibleText": "w · x = (0.7)(0.8) + (0.5)(0.6) + (-0.4)(0.2)",
               "source": {
                 "pdfPage": 14,
                 "printedPageLabel": "5"
@@ -2209,8 +2209,8 @@
             {
               "type": "formula",
               "id": "formula-math-p014-g002",
-              "latex": "\\text{= 0.56 + 0.30 -0.08}",
-              "accessibleText": "= 0.56 + 0.30 -0.08",
+              "latex": "= 0.56 + 0.30 - 0.08",
+              "accessibleText": "= 0.56 + 0.30 - 0.08",
               "source": {
                 "pdfPage": 14,
                 "printedPageLabel": "5"
@@ -2219,7 +2219,7 @@
             {
               "type": "formula",
               "id": "formula-math-p014-g003",
-              "latex": "\\text{= 0.78}",
+              "latex": "= 0.78",
               "accessibleText": "= 0.78",
               "source": {
                 "pdfPage": 14,
@@ -2456,8 +2456,8 @@
             {
               "type": "formula",
               "id": "formula-math-p015-g000",
-              "latex": "\\text{z= w} \\cdot \\text{x+ b}",
-              "accessibleText": "𝑧= 𝑤⋅𝑥+ 𝑏",
+              "latex": "z = w \\cdot x + b",
+              "accessibleText": "z = w · x + b",
               "source": {
                 "pdfPage": 15,
                 "printedPageLabel": "6"
@@ -2522,8 +2522,8 @@
             {
               "type": "formula",
               "id": "formula-math-p015-g001",
-              "latex": "\\text{z= 0.78 + 0.10 = 0.88}",
-              "accessibleText": "𝑧= 0.78 + 0.10 = 0.88",
+              "latex": "z = 0.78 + 0.10 = 0.88",
+              "accessibleText": "z = 0.78 + 0.10 = 0.88",
               "source": {
                 "pdfPage": 15,
                 "printedPageLabel": "6"
@@ -2616,8 +2616,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p015-g002",
-                  "latex": "\\text{w} \\cdot \\text{x+ b> 0}",
-                  "accessibleText": "𝑤⋅𝑥+ 𝑏> 0",
+                  "latex": "w \\cdot x + b > 0",
+                  "accessibleText": "w · x + b > 0",
                   "source": {
                     "pdfPage": 15,
                     "printedPageLabel": "6"
@@ -2671,8 +2671,8 @@
             {
               "type": "formula",
               "id": "formula-math-p015-g003",
-              "latex": "\\text{y= f(x)}",
-              "accessibleText": "𝑦= 𝑓(𝑥)",
+              "latex": "y = f(x)",
+              "accessibleText": "y = f(x)",
               "source": {
                 "pdfPage": 15,
                 "printedPageLabel": "6"
@@ -3130,8 +3130,8 @@
             {
               "type": "formula",
               "id": "formula-math-p016-g000",
-              "latex": "\\text{W= [ 0.7 0.2 0.5 -0.1 -0.4 0.8 ]}",
-              "accessibleText": "𝑊= [\n0.7\n0.2\n0.5\n-0.1\n-0.4\n0.8\n]",
+              "latex": "W = \\begin{bmatrix} 0.7 & 0.2 \\\\ 0.5 & -0.1 \\\\ -0.4 & 0.8 \\end{bmatrix}",
+              "accessibleText": "W = matrix [[0.7, 0.2], [0.5, -0.1], [-0.4, 0.8]]",
               "source": {
                 "pdfPage": 16,
                 "printedPageLabel": "7"
@@ -3168,8 +3168,8 @@
             {
               "type": "formula",
               "id": "formula-math-p016-g001",
-              "latex": "\\text{x= [0.8 0.6 0.2]}",
-              "accessibleText": "𝑥= [0.8 0.6 0.2]",
+              "latex": "x = [0.8\\; 0.6\\; 0.2]",
+              "accessibleText": "x = [0.8, 0.6, 0.2]",
               "source": {
                 "pdfPage": 16,
                 "printedPageLabel": "7"
@@ -3192,8 +3192,8 @@
             {
               "type": "formula",
               "id": "formula-math-p017-g000",
-              "latex": "\\text{z= xW+ b}",
-              "accessibleText": "𝑧= 𝑥𝑊+ 𝑏",
+              "latex": "z = xW + b",
+              "accessibleText": "z = xW + b",
               "source": {
                 "pdfPage": 17,
                 "printedPageLabel": "8"
@@ -3329,8 +3329,8 @@
             {
               "type": "formula",
               "id": "formula-math-p017-g001",
-              "latex": "\\text{[m, n] } \\times \\text{ [n, p] } \\rightarrow \\text{ [m, p]}",
-              "accessibleText": "[𝑚, 𝑛] × [𝑛, 𝑝] → [𝑚, 𝑝]",
+              "latex": "[m,n] \\times [n,p] \\rightarrow [m,p]",
+              "accessibleText": "[m,n] × [n,p] arrow [m,p]",
               "source": {
                 "pdfPage": 17,
                 "printedPageLabel": "8"
@@ -3367,8 +3367,8 @@
             {
               "type": "formula",
               "id": "formula-math-p017-g002",
-              "latex": "\\text{[4, 3] } \\times \\text{ [3, 2] } \\rightarrow \\text{ [4, 2]}",
-              "accessibleText": "[4, 3] × [3, 2] → [4, 2]",
+              "latex": "[4,3] \\times [3,2] \\rightarrow [4,2]",
+              "accessibleText": "[4,3] × [3,2] arrow [4,2]",
               "source": {
                 "pdfPage": 17,
                 "printedPageLabel": "8"
@@ -3548,8 +3548,8 @@
             {
               "type": "formula",
               "id": "formula-math-p017-g003",
-              "latex": "\\text{w1x1 + w2x2 + w3x3}",
-              "accessibleText": "𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3",
+              "latex": "w_1x_1 + w_2x_2 + w_3x_3",
+              "accessibleText": "w_1x_1 + w_2x_2 + w_3x_3",
               "source": {
                 "pdfPage": 17,
                 "printedPageLabel": "8"
@@ -3558,8 +3558,8 @@
             {
               "type": "formula",
               "id": "formula-math-p017-g004",
-              "latex": "\\text{3 } \\sum \\text{ i=1 wixi}",
-              "accessibleText": "3\n∑\n𝑖=1\n𝑤𝑖𝑥𝑖",
+              "latex": "\\sum_{i=1}^{3} w_i x_i",
+              "accessibleText": "sum_i=1^3 w_i x_i",
               "source": {
                 "pdfPage": 17,
                 "printedPageLabel": "8"
@@ -3709,8 +3709,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p018-g000",
-                  "latex": "\\text{x2 = x} \\times \\text{ x}",
-                  "accessibleText": "𝑥2 = 𝑥× 𝑥",
+                  "latex": "x^2 = x \\times x",
+                  "accessibleText": "x^2 = x × x",
                   "source": {
                     "pdfPage": 18,
                     "printedPageLabel": "9"
@@ -3748,8 +3748,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p018-g001",
-                  "latex": "\\text{ex}",
-                  "accessibleText": "𝑒𝑥",
+                  "latex": "e^x",
+                  "accessibleText": "e^x",
                   "source": {
                     "pdfPage": 18,
                     "printedPageLabel": "9"
@@ -3787,8 +3787,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p018-g002",
-                  "latex": "\\text{0 } \\le \\text{p} \\le \\text{1}",
-                  "accessibleText": "0 ≤𝑝≤1",
+                  "latex": "0 \\le p \\le 1",
+                  "accessibleText": "0 ≤ p ≤ 1",
                   "source": {
                     "pdfPage": 18,
                     "printedPageLabel": "9"
@@ -3943,8 +3943,8 @@
             {
               "type": "formula",
               "id": "formula-math-p018-g003",
-              "latex": "\\text{z= Wx+ b}",
-              "accessibleText": "𝑧= 𝑊𝑥+ 𝑏",
+              "latex": "z = xW + b",
+              "accessibleText": "z = xW + b",
               "source": {
                 "pdfPage": 18,
                 "printedPageLabel": "9"
@@ -4541,8 +4541,8 @@
             {
               "type": "formula",
               "id": "formula-math-p020-g000",
-              "latex": "\\text{z= w} \\cdot \\text{x+ b}",
-              "accessibleText": "𝑧= 𝑤⋅𝑥+ 𝑏",
+              "latex": "z = w \\cdot x + b",
+              "accessibleText": "z = w · x + b",
               "source": {
                 "pdfPage": 20,
                 "printedPageLabel": "11"
@@ -4565,8 +4565,8 @@
             {
               "type": "formula",
               "id": "formula-math-p020-g001",
-              "latex": "\\text{z= (0.5)(2) + (-0.2)(3) + 0.1}",
-              "accessibleText": "𝑧= (0.5)(2) + (-0.2)(3) + 0.1",
+              "latex": "z = (0.5)(2) + (-0.2)(3) + 0.1",
+              "accessibleText": "z = (0.5)(2) + (-0.2)(3) + 0.1",
               "source": {
                 "pdfPage": 20,
                 "printedPageLabel": "11"
@@ -4575,8 +4575,8 @@
             {
               "type": "formula",
               "id": "formula-math-p020-g002",
-              "latex": "\\text{= 1 -0.6 + 0.1 = 0.5}",
-              "accessibleText": "= 1 -0.6 + 0.1 = 0.5",
+              "latex": "= 1 - 0.6 + 0.1 = 0.5",
+              "accessibleText": "= 1 - 0.6 + 0.1 = 0.5",
               "source": {
                 "pdfPage": 20,
                 "printedPageLabel": "11"
@@ -4656,8 +4656,8 @@
             {
               "type": "formula",
               "id": "formula-math-p020-g003",
-              "latex": "\\text{y= wx+ b}",
-              "accessibleText": "𝑦= 𝑤𝑥+ 𝑏",
+              "latex": "\\hat{y} = wx + b",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 20,
                 "printedPageLabel": "11"
@@ -5007,7 +5007,7 @@
               "type": "formula",
               "id": "formula-p021-l0025",
               "latex": "\\hat{y} = wx + b",
-              "accessibleText": "𝑦= wx + 𝑏",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 21,
                 "printedPageLabel": "12"
@@ -5200,8 +5200,8 @@
             {
               "type": "formula",
               "id": "formula-math-p022-g000",
-              "latex": "\\text{y= wx + b= 1 } \\times \\text{ 2 + 0 = 2}",
-              "accessibleText": "𝑦= wx + 𝑏= 1 × 2 + 0 = 2",
+              "latex": "\\hat{y} = wx + b = 1 \\times 2 + 0 = 2",
+              "accessibleText": "ŷ = wx + b = 1 × 2 + 0 = 2",
               "source": {
                 "pdfPage": 22,
                 "printedPageLabel": "13"
@@ -5224,8 +5224,8 @@
             {
               "type": "formula",
               "id": "formula-math-p022-g001",
-              "latex": "\\text{y= 5}",
-              "accessibleText": "𝑦= 5",
+              "latex": "y = 5",
+              "accessibleText": "y = 5",
               "source": {
                 "pdfPage": 22,
                 "printedPageLabel": "13"
@@ -5333,8 +5333,8 @@
             {
               "type": "formula",
               "id": "formula-math-p022-g002",
-              "latex": "\\text{Error = y-y}",
-              "accessibleText": "Error =̂ 𝑦-𝑦",
+              "latex": "\\mathrm{Error} = \\hat{y} - y",
+              "accessibleText": "Error = ŷ - y",
               "source": {
                 "pdfPage": 22,
                 "printedPageLabel": "13"
@@ -5413,8 +5413,8 @@
             {
               "type": "formula",
               "id": "formula-math-p022-g003",
-              "latex": "\\text{SquaredError = (y-y)2}",
-              "accessibleText": "SquaredError = (̂𝑦-𝑦)2",
+              "latex": "\\mathrm{SquaredError} = (\\hat{y} - y)^2",
+              "accessibleText": "SquaredError = (ŷ - y)^2",
               "source": {
                 "pdfPage": 22,
                 "printedPageLabel": "13"
@@ -5517,8 +5517,8 @@
             {
               "type": "formula",
               "id": "formula-math-p022-g004",
-              "latex": "\\text{MSE = (1/n) } \\times \\text{ } \\sum \\text{(yi-yi)2}",
-              "accessibleText": "MSE = (1/𝑛) × ∑(̂𝑦𝑖-𝑦𝑖)2",
+              "latex": "\\mathrm{MSE} = \\frac{1}{n} \\times \\sum_i (\\hat{y}_i - y_i)^2",
+              "accessibleText": "MSE = (1)/(n) × sum_i (ŷ_i - y_i)^2",
               "source": {
                 "pdfPage": 22,
                 "printedPageLabel": "13"
@@ -5847,8 +5847,8 @@
             {
               "type": "formula",
               "id": "formula-math-p023-g000",
-              "latex": "\\text{f(x) = x2}",
-              "accessibleText": "𝑓(𝑥) = 𝑥2",
+              "latex": "f(x) = x^2",
+              "accessibleText": "f(x) = x^2",
               "source": {
                 "pdfPage": 23,
                 "printedPageLabel": "14"
@@ -5956,36 +5956,8 @@
             {
               "type": "formula",
               "id": "formula-math-p023-g001",
-              "latex": "\\text{Gradient =}",
-              "accessibleText": "Gradient =",
-              "source": {
-                "pdfPage": 23,
-                "printedPageLabel": "14"
-              }
-            },
-            {
-              "type": "paragraph",
-              "id": "body-00374",
-              "children": [
-                {
-                  "type": "text",
-                  "value": "dLoss"
-                }
-              ],
-              "source": {
-                "pdfPage": 23,
-                "printedPageLabel": "14"
-              }
-            },
-            {
-              "type": "paragraph",
-              "id": "body-00375",
-              "children": [
-                {
-                  "type": "text",
-                  "value": "dw"
-                }
-              ],
+              "latex": "\\mathrm{Gradient} = \\frac{d\\,\\mathrm{Loss}}{dw}",
+              "accessibleText": "Gradient = (d Loss)/(dw)",
               "source": {
                 "pdfPage": 23,
                 "printedPageLabel": "14"
@@ -6062,8 +6034,8 @@
             {
               "type": "formula",
               "id": "formula-math-p024-g000",
-              "latex": "\\text{wnew = wold -learningrate } \\times \\text{ gradient}",
-              "accessibleText": "𝑤new = 𝑤old -learningrate × gradient",
+              "latex": "w_{\\mathrm{new}} = w_{\\mathrm{old}} - \\mathrm{learning}_{\\mathrm{rate}} \\times \\mathrm{gradient}",
+              "accessibleText": "w_new = w_old - learning_rate × gradient",
               "source": {
                 "pdfPage": 24,
                 "printedPageLabel": "15"
@@ -6312,8 +6284,8 @@
             {
               "type": "formula",
               "id": "formula-math-p024-g001",
-              "latex": "\\text{parameternew = parameterold -learningrate } \\times \\text{ gradient}",
-              "accessibleText": "parameternew = parameterold -learningrate × gradient",
+              "latex": "\\mathrm{parameter}_{\\mathrm{new}} = \\mathrm{parameter}_{\\mathrm{old}} - \\mathrm{learning}_{\\mathrm{rate}} \\times \\mathrm{gradient}",
+              "accessibleText": "parameter_new = parameter_old - learning_rate × gradient",
               "source": {
                 "pdfPage": 24,
                 "printedPageLabel": "15"
@@ -6481,8 +6453,8 @@
             {
               "type": "formula",
               "id": "formula-math-p025-g000",
-              "latex": "\\text{y= wx}",
-              "accessibleText": "𝑦= wx",
+              "latex": "\\hat{y} = wx",
+              "accessibleText": "ŷ = wx",
               "source": {
                 "pdfPage": 25,
                 "printedPageLabel": "16"
@@ -6547,8 +6519,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p025-g001",
-                  "latex": "\\text{y= 1 } \\times \\text{ 2 = 2}",
-                  "accessibleText": "𝑦= 1 × 2 = 2",
+                  "latex": "\\hat{y} = 1 \\times 2 = 2",
+                  "accessibleText": "ŷ = 1 × 2 = 2",
                   "source": {
                     "pdfPage": 25,
                     "printedPageLabel": "16"
@@ -6572,8 +6544,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p025-g002",
-                  "latex": "\\text{Loss = (y-y)2 = (2 -5)2 = 9}",
-                  "accessibleText": "Loss = (̂𝑦-𝑦)2 = (2 -5)2 = 9",
+                  "latex": "\\mathrm{Loss} = (\\hat{y} - y)^2 = (2 - 5)^2 = 9",
+                  "accessibleText": "Loss = (ŷ - y)^2 = (2 - 5)^2 = 9",
                   "source": {
                     "pdfPage": 25,
                     "printedPageLabel": "16"
@@ -6611,8 +6583,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p025-g003",
-                  "latex": "\\text{Loss = (y-y)2}",
-                  "accessibleText": "Loss = (̂𝑦-𝑦)2",
+                  "latex": "\\mathrm{Loss} = (\\hat{y} - y)^2",
+                  "accessibleText": "Loss = (ŷ - y)^2",
                   "source": {
                     "pdfPage": 25,
                     "printedPageLabel": "16"
@@ -6635,8 +6607,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p025-g004",
-                  "latex": "\\text{y= wx}",
-                  "accessibleText": "𝑦= wx",
+                  "latex": "\\hat{y} = wx",
+                  "accessibleText": "ŷ = wx",
                   "source": {
                     "pdfPage": 25,
                     "printedPageLabel": "16"
@@ -6657,38 +6629,10 @@
                   }
                 },
                 {
-                  "type": "paragraph",
-                  "id": "body-00417",
-                  "children": [
-                    {
-                      "type": "text",
-                      "value": "dLoss"
-                    }
-                  ],
-                  "source": {
-                    "pdfPage": 25,
-                    "printedPageLabel": "16"
-                  }
-                },
-                {
-                  "type": "paragraph",
-                  "id": "body-00418",
-                  "children": [
-                    {
-                      "type": "text",
-                      "value": "dw"
-                    }
-                  ],
-                  "source": {
-                    "pdfPage": 25,
-                    "printedPageLabel": "16"
-                  }
-                },
-                {
                   "type": "formula",
                   "id": "formula-math-p025-g005",
-                  "latex": "\\text{= (dLoss/dy) } \\times \\text{ (dy/dw)}",
-                  "accessibleText": "= (dLoss/𝑑̂𝑦) × (𝑑̂𝑦/dw)",
+                  "latex": "\\frac{d\\,\\mathrm{Loss}}{dw} = \\left(\\frac{d\\,\\mathrm{Loss}}{d\\hat{y}}\\right) \\times \\left(\\frac{d\\hat{y}}{dw}\\right)",
+                  "accessibleText": "(d Loss)/(dw) = ((d Loss)/(dŷ)) × ((dŷ)/(dw))",
                   "source": {
                     "pdfPage": 25,
                     "printedPageLabel": "16"
@@ -6711,8 +6655,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p025-g006",
-                  "latex": "\\text{dLoss/dy= 2(y-y)}",
-                  "accessibleText": "dLoss/𝑑̂𝑦= 2(̂𝑦-𝑦)",
+                  "latex": "\\frac{d\\,\\mathrm{Loss}}{d\\hat{y}} = 2(\\hat{y} - y)",
+                  "accessibleText": "(d Loss)/(dŷ) = 2(ŷ - y)",
                   "source": {
                     "pdfPage": 25,
                     "printedPageLabel": "16"
@@ -6789,38 +6733,10 @@
                   }
                 },
                 {
-                  "type": "paragraph",
-                  "id": "body-00425",
-                  "children": [
-                    {
-                      "type": "text",
-                      "value": "dLoss"
-                    }
-                  ],
-                  "source": {
-                    "pdfPage": 25,
-                    "printedPageLabel": "16"
-                  }
-                },
-                {
-                  "type": "paragraph",
-                  "id": "body-00426",
-                  "children": [
-                    {
-                      "type": "text",
-                      "value": "dw"
-                    }
-                  ],
-                  "source": {
-                    "pdfPage": 25,
-                    "printedPageLabel": "16"
-                  }
-                },
-                {
                   "type": "formula",
                   "id": "formula-math-p025-g007",
-                  "latex": "\\text{= -6 } \\times \\text{ 2 = -12}",
-                  "accessibleText": "= -6 × 2 = -12",
+                  "latex": "\\frac{d\\,\\mathrm{Loss}}{dw} = -6 \\times 2 = -12",
+                  "accessibleText": "(d Loss)/(dw) = -6 × 2 = -12",
                   "source": {
                     "pdfPage": 25,
                     "printedPageLabel": "16"
@@ -6872,8 +6788,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p026-g000",
-                  "latex": "\\text{wnew = 1 -0.01 } \\times \\text{ (-12)}",
-                  "accessibleText": "𝑤new = 1 -0.01 × (-12)",
+                  "latex": "w_{\\mathrm{new}} = 1 - 0.01 \\times (-12)",
+                  "accessibleText": "w_new = 1 - 0.01 × (-12)",
                   "source": {
                     "pdfPage": 26,
                     "printedPageLabel": "17"
@@ -6896,8 +6812,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p026-g001",
-                  "latex": "\\text{wnew = 1.12}",
-                  "accessibleText": "𝑤new = 1.12",
+                  "latex": "w_{\\mathrm{new}} = 1.12",
+                  "accessibleText": "w_new = 1.12",
                   "source": {
                     "pdfPage": 26,
                     "printedPageLabel": "17"
@@ -6920,8 +6836,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p026-g002",
-                  "latex": "\\text{y= 1.12 } \\times \\text{ 2 = 2.24}",
-                  "accessibleText": "𝑦= 1.12 × 2 = 2.24",
+                  "latex": "\\hat{y} = 1.12 \\times 2 = 2.24",
+                  "accessibleText": "ŷ = 1.12 × 2 = 2.24",
                   "source": {
                     "pdfPage": 26,
                     "printedPageLabel": "17"
@@ -7144,8 +7060,8 @@
             {
               "type": "formula",
               "id": "formula-math-p026-g003",
-              "latex": "\\text{y= wx + b}",
-              "accessibleText": "𝑦= wx + 𝑏",
+              "latex": "\\hat{y} = wx + b",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 26,
                 "printedPageLabel": "17"
@@ -7168,8 +7084,8 @@
             {
               "type": "formula",
               "id": "formula-math-p026-g004",
-              "latex": "\\text{Loss = f(w, b)}",
-              "accessibleText": "Loss = 𝑓(𝑤, 𝑏)",
+              "latex": "\\mathrm{Loss} = f(w,b)",
+              "accessibleText": "Loss = f(w,b)",
               "source": {
                 "pdfPage": 26,
                 "printedPageLabel": "17"
@@ -7192,8 +7108,8 @@
             {
               "type": "formula",
               "id": "formula-math-p026-g005",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w}",
-              "accessibleText": "𝜕Loss\n𝜕𝑤",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial w}",
+              "accessibleText": "(partial Loss)/(partial w)",
               "source": {
                 "pdfPage": 26,
                 "printedPageLabel": "17"
@@ -7216,8 +7132,8 @@
             {
               "type": "formula",
               "id": "formula-math-p026-g006",
-              "latex": "\\partial \\text{Loss } \\partial \\text{b}",
-              "accessibleText": "𝜕Loss\n𝜕𝑏",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial b}",
+              "accessibleText": "(partial Loss)/(partial b)",
               "source": {
                 "pdfPage": 26,
                 "printedPageLabel": "17"
@@ -7240,8 +7156,8 @@
             {
               "type": "formula",
               "id": "formula-math-p027-g000",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w = 2(y-y)x}",
-              "accessibleText": "𝜕Loss\n𝜕𝑤\n= 2(̂𝑦-𝑦)𝑥",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial w} = 2(\\hat{y} - y)x",
+              "accessibleText": "(partial Loss)/(partial w) = 2(ŷ - y)x",
               "source": {
                 "pdfPage": 27,
                 "printedPageLabel": "18"
@@ -7250,8 +7166,8 @@
             {
               "type": "formula",
               "id": "formula-math-p027-g001",
-              "latex": "\\partial \\text{Loss } \\partial \\text{b = 2(y-y)}",
-              "accessibleText": "𝜕Loss\n𝜕𝑏\n= 2(̂𝑦-𝑦)",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial b} = 2(\\hat{y} - y)",
+              "accessibleText": "(partial Loss)/(partial b) = 2(ŷ - y)",
               "source": {
                 "pdfPage": 27,
                 "printedPageLabel": "18"
@@ -7429,8 +7345,8 @@
             {
               "type": "formula",
               "id": "formula-math-p027-g002",
-              "latex": "\\text{y= 1.12x+ 0.06}",
-              "accessibleText": "𝑦= 1.12𝑥+ 0.06",
+              "latex": "\\hat{y} = 1.12x + 0.06",
+              "accessibleText": "ŷ = 1.12x + 0.06",
               "source": {
                 "pdfPage": 27,
                 "printedPageLabel": "18"
@@ -8282,8 +8198,8 @@
             {
               "type": "formula",
               "id": "formula-math-p029-g000",
-              "latex": "\\text{y} \\approx \\text{2x+ 1}",
-              "accessibleText": "𝑦≈2𝑥+ 1",
+              "latex": "y \\approx 2x + 1",
+              "accessibleText": "y ≈ 2x + 1",
               "source": {
                 "pdfPage": 29,
                 "printedPageLabel": "20"
@@ -8349,8 +8265,8 @@
             {
               "type": "formula",
               "id": "formula-math-p029-g001",
-              "latex": "\\text{y= wx + b}",
-              "accessibleText": "𝑦= wx + 𝑏",
+              "latex": "\\hat{y} = wx + b",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 29,
                 "printedPageLabel": "20"
@@ -8401,8 +8317,8 @@
             {
               "type": "formula",
               "id": "formula-math-p029-g002",
-              "latex": "\\text{y-y}",
-              "accessibleText": "𝑦-𝑦",
+              "latex": "\\hat{y} - y",
+              "accessibleText": "ŷ - y",
               "source": {
                 "pdfPage": 29,
                 "printedPageLabel": "20"
@@ -8509,8 +8425,8 @@
             {
               "type": "formula",
               "id": "formula-math-p029-g003",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w = 2(y-y)x}",
-              "accessibleText": "𝜕Loss\n𝜕𝑤\n= 2(̂𝑦-𝑦)𝑥",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial w} = 2(\\hat{y} - y)x",
+              "accessibleText": "(partial Loss)/(partial w) = 2(ŷ - y)x",
               "source": {
                 "pdfPage": 29,
                 "printedPageLabel": "20"
@@ -8561,8 +8477,8 @@
             {
               "type": "formula",
               "id": "formula-math-p029-g004",
-              "latex": "\\partial \\text{Loss } \\partial \\text{b = 2(y-y)}",
-              "accessibleText": "𝜕Loss\n𝜕𝑏\n= 2(̂𝑦-𝑦)",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial b} = 2(\\hat{y} - y)",
+              "accessibleText": "(partial Loss)/(partial b) = 2(ŷ - y)",
               "source": {
                 "pdfPage": 29,
                 "printedPageLabel": "20"
@@ -8771,7 +8687,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Backward Pass："
+                  "value": "Backward Pass / Backpropagation："
                 }
               ],
               "source": {
@@ -8841,7 +8757,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Update Parameters"
+                  "value": "Optimizer / Gradient Descent："
                 }
               ],
               "source": {
@@ -8855,7 +8771,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "这已经是最简单版本的Backpropagation 雏形。"
+                  "value": "Gradients → Updated Parameters"
                 }
               ],
               "source": {
@@ -8938,10 +8854,7 @@
               "type": "conceptChain",
               "id": "chain-body-00558",
               "steps": [
-                "Batch：一次只拿部分训练数据计算Forward",
-                "Loss",
-                "Gradient",
-                "Update。"
+                "Batch 是一次forward/loss/backward/update 所处理的一组样本。它可以是整个训练集（full batch），也可以是其中一部分（mini-batch；实际训练更常见）。"
               ],
               "source": {
                 "pdfPage": 30,
@@ -8994,8 +8907,8 @@
             {
               "type": "formula",
               "id": "formula-math-p030-g000",
-              "latex": "\\text{y= wx + b}",
-              "accessibleText": "𝑦= wx + 𝑏",
+              "latex": "\\hat{y} = wx + b",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 30,
                 "printedPageLabel": "21"
@@ -9018,8 +8931,8 @@
             {
               "type": "formula",
               "id": "formula-math-p030-g001",
-              "latex": "\\text{z= w1x1 + w2x2 + ... + wnxn+ b}",
-              "accessibleText": "𝑧= 𝑤1𝑥1 + 𝑤2𝑥2 + ... + 𝑤𝑛𝑥𝑛+ 𝑏",
+              "latex": "z = w_1x_1 + w_2x_2 + \\cdots + w_nx_n + b",
+              "accessibleText": "z = w_1x_1 + w_2x_2 + ... + w_nx_n + b",
               "source": {
                 "pdfPage": 30,
                 "printedPageLabel": "21"
@@ -10397,7 +10310,7 @@
               "type": "formula",
               "id": "formula-p032-l0015",
               "latex": "\\hat{y} = wx + b",
-              "accessibleText": "𝑦= wx + 𝑏",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 32,
                 "printedPageLabel": "23"
@@ -10420,8 +10333,8 @@
             {
               "type": "formula",
               "id": "formula-p032-l0017",
-              "latex": "\\mathrm{MSE} = \\frac{1}{n} \\sum_i (\\hat{y}_i-y_i)^2",
-              "accessibleText": "MSE = (1/𝑛) × ∑(̂𝑦𝑖-𝑦𝑖)2",
+              "latex": "\\mathrm{MSE} = \\frac{1}{n} \\times \\sum_i (\\hat{y}_i-y_i)^2",
+              "accessibleText": "MSE = (1)/(n) × sum_i (ŷ_i-y_i)^2",
               "source": {
                 "pdfPage": 32,
                 "printedPageLabel": "23"
@@ -10444,8 +10357,8 @@
             {
               "type": "formula",
               "id": "formula-p032-l0019-21",
-              "latex": "\\frac{\\partial \\mathrm{Loss}}{\\partial w} = 2(\\hat{y}-y)x",
-              "accessibleText": "𝜕Loss\n𝜕𝑤\n= 2(̂𝑦-𝑦)𝑥",
+              "latex": "\\frac{\\partial\\,\\mathrm{MSE}}{\\partial w} = \\frac{2}{n}\\sum_i(\\hat{y}_i-y_i)x_i",
+              "accessibleText": "∂MSE/∂w = (2/n) sum_i (ŷ_i - y_i) x_i",
               "source": {
                 "pdfPage": 32,
                 "printedPageLabel": "23"
@@ -10468,8 +10381,8 @@
             {
               "type": "formula",
               "id": "formula-p032-l0023-25",
-              "latex": "\\frac{\\partial \\mathrm{Loss}}{\\partial b} = 2(\\hat{y}-y)",
-              "accessibleText": "𝜕Loss\n𝜕𝑏\n= 2(̂𝑦-𝑦)",
+              "latex": "\\frac{\\partial\\,\\mathrm{MSE}}{\\partial b} = \\frac{2}{n}\\sum_i(\\hat{y}_i-y_i)",
+              "accessibleText": "∂MSE/∂b = (2/n) sum_i (ŷ_i - y_i)",
               "source": {
                 "pdfPage": 32,
                 "printedPageLabel": "23"
@@ -10492,8 +10405,8 @@
             {
               "type": "formula",
               "id": "formula-p032-l0027",
-              "latex": "\\mathrm{Parameter}_{new} = \\mathrm{Parameter}_{old} - \\mathrm{LearningRate} \\times \\mathrm{Gradient}",
-              "accessibleText": "Parameternew = Parameterold -LearningRate × Gradient",
+              "latex": "\\mathrm{Parameter}_{\\mathrm{new}} = \\mathrm{Parameter}_{\\mathrm{old}} - \\mathrm{LearningRate} \\times \\mathrm{Gradient}",
+              "accessibleText": "Parameter_new = Parameter_old - LearningRate × Gradient",
               "source": {
                 "pdfPage": 32,
                 "printedPageLabel": "23"
@@ -10966,8 +10879,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p033-g000",
-                  "latex": "\\text{Loss(w) = (2w-5)2}",
-                  "accessibleText": "𝐿𝑜𝑠𝑠(𝑤) = (2𝑤-5)2",
+                  "latex": "\\mathrm{Loss}(w) = (2w - 5)^2",
+                  "accessibleText": "Loss(w) = (2w - 5)^2",
                   "source": {
                     "pdfPage": 33,
                     "printedPageLabel": "24"
@@ -11004,8 +10917,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p033-g001",
-                  "latex": "\\text{dLoss dw = -12}",
-                  "accessibleText": "𝑑𝐿𝑜𝑠𝑠\n𝑑𝑤\n= -12",
+                  "latex": "\\frac{d\\,\\mathrm{Loss}}{dw} = -12",
+                  "accessibleText": "(d Loss)/(dw) = -12",
                   "source": {
                     "pdfPage": 33,
                     "printedPageLabel": "24"
@@ -11099,8 +11012,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p033-g002",
-                  "latex": "\\text{gradient= dLoss dw}",
-                  "accessibleText": "𝑔𝑟𝑎𝑑𝑖𝑒𝑛𝑡= 𝑑𝐿𝑜𝑠𝑠\n𝑑𝑤",
+                  "latex": "\\mathrm{gradient} = \\frac{d\\,\\mathrm{Loss}}{dw}",
+                  "accessibleText": "gradient = (d Loss)/(dw)",
                   "source": {
                     "pdfPage": 33,
                     "printedPageLabel": "24"
@@ -11137,8 +11050,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p033-g003",
-                  "latex": "\\nabla \\text{Loss= [ } \\partial \\text{Loss } \\partial \\text{w } \\partial \\text{Loss } \\partial \\text{b ]}",
-                  "accessibleText": "∇𝐿𝑜𝑠𝑠= [\n𝜕𝐿𝑜𝑠𝑠\n𝜕𝑤\n𝜕𝐿𝑜𝑠𝑠\n𝜕𝑏\n]",
+                  "latex": "\\nabla \\mathrm{Loss} = \\begin{bmatrix} \\frac{\\partial\\,\\mathrm{Loss}}{\\partial w} \\\\ \\frac{\\partial\\,\\mathrm{Loss}}{\\partial b} \\end{bmatrix}",
+                  "accessibleText": "gradient Loss = column vector [partial Loss / partial w, partial Loss / partial b]",
                   "source": {
                     "pdfPage": 33,
                     "printedPageLabel": "24"
@@ -11161,8 +11074,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p033-g004",
-                  "latex": "\\theta \\text{new= } \\theta \\text{old-} \\alpha \\nabla \\text{Loss}",
-                  "accessibleText": "𝜃𝑛𝑒𝑤= 𝜃𝑜𝑙𝑑-𝛼∇𝐿𝑜𝑠𝑠",
+                  "latex": "\\theta_{\\mathrm{new}} = \\theta_{\\mathrm{old}} - \\alpha \\nabla \\mathrm{Loss}",
+                  "accessibleText": "theta_new = theta_old - alpha gradient Loss",
                   "source": {
                     "pdfPage": 33,
                     "printedPageLabel": "24"
@@ -11256,8 +11169,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p034-g000",
-                  "latex": "\\text{wnew= 1 -0.01(-12) = 1.12}",
-                  "accessibleText": "𝑤𝑛𝑒𝑤= 1 -0.01(-12) = 1.12",
+                  "latex": "w_{\\mathrm{new}} = 1 - 0.01(-12) = 1.12",
+                  "accessibleText": "w_new = 1 - 0.01(-12) = 1.12",
                   "source": {
                     "pdfPage": 34,
                     "printedPageLabel": "25"
@@ -11349,8 +11262,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p034-g001",
-                  "latex": "\\text{dLoss dw = dLoss dy dy dz dz dw}",
-                  "accessibleText": "𝑑𝐿𝑜𝑠𝑠\n𝑑𝑤\n= 𝑑𝐿𝑜𝑠𝑠\n𝑑̂𝑦\n𝑑̂𝑦\n𝑑𝑧\n𝑑𝑧\n𝑑𝑤",
+                  "latex": "\\frac{d\\,\\mathrm{Loss}}{dw} = \\frac{d\\,\\mathrm{Loss}}{d\\hat{y}}\\frac{d\\hat{y}}{dz}\\frac{dz}{dw}",
+                  "accessibleText": "(d Loss)/(dw) = (d Loss)/(dŷ)(dŷ)/(dz)(dz)/(dw)",
                   "source": {
                     "pdfPage": 34,
                     "printedPageLabel": "25"
@@ -11402,8 +11315,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p034-g002",
-                  "latex": "\\text{parameter} \\leftarrow \\text{parameter-learningRate} \\times \\text{ gradient}",
-                  "accessibleText": "𝑝𝑎𝑟𝑎𝑚𝑒𝑡𝑒𝑟←𝑝𝑎𝑟𝑎𝑚𝑒𝑡𝑒𝑟-𝑙𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑅𝑎𝑡𝑒× 𝑔𝑟𝑎𝑑𝑖𝑒𝑛𝑡",
+                  "latex": "\\mathit{parameter} \\leftarrow \\mathit{parameter} - \\mathit{learningRate} \\times \\mathit{gradient}",
+                  "accessibleText": "parameter arrow parameter - learningRate × gradient",
                   "source": {
                     "pdfPage": 34,
                     "printedPageLabel": "25"
@@ -11426,8 +11339,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p034-g003",
-                  "latex": "\\text{d2Loss dw2}",
-                  "accessibleText": "𝑑2𝐿𝑜𝑠𝑠\n𝑑𝑤2",
+                  "latex": "\\frac{d^2\\,\\mathrm{Loss}}{dw^2}",
+                  "accessibleText": "(d^2 Loss)/(dw^2)",
                   "source": {
                     "pdfPage": 34,
                     "printedPageLabel": "25"
@@ -11479,8 +11392,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p034-g004",
-                  "latex": "\\text{dLoss dw } \\approx \\text{Loss(w+ } \\varepsilon \\text{) -Loss(w) } \\varepsilon",
-                  "accessibleText": "𝑑𝐿𝑜𝑠𝑠\n𝑑𝑤\n≈𝐿𝑜𝑠𝑠(𝑤+ 𝜖) -𝐿𝑜𝑠𝑠(𝑤)\n𝜖",
+                  "latex": "\\frac{d\\,\\mathrm{Loss}}{dw} \\approx \\frac{\\mathrm{Loss}(w+\\varepsilon)-\\mathrm{Loss}(w)}{\\varepsilon}",
+                  "accessibleText": "(d Loss)/(dw) ≈ (Loss(w+epsilon)-Loss(w))/(epsilon)",
                   "source": {
                     "pdfPage": 34,
                     "printedPageLabel": "25"
@@ -11827,7 +11740,7 @@
           "type": "formula",
           "id": "formula-p036-l0007",
           "latex": "\\hat{y} = wx + b",
-          "accessibleText": "𝑦= 𝑤𝑥+ 𝑏",
+          "accessibleText": "ŷ = wx + b",
           "source": {
             "pdfPage": 36,
             "printedPageLabel": "27"
@@ -11878,8 +11791,8 @@
             {
               "type": "formula",
               "id": "formula-math-p036-g001",
-              "latex": "\\text{y= wx+ b}",
-              "accessibleText": "𝑦= 𝑤𝑥+ 𝑏",
+              "latex": "\\hat{y} = wx + b",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 36,
                 "printedPageLabel": "27"
@@ -11902,8 +11815,8 @@
             {
               "type": "formula",
               "id": "formula-math-p036-g002",
-              "latex": "\\text{Price = w} \\times \\text{ Area + b}",
-              "accessibleText": "Price = 𝑤× Area + 𝑏",
+              "latex": "\\mathrm{Price} = w \\times \\mathrm{Area} + b",
+              "accessibleText": "Price = w × Area + b",
               "source": {
                 "pdfPage": 36,
                 "printedPageLabel": "27"
@@ -11968,7 +11881,7 @@
             {
               "type": "formula",
               "id": "formula-math-p036-g003",
-              "latex": "\\text{Price = 5000 } \\times \\text{ 100 + 100000}",
+              "latex": "\\mathrm{Price} = 5000 \\times 100 + 100000",
               "accessibleText": "Price = 5000 × 100 + 100000",
               "source": {
                 "pdfPage": 36,
@@ -12522,8 +12435,8 @@
             {
               "type": "formula",
               "id": "formula-math-p037-g000",
-              "latex": "\\text{y= wx+ b}",
-              "accessibleText": "𝑦= 𝑤𝑥+ 𝑏",
+              "latex": "\\hat{y} = wx + b",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 37,
                 "printedPageLabel": "28"
@@ -12589,8 +12502,8 @@
             {
               "type": "formula",
               "id": "formula-math-p037-g001",
-              "latex": "\\text{z= w1x1 + w2x2 + w3x3 + b}",
-              "accessibleText": "𝑧= 𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3 + 𝑏",
+              "latex": "z = w_1x_1 + w_2x_2 + w_3x_3 + b",
+              "accessibleText": "z = w_1x_1 + w_2x_2 + w_3x_3 + b",
               "source": {
                 "pdfPage": 37,
                 "printedPageLabel": "28"
@@ -12641,8 +12554,8 @@
             {
               "type": "formula",
               "id": "formula-math-p037-g002",
-              "latex": "\\text{wx+ b}",
-              "accessibleText": "𝑤𝑥+ 𝑏",
+              "latex": "wx + b",
+              "accessibleText": "wx + b",
               "source": {
                 "pdfPage": 37,
                 "printedPageLabel": "28"
@@ -12665,8 +12578,8 @@
             {
               "type": "formula",
               "id": "formula-math-p038-g000",
-              "latex": "\\text{w1x1 + w2x2 + w3x3 + b}",
-              "accessibleText": "𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3 + 𝑏",
+              "latex": "w_1x_1 + w_2x_2 + w_3x_3 + b",
+              "accessibleText": "w_1x_1 + w_2x_2 + w_3x_3 + b",
               "source": {
                 "pdfPage": 38,
                 "printedPageLabel": "29"
@@ -12746,8 +12659,8 @@
             {
               "type": "formula",
               "id": "formula-math-p038-g001",
-              "latex": "\\text{z= w1x1 + w2x2 + w3x3 + b}",
-              "accessibleText": "𝑧= 𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3 + 𝑏",
+              "latex": "z = w_1x_1 + w_2x_2 + w_3x_3 + b",
+              "accessibleText": "z = w_1x_1 + w_2x_2 + w_3x_3 + b",
               "source": {
                 "pdfPage": 38,
                 "printedPageLabel": "29"
@@ -12995,8 +12908,8 @@
             {
               "type": "formula",
               "id": "formula-math-p038-g002",
-              "latex": "\\text{z= w1x1 + w2x2 + w3x3 + b}",
-              "accessibleText": "𝑧= 𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3 + 𝑏",
+              "latex": "z = w_1x_1 + w_2x_2 + w_3x_3 + b",
+              "accessibleText": "z = w_1x_1 + w_2x_2 + w_3x_3 + b",
               "source": {
                 "pdfPage": 38,
                 "printedPageLabel": "29"
@@ -13358,8 +13271,8 @@
             {
               "type": "formula",
               "id": "formula-math-p039-g000",
-              "latex": "\\text{z= } \\sum \\text{ i wixi+ b}",
-              "accessibleText": "𝑧= ∑\n𝑖\n𝑤𝑖𝑥𝑖+ 𝑏",
+              "latex": "z = \\sum_i w_ix_i + b",
+              "accessibleText": "z = sum_i w_ix_i + b",
               "source": {
                 "pdfPage": 39,
                 "printedPageLabel": "30"
@@ -13420,8 +13333,8 @@
             {
               "type": "formula",
               "id": "formula-math-p039-g002",
-              "latex": "\\text{3 } \\sum \\text{ i=1 wixi}",
-              "accessibleText": "3\n∑\n𝑖=1\n𝑤𝑖𝑥𝑖",
+              "latex": "\\sum_{i=1}^{3} w_i x_i",
+              "accessibleText": "sum_i=1^3 w_i x_i",
               "source": {
                 "pdfPage": 39,
                 "printedPageLabel": "30"
@@ -13444,8 +13357,8 @@
             {
               "type": "formula",
               "id": "formula-math-p039-g003",
-              "latex": "\\text{w1x1 + w2x2 + w3x3}",
-              "accessibleText": "𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3",
+              "latex": "w_1x_1 + w_2x_2 + w_3x_3",
+              "accessibleText": "w_1x_1 + w_2x_2 + w_3x_3",
               "source": {
                 "pdfPage": 39,
                 "printedPageLabel": "30"
@@ -13651,8 +13564,8 @@
             {
               "type": "formula",
               "id": "formula-math-p040-g000",
-              "latex": "\\text{z= w1x1 + w2x2 + w3x3 + b}",
-              "accessibleText": "𝑧= 𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3 + 𝑏",
+              "latex": "z = w_1x_1 + w_2x_2 + w_3x_3 + b",
+              "accessibleText": "z = w_1x_1 + w_2x_2 + w_3x_3 + b",
               "source": {
                 "pdfPage": 40,
                 "printedPageLabel": "31"
@@ -13675,8 +13588,8 @@
             {
               "type": "formula",
               "id": "formula-math-p040-g001",
-              "latex": "\\text{z= (0.7)(0.8) + (0.5)(0.6) + (-0.4)(0.2) + 0.1}",
-              "accessibleText": "𝑧= (0.7)(0.8) + (0.5)(0.6) + (-0.4)(0.2) + 0.1",
+              "latex": "z = (0.7)(0.8) + (0.5)(0.6) + (-0.4)(0.2) + 0.1",
+              "accessibleText": "z = (0.7)(0.8) + (0.5)(0.6) + (-0.4)(0.2) + 0.1",
               "source": {
                 "pdfPage": 40,
                 "printedPageLabel": "31"
@@ -13699,7 +13612,7 @@
             {
               "type": "formula",
               "id": "formula-math-p040-g002",
-              "latex": "\\text{0.7 } \\times \\text{ 0.8 = 0.56}",
+              "latex": "0.7 \\times 0.8 = 0.56",
               "accessibleText": "0.7 × 0.8 = 0.56",
               "source": {
                 "pdfPage": 40,
@@ -13709,7 +13622,7 @@
             {
               "type": "formula",
               "id": "formula-math-p040-g003",
-              "latex": "\\text{0.5 } \\times \\text{ 0.6 = 0.30}",
+              "latex": "0.5 \\times 0.6 = 0.30",
               "accessibleText": "0.5 × 0.6 = 0.30",
               "source": {
                 "pdfPage": 40,
@@ -13719,7 +13632,7 @@
             {
               "type": "formula",
               "id": "formula-math-p040-g004",
-              "latex": "\\text{-0.4 } \\times \\text{ 0.2 = -0.08}",
+              "latex": "-0.4 \\times 0.2 = -0.08",
               "accessibleText": "-0.4 × 0.2 = -0.08",
               "source": {
                 "pdfPage": 40,
@@ -13743,8 +13656,8 @@
             {
               "type": "formula",
               "id": "formula-math-p040-g005",
-              "latex": "\\text{z= 0.56 + 0.30 -0.08 + 0.1}",
-              "accessibleText": "𝑧= 0.56 + 0.30 -0.08 + 0.1",
+              "latex": "z = 0.56 + 0.30 - 0.08 + 0.1",
+              "accessibleText": "z = 0.56 + 0.30 - 0.08 + 0.1",
               "source": {
                 "pdfPage": 40,
                 "printedPageLabel": "31"
@@ -13753,8 +13666,8 @@
             {
               "type": "formula",
               "id": "formula-math-p040-g006",
-              "latex": "\\text{z= 0.88}",
-              "accessibleText": "𝑧= 0.88",
+              "latex": "z = 0.88",
+              "accessibleText": "z = 0.88",
               "source": {
                 "pdfPage": 40,
                 "printedPageLabel": "31"
@@ -13834,8 +13747,8 @@
             {
               "type": "formula",
               "id": "formula-math-p040-g007",
-              "latex": "\\text{z= wx+ b}",
-              "accessibleText": "𝑧= 𝑤𝑥+ 𝑏",
+              "latex": "z = wx + b",
+              "accessibleText": "z = wx + b",
               "source": {
                 "pdfPage": 40,
                 "printedPageLabel": "31"
@@ -14041,8 +13954,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g000",
-              "latex": "\\text{h= w1x+ b1}",
-              "accessibleText": "ℎ= 𝑤1𝑥+ 𝑏1",
+              "latex": "h = w_1x + b_1",
+              "accessibleText": "h = w_1x + b_1",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14065,8 +13978,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g001",
-              "latex": "\\text{y= w2h+ b2}",
-              "accessibleText": "𝑦= 𝑤2ℎ+ 𝑏2",
+              "latex": "y = w_2h + b_2",
+              "accessibleText": "y = w_2h + b_2",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14089,8 +14002,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g002",
-              "latex": "\\text{y= w2(w1x+ b1) + b2}",
-              "accessibleText": "𝑦= 𝑤2(𝑤1𝑥+ 𝑏1) + 𝑏2",
+              "latex": "y = w_2(w_1x + b_1) + b_2",
+              "accessibleText": "y = w_2(w_1x + b_1) + b_2",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14113,8 +14026,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g003",
-              "latex": "\\text{y= w2w1x+ w2b1 + b2}",
-              "accessibleText": "𝑦= 𝑤2𝑤1𝑥+ 𝑤2𝑏1 + 𝑏2",
+              "latex": "y = w_2w_1x + w_2b_1 + b_2",
+              "accessibleText": "y = w_2w_1x + w_2b_1 + b_2",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14137,8 +14050,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g004",
-              "latex": "\\text{w2w1}",
-              "accessibleText": "𝑤2𝑤1",
+              "latex": "w_2w_1",
+              "accessibleText": "w_2w_1",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14161,8 +14074,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g005",
-              "latex": "\\text{W}",
-              "accessibleText": "𝑊",
+              "latex": "W",
+              "accessibleText": "W",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14185,8 +14098,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g006",
-              "latex": "\\text{w2b1 + b2}",
-              "accessibleText": "𝑤2𝑏1 + 𝑏2",
+              "latex": "w_2b_1 + b_2",
+              "accessibleText": "w_2b_1 + b_2",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14209,8 +14122,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g007",
-              "latex": "\\text{B}",
-              "accessibleText": "𝐵",
+              "latex": "B",
+              "accessibleText": "B",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14233,8 +14146,8 @@
             {
               "type": "formula",
               "id": "formula-math-p041-g008",
-              "latex": "\\text{y= Wx+ B}",
-              "accessibleText": "𝑦= 𝑊𝑥+ 𝐵",
+              "latex": "y = Wx + B",
+              "accessibleText": "y = Wx + B",
               "source": {
                 "pdfPage": 41,
                 "printedPageLabel": "32"
@@ -14398,8 +14311,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p042-g000",
-                  "latex": "\\text{z= wx+ b}",
-                  "accessibleText": "𝑧= 𝑤𝑥+ 𝑏",
+                  "latex": "z = wx + b",
+                  "accessibleText": "z = wx + b",
                   "source": {
                     "pdfPage": 42,
                     "printedPageLabel": "33"
@@ -14422,8 +14335,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p042-g001",
-                  "latex": "\\text{a= f(z)}",
-                  "accessibleText": "𝑎= 𝑓(𝑧)",
+                  "latex": "a = f(z)",
+                  "accessibleText": "a = f(z)",
                   "source": {
                     "pdfPage": 42,
                     "printedPageLabel": "33"
@@ -14446,8 +14359,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p042-g002",
-                  "latex": "\\text{a= f(wx+ b)}",
-                  "accessibleText": "𝑎= 𝑓(𝑤𝑥+ 𝑏)",
+                  "latex": "a = f(wx + b)",
+                  "accessibleText": "a = f(wx + b)",
                   "source": {
                     "pdfPage": 42,
                     "printedPageLabel": "33"
@@ -14883,8 +14796,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p043-g000",
-                  "latex": "\\text{ReLU(x) = max(0, x)}",
-                  "accessibleText": "ReLU(𝑥) = max(0, 𝑥)",
+                  "latex": "\\operatorname{ReLU}(x) = \\max(0,x)",
+                  "accessibleText": "ReLU(x) = max(0,x)",
                   "source": {
                     "pdfPage": 43,
                     "printedPageLabel": "34"
@@ -15022,7 +14935,7 @@
             {
               "type": "formula",
               "id": "formula-math-p043-g001",
-              "latex": "\\text{ReLU(5) = 5}",
+              "latex": "\\operatorname{ReLU}(5) = 5",
               "accessibleText": "ReLU(5) = 5",
               "source": {
                 "pdfPage": 43,
@@ -15074,7 +14987,7 @@
             {
               "type": "formula",
               "id": "formula-math-p043-g002",
-              "latex": "\\text{ReLU(-3) = 0}",
+              "latex": "\\operatorname{ReLU}(-3) = 0",
               "accessibleText": "ReLU(-3) = 0",
               "source": {
                 "pdfPage": 43,
@@ -15126,7 +15039,7 @@
             {
               "type": "formula",
               "id": "formula-math-p043-g003",
-              "latex": "\\text{ReLU(0.7) = 0.7}",
+              "latex": "\\operatorname{ReLU}(0.7) = 0.7",
               "accessibleText": "ReLU(0.7) = 0.7",
               "source": {
                 "pdfPage": 43,
@@ -15753,8 +15666,8 @@
             {
               "type": "formula",
               "id": "formula-math-p044-g000",
-              "latex": "\\text{a= ReLU(wx+ b)}",
-              "accessibleText": "𝑎= ReLU(𝑤𝑥+ 𝑏)",
+              "latex": "a = \\operatorname{ReLU}(wx + b)",
+              "accessibleText": "a = ReLU(wx + b)",
               "source": {
                 "pdfPage": 44,
                 "printedPageLabel": "35"
@@ -15792,8 +15705,8 @@
             {
               "type": "formula",
               "id": "formula-math-p044-g001",
-              "latex": "\\text{x1 = 2}",
-              "accessibleText": "𝑥1 = 2",
+              "latex": "x_1 = 2",
+              "accessibleText": "x_1 = 2",
               "source": {
                 "pdfPage": 44,
                 "printedPageLabel": "35"
@@ -15802,8 +15715,8 @@
             {
               "type": "formula",
               "id": "formula-math-p044-g002",
-              "latex": "\\text{x2 = 3}",
-              "accessibleText": "𝑥2 = 3",
+              "latex": "x_2 = 3",
+              "accessibleText": "x_2 = 3",
               "source": {
                 "pdfPage": 44,
                 "printedPageLabel": "35"
@@ -15826,8 +15739,8 @@
             {
               "type": "formula",
               "id": "formula-math-p044-g003",
-              "latex": "\\text{w1 = 0.5}",
-              "accessibleText": "𝑤1 = 0.5",
+              "latex": "w_1 = 0.5",
+              "accessibleText": "w_1 = 0.5",
               "source": {
                 "pdfPage": 44,
                 "printedPageLabel": "35"
@@ -15836,8 +15749,8 @@
             {
               "type": "formula",
               "id": "formula-math-p044-g004",
-              "latex": "\\text{w2 = -0.8}",
-              "accessibleText": "𝑤2 = -0.8",
+              "latex": "w_2 = -0.8",
+              "accessibleText": "w_2 = -0.8",
               "source": {
                 "pdfPage": 44,
                 "printedPageLabel": "35"
@@ -15860,8 +15773,8 @@
             {
               "type": "formula",
               "id": "formula-math-p044-g005",
-              "latex": "\\text{b= 0.2}",
-              "accessibleText": "𝑏= 0.2",
+              "latex": "b = 0.2",
+              "accessibleText": "b = 0.2",
               "source": {
                 "pdfPage": 44,
                 "printedPageLabel": "35"
@@ -15884,8 +15797,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g000",
-              "latex": "\\text{z= w1x1 + w2x2 + b}",
-              "accessibleText": "𝑧= 𝑤1𝑥1 + 𝑤2𝑥2 + 𝑏",
+              "latex": "z = w_1x_1 + w_2x_2 + b",
+              "accessibleText": "z = w_1x_1 + w_2x_2 + b",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -15908,8 +15821,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g001",
-              "latex": "\\text{z= (0.5)(2) + (-0.8)(3) + 0.2}",
-              "accessibleText": "𝑧= (0.5)(2) + (-0.8)(3) + 0.2",
+              "latex": "z = (0.5)(2) + (-0.8)(3) + 0.2",
+              "accessibleText": "z = (0.5)(2) + (-0.8)(3) + 0.2",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -15918,8 +15831,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g002",
-              "latex": "\\text{= 1 -2.4 + 0.2}",
-              "accessibleText": "= 1 -2.4 + 0.2",
+              "latex": "= 1 - 2.4 + 0.2",
+              "accessibleText": "= 1 - 2.4 + 0.2",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -15928,7 +15841,7 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g003",
-              "latex": "\\text{= -1.2}",
+              "latex": "= -1.2",
               "accessibleText": "= -1.2",
               "source": {
                 "pdfPage": 45,
@@ -15952,8 +15865,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g004",
-              "latex": "\\text{a= ReLU(-1.2)}",
-              "accessibleText": "𝑎= ReLU(-1.2)",
+              "latex": "a = \\operatorname{ReLU}(-1.2)",
+              "accessibleText": "a = ReLU(-1.2)",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -15976,8 +15889,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g005",
-              "latex": "\\text{a= 0}",
-              "accessibleText": "𝑎= 0",
+              "latex": "a = 0",
+              "accessibleText": "a = 0",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -16029,8 +15942,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g006",
-              "latex": "\\text{w2 = -0.8}",
-              "accessibleText": "𝑤2 = -0.8",
+              "latex": "w_2 = -0.8",
+              "accessibleText": "w_2 = -0.8",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -16053,8 +15966,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g007",
-              "latex": "\\text{w2 = 0.2}",
-              "accessibleText": "𝑤2 = 0.2",
+              "latex": "w_2 = 0.2",
+              "accessibleText": "w_2 = 0.2",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -16077,8 +15990,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g008",
-              "latex": "\\text{z= (0.5)(2) + (0.2)(3) + 0.2}",
-              "accessibleText": "𝑧= (0.5)(2) + (0.2)(3) + 0.2",
+              "latex": "z = (0.5)(2) + (0.2)(3) + 0.2",
+              "accessibleText": "z = (0.5)(2) + (0.2)(3) + 0.2",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -16087,7 +16000,7 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g009",
-              "latex": "\\text{= 1 + 0.6 + 0.2}",
+              "latex": "= 1 + 0.6 + 0.2",
               "accessibleText": "= 1 + 0.6 + 0.2",
               "source": {
                 "pdfPage": 45,
@@ -16097,7 +16010,7 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g010",
-              "latex": "\\text{= 1.8}",
+              "latex": "= 1.8",
               "accessibleText": "= 1.8",
               "source": {
                 "pdfPage": 45,
@@ -16121,7 +16034,7 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g011",
-              "latex": "\\text{ReLU(1.8) = 1.8}",
+              "latex": "\\operatorname{ReLU}(1.8) = 1.8",
               "accessibleText": "ReLU(1.8) = 1.8",
               "source": {
                 "pdfPage": 45,
@@ -16145,8 +16058,8 @@
             {
               "type": "formula",
               "id": "formula-math-p045-g012",
-              "latex": "\\text{a= 1.8}",
-              "accessibleText": "𝑎= 1.8",
+              "latex": "a = 1.8",
+              "accessibleText": "a = 1.8",
               "source": {
                 "pdfPage": 45,
                 "printedPageLabel": "36"
@@ -16495,8 +16408,8 @@
             {
               "type": "formula",
               "id": "formula-math-p046-g000",
-              "latex": "\\text{x= [x1, x2]}",
-              "accessibleText": "𝑥= [𝑥1, 𝑥2]",
+              "latex": "x = [x_1,x_2]",
+              "accessibleText": "x = [x_1,x_2]",
               "source": {
                 "pdfPage": 46,
                 "printedPageLabel": "37"
@@ -16617,8 +16530,8 @@
             {
               "type": "formula",
               "id": "formula-math-p046-g001",
-              "latex": "\\text{z1 = w11x1 + w12x2 + b1}",
-              "accessibleText": "𝑧1 = 𝑤11𝑥1 + 𝑤12𝑥2 + 𝑏1",
+              "latex": "z_1 = w_{11}x_1 + w_{12}x_2 + b_1",
+              "accessibleText": "z_1 = w_11x_1 + w_12x_2 + b_1",
               "source": {
                 "pdfPage": 46,
                 "printedPageLabel": "37"
@@ -16641,8 +16554,8 @@
             {
               "type": "formula",
               "id": "formula-math-p046-g002",
-              "latex": "\\text{z2 = w21x1 + w22x2 + b2}",
-              "accessibleText": "𝑧2 = 𝑤21𝑥1 + 𝑤22𝑥2 + 𝑏2",
+              "latex": "z_2 = w_{21}x_1 + w_{22}x_2 + b_2",
+              "accessibleText": "z_2 = w_21x_1 + w_22x_2 + b_2",
               "source": {
                 "pdfPage": 46,
                 "printedPageLabel": "37"
@@ -16665,8 +16578,8 @@
             {
               "type": "formula",
               "id": "formula-math-p046-g003",
-              "latex": "\\text{z3 = w31x1 + w32x2 + b3}",
-              "accessibleText": "𝑧3 = 𝑤31𝑥1 + 𝑤32𝑥2 + 𝑏3",
+              "latex": "z_3 = w_{31}x_1 + w_{32}x_2 + b_3",
+              "accessibleText": "z_3 = w_31x_1 + w_32x_2 + b_3",
               "source": {
                 "pdfPage": 46,
                 "printedPageLabel": "37"
@@ -16689,8 +16602,8 @@
             {
               "type": "formula",
               "id": "formula-math-p046-g004",
-              "latex": "\\text{a1 = ReLU(z1)}",
-              "accessibleText": "𝑎1 = ReLU(𝑧1)",
+              "latex": "a_1 = \\operatorname{ReLU}(z_1)",
+              "accessibleText": "a_1 = ReLU(z_1)",
               "source": {
                 "pdfPage": 46,
                 "printedPageLabel": "37"
@@ -16699,8 +16612,8 @@
             {
               "type": "formula",
               "id": "formula-math-p046-g005",
-              "latex": "\\text{a2 = ReLU(z2)}",
-              "accessibleText": "𝑎2 = ReLU(𝑧2)",
+              "latex": "a_2 = \\operatorname{ReLU}(z_2)",
+              "accessibleText": "a_2 = ReLU(z_2)",
               "source": {
                 "pdfPage": 46,
                 "printedPageLabel": "37"
@@ -16709,8 +16622,8 @@
             {
               "type": "formula",
               "id": "formula-math-p047-g000",
-              "latex": "\\text{a3 = ReLU(z3)}",
-              "accessibleText": "𝑎3 = ReLU(𝑧3)",
+              "latex": "a_3 = \\operatorname{ReLU}(z_3)",
+              "accessibleText": "a_3 = ReLU(z_3)",
               "source": {
                 "pdfPage": 47,
                 "printedPageLabel": "38"
@@ -16733,8 +16646,8 @@
             {
               "type": "formula",
               "id": "formula-math-p047-g001",
-              "latex": "\\text{[a1 a2 a3]}",
-              "accessibleText": "[𝑎1\n𝑎2\n𝑎3]",
+              "latex": "[a_1\\; a_2\\; a_3]",
+              "accessibleText": "[a_1, a_2, a_3]",
               "source": {
                 "pdfPage": 47,
                 "printedPageLabel": "38"
@@ -18223,8 +18136,8 @@
             {
               "type": "formula",
               "id": "formula-math-p049-g000",
-              "latex": "\\text{x1 = 1}",
-              "accessibleText": "𝑥1 = 1",
+              "latex": "x_1 = 1",
+              "accessibleText": "x_1 = 1",
               "source": {
                 "pdfPage": 49,
                 "printedPageLabel": "40"
@@ -18233,8 +18146,8 @@
             {
               "type": "formula",
               "id": "formula-math-p049-g001",
-              "latex": "\\text{x2 = 2}",
-              "accessibleText": "𝑥2 = 2",
+              "latex": "x_2 = 2",
+              "accessibleText": "x_2 = 2",
               "source": {
                 "pdfPage": 49,
                 "printedPageLabel": "40"
@@ -18286,8 +18199,8 @@
             {
               "type": "formula",
               "id": "formula-math-p049-g002",
-              "latex": "\\text{w11 = 0.5}",
-              "accessibleText": "𝑤11 = 0.5",
+              "latex": "w_{11} = 0.5",
+              "accessibleText": "w_11 = 0.5",
               "source": {
                 "pdfPage": 49,
                 "printedPageLabel": "40"
@@ -18296,8 +18209,8 @@
             {
               "type": "formula",
               "id": "formula-math-p049-g003",
-              "latex": "\\text{w12 = 0.4}",
-              "accessibleText": "𝑤12 = 0.4",
+              "latex": "w_{12} = 0.4",
+              "accessibleText": "w_12 = 0.4",
               "source": {
                 "pdfPage": 49,
                 "printedPageLabel": "40"
@@ -18320,8 +18233,8 @@
             {
               "type": "formula",
               "id": "formula-math-p049-g004",
-              "latex": "\\text{b1 = 0.1}",
-              "accessibleText": "𝑏1 = 0.1",
+              "latex": "b_1 = 0.1",
+              "accessibleText": "b_1 = 0.1",
               "source": {
                 "pdfPage": 49,
                 "printedPageLabel": "40"
@@ -18344,8 +18257,8 @@
             {
               "type": "formula",
               "id": "formula-math-p049-g005",
-              "latex": "\\text{z1 = 0.5(1) + 0.4(2) + 0.1}",
-              "accessibleText": "𝑧1 = 0.5(1) + 0.4(2) + 0.1",
+              "latex": "z_1 = 0.5(1) + 0.4(2) + 0.1",
+              "accessibleText": "z_1 = 0.5(1) + 0.4(2) + 0.1",
               "source": {
                 "pdfPage": 49,
                 "printedPageLabel": "40"
@@ -18354,7 +18267,7 @@
             {
               "type": "formula",
               "id": "formula-math-p049-g006",
-              "latex": "\\text{= 0.5 + 0.8 + 0.1}",
+              "latex": "= 0.5 + 0.8 + 0.1",
               "accessibleText": "= 0.5 + 0.8 + 0.1",
               "source": {
                 "pdfPage": 49,
@@ -18364,7 +18277,7 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g000",
-              "latex": "\\text{= 1.4}",
+              "latex": "= 1.4",
               "accessibleText": "= 1.4",
               "source": {
                 "pdfPage": 50,
@@ -18388,8 +18301,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g001",
-              "latex": "\\text{h1 = ReLU(1.4)}",
-              "accessibleText": "ℎ1 = ReLU(1.4)",
+              "latex": "h_1 = \\operatorname{ReLU}(1.4)",
+              "accessibleText": "h_1 = ReLU(1.4)",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18412,8 +18325,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g002",
-              "latex": "\\text{h1 = 1.4}",
-              "accessibleText": "ℎ1 = 1.4",
+              "latex": "h_1 = 1.4",
+              "accessibleText": "h_1 = 1.4",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18451,8 +18364,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g003",
-              "latex": "\\text{w21 = -0.3}",
-              "accessibleText": "𝑤21 = -0.3",
+              "latex": "w_{21} = -0.3",
+              "accessibleText": "w_21 = -0.3",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18461,8 +18374,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g004",
-              "latex": "\\text{w22 = 0.8}",
-              "accessibleText": "𝑤22 = 0.8",
+              "latex": "w_{22} = 0.8",
+              "accessibleText": "w_22 = 0.8",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18485,8 +18398,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g005",
-              "latex": "\\text{b2 = -0.2}",
-              "accessibleText": "𝑏2 = -0.2",
+              "latex": "b_2 = -0.2",
+              "accessibleText": "b_2 = -0.2",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18509,8 +18422,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g006",
-              "latex": "\\text{z2 = (-0.3)(1) + (0.8)(2) -0.2}",
-              "accessibleText": "𝑧2 = (-0.3)(1) + (0.8)(2) -0.2",
+              "latex": "z_2 = (-0.3)(1) + (0.8)(2) - 0.2",
+              "accessibleText": "z_2 = (-0.3)(1) + (0.8)(2) - 0.2",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18519,8 +18432,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g007",
-              "latex": "\\text{= -0.3 + 1.6 -0.2}",
-              "accessibleText": "= -0.3 + 1.6 -0.2",
+              "latex": "= -0.3 + 1.6 - 0.2",
+              "accessibleText": "= -0.3 + 1.6 - 0.2",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18529,7 +18442,7 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g008",
-              "latex": "\\text{= 1.1}",
+              "latex": "= 1.1",
               "accessibleText": "= 1.1",
               "source": {
                 "pdfPage": 50,
@@ -18553,8 +18466,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g009",
-              "latex": "\\text{h2 = ReLU(1.1)}",
-              "accessibleText": "ℎ2 = ReLU(1.1)",
+              "latex": "h_2 = \\operatorname{ReLU}(1.1)",
+              "accessibleText": "h_2 = ReLU(1.1)",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18577,8 +18490,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g010",
-              "latex": "\\text{h2 = 1.1}",
-              "accessibleText": "ℎ2 = 1.1",
+              "latex": "h_2 = 1.1",
+              "accessibleText": "h_2 = 1.1",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18601,8 +18514,8 @@
             {
               "type": "formula",
               "id": "formula-math-p050-g011",
-              "latex": "\\text{[1.4 1.1]}",
-              "accessibleText": "[1.4 1.1]",
+              "latex": "[1.4\\; 1.1]",
+              "accessibleText": "[1.4, 1.1]",
               "source": {
                 "pdfPage": 50,
                 "printedPageLabel": "41"
@@ -18640,8 +18553,8 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g000",
-              "latex": "\\text{[1 2]}",
-              "accessibleText": "[1 2]",
+              "latex": "[1\\; 2]",
+              "accessibleText": "[1, 2]",
               "source": {
                 "pdfPage": 51,
                 "printedPageLabel": "42"
@@ -18664,8 +18577,8 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g001",
-              "latex": "\\text{[1.4 1.1]}",
-              "accessibleText": "[1.4 1.1]",
+              "latex": "[1.4\\; 1.1]",
+              "accessibleText": "[1.4, 1.1]",
               "source": {
                 "pdfPage": 51,
                 "printedPageLabel": "42"
@@ -18873,8 +18786,8 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g002",
-              "latex": "\\text{v1 = 0.7}",
-              "accessibleText": "𝑣1 = 0.7",
+              "latex": "v_1 = 0.7",
+              "accessibleText": "v_1 = 0.7",
               "source": {
                 "pdfPage": 51,
                 "printedPageLabel": "42"
@@ -18883,8 +18796,8 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g003",
-              "latex": "\\text{v2 = 0.2}",
-              "accessibleText": "𝑣2 = 0.2",
+              "latex": "v_2 = 0.2",
+              "accessibleText": "v_2 = 0.2",
               "source": {
                 "pdfPage": 51,
                 "printedPageLabel": "42"
@@ -18907,8 +18820,8 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g004",
-              "latex": "\\text{b= 0.1}",
-              "accessibleText": "𝑏= 0.1",
+              "latex": "b = 0.1",
+              "accessibleText": "b = 0.1",
               "source": {
                 "pdfPage": 51,
                 "printedPageLabel": "42"
@@ -18931,8 +18844,8 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g005",
-              "latex": "\\text{y} ' \\text{ = 0.7h1 + 0.2h2 + 0.1}",
-              "accessibleText": "𝑦′ = 0.7ℎ1 + 0.2ℎ2 + 0.1",
+              "latex": "y' = 0.7h_1 + 0.2h_2 + 0.1",
+              "accessibleText": "y' = 0.7h_1 + 0.2h_2 + 0.1",
               "source": {
                 "pdfPage": 51,
                 "printedPageLabel": "42"
@@ -18955,7 +18868,7 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g006",
-              "latex": "\\text{= 0.7(1.4) + 0.2(1.1) + 0.1}",
+              "latex": "= 0.7(1.4) + 0.2(1.1) + 0.1",
               "accessibleText": "= 0.7(1.4) + 0.2(1.1) + 0.1",
               "source": {
                 "pdfPage": 51,
@@ -18965,7 +18878,7 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g007",
-              "latex": "\\text{= 0.98 + 0.22 + 0.1}",
+              "latex": "= 0.98 + 0.22 + 0.1",
               "accessibleText": "= 0.98 + 0.22 + 0.1",
               "source": {
                 "pdfPage": 51,
@@ -18975,8 +18888,8 @@
             {
               "type": "formula",
               "id": "formula-math-p051-g008",
-              "latex": "\\text{y} ' \\text{ = 1.30}",
-              "accessibleText": "𝑦′ = 1.30",
+              "latex": "y' = 1.30",
+              "accessibleText": "y' = 1.30",
               "source": {
                 "pdfPage": 51,
                 "printedPageLabel": "42"
@@ -19436,8 +19349,8 @@
             {
               "type": "formula",
               "id": "formula-math-p052-g000",
-              "latex": "\\text{y= 2}",
-              "accessibleText": "𝑦= 2",
+              "latex": "y = 2",
+              "accessibleText": "y = 2",
               "source": {
                 "pdfPage": 52,
                 "printedPageLabel": "43"
@@ -19460,8 +19373,8 @@
             {
               "type": "formula",
               "id": "formula-math-p052-g001",
-              "latex": "\\text{y= 1.3}",
-              "accessibleText": "𝑦= 1.3",
+              "latex": "\\hat{y} = 1.3",
+              "accessibleText": "ŷ = 1.3",
               "source": {
                 "pdfPage": 52,
                 "printedPageLabel": "43"
@@ -19484,8 +19397,8 @@
             {
               "type": "formula",
               "id": "formula-math-p052-g002",
-              "latex": "\\text{1.3 -2 = -0.7}",
-              "accessibleText": "1.3 -2 = -0.7",
+              "latex": "1.3 - 2 = -0.7",
+              "accessibleText": "1.3 - 2 = -0.7",
               "source": {
                 "pdfPage": 52,
                 "printedPageLabel": "43"
@@ -19508,8 +19421,8 @@
             {
               "type": "formula",
               "id": "formula-math-p052-g003",
-              "latex": "\\text{Loss = (1.3 -2)2}",
-              "accessibleText": "Loss = (1.3 -2)2",
+              "latex": "\\mathrm{Loss} = (1.3 - 2)^2",
+              "accessibleText": "Loss = (1.3 - 2)^2",
               "source": {
                 "pdfPage": 52,
                 "printedPageLabel": "43"
@@ -19518,8 +19431,8 @@
             {
               "type": "formula",
               "id": "formula-math-p052-g004",
-              "latex": "\\text{= (-0.7)2}",
-              "accessibleText": "= (-0.7)2",
+              "latex": "= (-0.7)^2",
+              "accessibleText": "= (-0.7)^2",
               "source": {
                 "pdfPage": 52,
                 "printedPageLabel": "43"
@@ -19528,7 +19441,7 @@
             {
               "type": "formula",
               "id": "formula-math-p052-g005",
-              "latex": "\\text{0.49}",
+              "latex": "0.49",
               "accessibleText": "0.49",
               "source": {
                 "pdfPage": 52,
@@ -20320,8 +20233,8 @@
             {
               "type": "formula",
               "id": "formula-math-p054-g000",
-              "latex": "\\text{y= wx+ b}",
-              "accessibleText": "𝑦= 𝑤𝑥+ 𝑏",
+              "latex": "\\hat{y} = wx + b",
+              "accessibleText": "ŷ = wx + b",
               "source": {
                 "pdfPage": 54,
                 "printedPageLabel": "45"
@@ -20624,8 +20537,8 @@
             {
               "type": "formula",
               "id": "formula-math-p054-g001",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w1}",
-              "accessibleText": "𝜕Loss\n𝜕𝑤1",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial w_1}",
+              "accessibleText": "(partial Loss)/(partial w_1)",
               "source": {
                 "pdfPage": 54,
                 "printedPageLabel": "45"
@@ -20634,8 +20547,8 @@
             {
               "type": "formula",
               "id": "formula-math-p054-g002",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w2}",
-              "accessibleText": "𝜕Loss\n𝜕𝑤2",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial w_2}",
+              "accessibleText": "(partial Loss)/(partial w_2)",
               "source": {
                 "pdfPage": 54,
                 "printedPageLabel": "45"
@@ -20644,8 +20557,8 @@
             {
               "type": "formula",
               "id": "formula-math-p054-g003",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w3}",
-              "accessibleText": "𝜕Loss\n𝜕𝑤3",
+              "latex": "\\frac{\\partial\\,\\mathrm{Loss}}{\\partial w_3}",
+              "accessibleText": "(partial Loss)/(partial w_3)",
               "source": {
                 "pdfPage": 54,
                 "printedPageLabel": "45"
@@ -20755,8 +20668,8 @@
             {
               "type": "formula",
               "id": "formula-math-p054-g004",
-              "latex": "\\text{x= 2}",
-              "accessibleText": "𝑥= 2",
+              "latex": "x = 2",
+              "accessibleText": "x = 2",
               "source": {
                 "pdfPage": 54,
                 "printedPageLabel": "45"
@@ -20765,8 +20678,8 @@
             {
               "type": "formula",
               "id": "formula-math-p055-g000",
-              "latex": "\\text{w= 3}",
-              "accessibleText": "𝑤= 3",
+              "latex": "w = 3",
+              "accessibleText": "w = 3",
               "source": {
                 "pdfPage": 55,
                 "printedPageLabel": "46"
@@ -20789,8 +20702,8 @@
             {
               "type": "formula",
               "id": "formula-math-p055-g001",
-              "latex": "\\text{z= xw}",
-              "accessibleText": "𝑧= 𝑥𝑤",
+              "latex": "z = xw",
+              "accessibleText": "z = xw",
               "source": {
                 "pdfPage": 55,
                 "printedPageLabel": "46"
@@ -20813,8 +20726,8 @@
             {
               "type": "formula",
               "id": "formula-math-p055-g002",
-              "latex": "\\text{y= z+ 1}",
-              "accessibleText": "𝑦= 𝑧+ 1",
+              "latex": "y = z + 1",
+              "accessibleText": "y = z + 1",
               "source": {
                 "pdfPage": 55,
                 "printedPageLabel": "46"
@@ -21433,8 +21346,8 @@
             {
               "type": "formula",
               "id": "formula-math-p056-g000",
-              "latex": "\\text{w1x1 + w2x2 + w3x3}",
-              "accessibleText": "𝑤1𝑥1 + 𝑤2𝑥2 + 𝑤3𝑥3",
+              "latex": "w_1x_1 + w_2x_2 + w_3x_3",
+              "accessibleText": "w_1x_1 + w_2x_2 + w_3x_3",
               "source": {
                 "pdfPage": 56,
                 "printedPageLabel": "47"
@@ -21569,8 +21482,8 @@
             {
               "type": "formula",
               "id": "formula-math-p056-g001",
-              "latex": "\\text{X}",
-              "accessibleText": "𝑋",
+              "latex": "X",
+              "accessibleText": "X",
               "source": {
                 "pdfPage": 56,
                 "printedPageLabel": "47"
@@ -21593,8 +21506,8 @@
             {
               "type": "formula",
               "id": "formula-math-p056-g002",
-              "latex": "\\text{W}",
-              "accessibleText": "𝑊",
+              "latex": "W",
+              "accessibleText": "W",
               "source": {
                 "pdfPage": 56,
                 "printedPageLabel": "47"
@@ -21617,8 +21530,8 @@
             {
               "type": "formula",
               "id": "formula-math-p056-g003",
-              "latex": "\\text{Z= XW+ b}",
-              "accessibleText": "𝑍= 𝑋𝑊+ 𝑏",
+              "latex": "Z = XW + b",
+              "accessibleText": "Z = XW + b",
               "source": {
                 "pdfPage": 56,
                 "printedPageLabel": "47"
@@ -21641,8 +21554,8 @@
             {
               "type": "formula",
               "id": "formula-math-p056-g004",
-              "latex": "\\text{A= ReLU(Z)}",
-              "accessibleText": "𝐴= ReLU(𝑍)",
+              "latex": "A = \\operatorname{ReLU}(Z)",
+              "accessibleText": "A = ReLU(Z)",
               "source": {
                 "pdfPage": 56,
                 "printedPageLabel": "47"
@@ -21694,8 +21607,8 @@
             {
               "type": "formula",
               "id": "formula-math-p056-g005",
-              "latex": "\\text{X= [1 2]}",
-              "accessibleText": "𝑋= [1 2]",
+              "latex": "X = [1\\; 2]",
+              "accessibleText": "X = [1, 2]",
               "source": {
                 "pdfPage": 56,
                 "printedPageLabel": "47"
@@ -21718,8 +21631,8 @@
             {
               "type": "formula",
               "id": "formula-math-p057-g000",
-              "latex": "\\text{W= [0.5 -0.3 0.4 0.8 ]}",
-              "accessibleText": "𝑊= [0.5 -0.3\n0.4\n0.8 ]",
+              "latex": "W = \\begin{bmatrix} 0.5 & -0.3 \\\\ 0.4 & 0.8 \\end{bmatrix}",
+              "accessibleText": "W = matrix [[0.5, -0.3], [0.4, 0.8]]",
               "source": {
                 "pdfPage": 57,
                 "printedPageLabel": "48"
@@ -21883,8 +21796,8 @@
             {
               "type": "formula",
               "id": "formula-math-p057-g001",
-              "latex": "\\text{XW}",
-              "accessibleText": "𝑋𝑊",
+              "latex": "XW",
+              "accessibleText": "XW",
               "source": {
                 "pdfPage": 57,
                 "printedPageLabel": "48"
@@ -22233,7 +22146,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "1.4"
+                  "value": "1.4000000000000001"
                 }
               ],
               "source": {
@@ -22780,7 +22693,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "[1.4, 1.1]"
+                  "value": "[1.4000000000000001, 1.1]"
                 }
               ],
               "source": {
@@ -23285,8 +23198,8 @@
             {
               "type": "formula",
               "id": "formula-math-p060-g000",
-              "latex": "\\text{W}",
-              "accessibleText": "𝑊",
+              "latex": "W",
+              "accessibleText": "W",
               "source": {
                 "pdfPage": 60,
                 "printedPageLabel": "51"
@@ -23309,8 +23222,8 @@
             {
               "type": "formula",
               "id": "formula-math-p060-g001",
-              "latex": "\\text{b}",
-              "accessibleText": "𝑏",
+              "latex": "b",
+              "accessibleText": "b",
               "source": {
                 "pdfPage": 60,
                 "printedPageLabel": "51"
@@ -23972,7 +23885,7 @@
             {
               "type": "formula",
               "id": "formula-math-p061-g000",
-              "latex": "\\text{Parameters = (Inputs } \\times \\text{ Neurons) + Neurons}",
+              "latex": "\\text{Parameters}=(\\text{Inputs}\\times\\text{Neurons})+\\text{Neurons}",
               "accessibleText": "Parameters = (Inputs × Neurons) + Neurons",
               "source": {
                 "pdfPage": 61,
@@ -23996,7 +23909,7 @@
             {
               "type": "formula",
               "id": "formula-math-p061-g001",
-              "latex": "\\text{3 } \\times \\text{ 4 + 4 = 16}",
+              "latex": "3\\times4+4=16",
               "accessibleText": "3 × 4 + 4 = 16",
               "source": {
                 "pdfPage": 61,
@@ -24091,8 +24004,8 @@
             {
               "type": "formula",
               "id": "formula-math-p061-g002",
-              "latex": "\\text{100 } \\times \\text{ 256 = 25, 600}",
-              "accessibleText": "100 × 256 = 25, 600",
+              "latex": "100\\times256=25{,}600",
+              "accessibleText": "100 × 256 = 25,600",
               "source": {
                 "pdfPage": 61,
                 "printedPageLabel": "52"
@@ -24115,7 +24028,7 @@
             {
               "type": "formula",
               "id": "formula-math-p061-g003",
-              "latex": "\\text{256}",
+              "latex": "256",
               "accessibleText": "256",
               "source": {
                 "pdfPage": 61,
@@ -24139,8 +24052,8 @@
             {
               "type": "formula",
               "id": "formula-math-p061-g004",
-              "latex": "\\text{25, 600 + 256}",
-              "accessibleText": "25, 600 + 256",
+              "latex": "25{,}600+256",
+              "accessibleText": "25,600 + 256",
               "source": {
                 "pdfPage": 61,
                 "printedPageLabel": "52"
@@ -24149,8 +24062,8 @@
             {
               "type": "formula",
               "id": "formula-math-p061-g005",
-              "latex": "\\text{25, 856}",
-              "accessibleText": "25, 856",
+              "latex": "25{,}856",
+              "accessibleText": "25,856",
               "source": {
                 "pdfPage": 61,
                 "printedPageLabel": "52"
@@ -24342,8 +24255,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p062-g000",
-                  "latex": "\\text{y= wx+ b}",
-                  "accessibleText": "𝑦= 𝑤𝑥+ 𝑏",
+                  "latex": "\\hat y=wx+b",
+                  "accessibleText": "ŷ = wx + b",
                   "source": {
                     "pdfPage": 62,
                     "printedPageLabel": "53"
@@ -24437,8 +24350,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p062-g001",
-                  "latex": "\\text{h= ReLU(W1x+ b1)}",
-                  "accessibleText": "ℎ= ReLU(𝑊1𝑥+ 𝑏1)",
+                  "latex": "h=\\operatorname{ReLU}(W_1x+b_1)",
+                  "accessibleText": "h = ReLU(W₁x + b₁)",
                   "source": {
                     "pdfPage": 62,
                     "printedPageLabel": "53"
@@ -24461,8 +24374,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p062-g002",
-                  "latex": "\\text{y= W2h+ b2}",
-                  "accessibleText": "𝑦= 𝑊2ℎ+ 𝑏2",
+                  "latex": "\\hat y=W_2h+b_2",
+                  "accessibleText": "ŷ = W₂h + b₂",
                   "source": {
                     "pdfPage": 62,
                     "printedPageLabel": "53"
@@ -24835,8 +24748,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p063-g000",
-                  "latex": "\\text{wx+ b}",
-                  "accessibleText": "𝑤𝑥+ 𝑏",
+                  "latex": "wx+b",
+                  "accessibleText": "wx + b",
                   "source": {
                     "pdfPage": 63,
                     "printedPageLabel": "54"
@@ -24904,8 +24817,8 @@
             {
               "type": "formula",
               "id": "formula-math-p063-g001",
-              "latex": "\\text{a= f(Wx+ b)}",
-              "accessibleText": "𝑎= 𝑓(𝑊𝑥+ 𝑏)",
+              "latex": "a=f(Wx+b)",
+              "accessibleText": "a = f(Wx + b)",
               "source": {
                 "pdfPage": 63,
                 "printedPageLabel": "54"
@@ -25032,7 +24945,16 @@
                   "children": [
                     {
                       "type": "text",
-                      "value": "Linear Transformation"
+                      "value": "Affine Transformation（当"
+                    },
+                    {
+                      "type": "inlineMath",
+                      "value": "b \\ne 0",
+                      "accessibleText": "b ≠ 0"
+                    },
+                    {
+                      "type": "text",
+                      "value": "时；ML frameworks 通常仍称为“Linear layer”）"
                     }
                   ],
                   "source": {
@@ -25173,8 +25095,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p064-g000",
-                  "latex": "\\sigma \\text{(x) = 1 1 + e-x}",
-                  "accessibleText": "𝜎(𝑥) =\n1\n1 + 𝑒-𝑥",
+                  "latex": "\\sigma(x)=\\frac{1}{1+e^{-x}}",
+                  "accessibleText": "σ(x) = 1 / (1 + e⁻ˣ)",
                   "source": {
                     "pdfPage": 64,
                     "printedPageLabel": "55"
@@ -25197,8 +25119,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p064-g001",
-                  "latex": "\\text{0 } \\sim \\text{1}",
-                  "accessibleText": "0 ∼1",
+                  "latex": "0\\sim1",
+                  "accessibleText": "0 ∼ 1",
                   "source": {
                     "pdfPage": 64,
                     "printedPageLabel": "55"
@@ -25250,8 +25172,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p064-g002",
-                  "latex": "\\text{-1 } \\sim \\text{1}",
-                  "accessibleText": "-1 ∼1",
+                  "latex": "-1\\sim1",
+                  "accessibleText": "−1 ∼ 1",
                   "source": {
                     "pdfPage": 64,
                     "printedPageLabel": "55"
@@ -25275,8 +25197,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p064-g003",
-                  "latex": "\\text{max(0, x)}",
-                  "accessibleText": "max(0, 𝑥)",
+                  "latex": "\\max(0,x)",
+                  "accessibleText": "max(0, x)",
                   "source": {
                     "pdfPage": 64,
                     "printedPageLabel": "55"
@@ -25401,8 +25323,8 @@
             {
               "type": "formula",
               "id": "formula-math-p064-g004",
-              "latex": "\\sigma \\text{(x) = 1 1 + e-x}",
-              "accessibleText": "𝜎(𝑥) =\n1\n1 + 𝑒-𝑥",
+              "latex": "\\sigma(x)=\\frac{1}{1+e^{-x}}",
+              "accessibleText": "σ(x) = 1 / (1 + e⁻ˣ)",
               "source": {
                 "pdfPage": 64,
                 "printedPageLabel": "55"
@@ -26311,8 +26233,8 @@
             {
               "type": "formula",
               "id": "formula-math-p066-g000",
-              "latex": "\\text{a= f(Wx+ b)}",
-              "accessibleText": "𝑎= 𝑓(𝑊𝑥+ 𝑏)",
+              "latex": "a=f(Wx+b)",
+              "accessibleText": "a = f(Wx + b)",
               "source": {
                 "pdfPage": 66,
                 "printedPageLabel": "57"
@@ -26785,8 +26707,8 @@
             {
               "type": "formula",
               "id": "formula-math-p067-g000",
-              "latex": "\\text{Wx+ b}",
-              "accessibleText": "𝑊𝑥+ 𝑏",
+              "latex": "Wx+b",
+              "accessibleText": "Wx + b",
               "source": {
                 "pdfPage": 67,
                 "printedPageLabel": "58"
@@ -27964,7 +27886,25 @@
                 [
                   {
                     "type": "text",
-                    "value": "Neuron 本质上还是Wx+b。"
+                    "value": "Neuron 的pre-activation 是"
+                  },
+                  {
+                    "type": "inlineMath",
+                    "value": "z = Wx + b",
+                    "accessibleText": "z = Wx + b"
+                  },
+                  {
+                    "type": "text",
+                    "value": "；包含activation 时，完整输出是"
+                  },
+                  {
+                    "type": "inlineMath",
+                    "value": "a = f(z) = f(Wx + b)",
+                    "accessibleText": "a = f(z) = f(Wx + b)"
+                  },
+                  {
+                    "type": "text",
+                    "value": "。"
                   }
                 ],
                 [
@@ -28310,8 +28250,8 @@
             {
               "type": "formula",
               "id": "formula-math-p069-g004",
-              "latex": "\\text{z= w1x1 + w2x2 + b}",
-              "accessibleText": "𝑧= 𝑤1𝑥1 + 𝑤2𝑥2 + 𝑏",
+              "latex": "z=w_1x_1+w_2x_2+b",
+              "accessibleText": "z = w₁x₁ + w₂x₂ + b",
               "source": {
                 "pdfPage": 69,
                 "printedPageLabel": "60"
@@ -28418,8 +28358,8 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g000",
-              "latex": "\\text{z= (2)(0.5) + (3)(-0.2) + 0.1}",
-              "accessibleText": "𝑧= (2)(0.5) + (3)(-0.2) + 0.1",
+              "latex": "z=(2)(0.5)+(3)(-0.2)+0.1",
+              "accessibleText": "z = (2)(0.5) + (3)(−0.2) + 0.1",
               "source": {
                 "pdfPage": 70,
                 "printedPageLabel": "61"
@@ -28428,8 +28368,8 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g001",
-              "latex": "\\text{= 1 -0.6 + 0.1}",
-              "accessibleText": "= 1 -0.6 + 0.1",
+              "latex": "=1-0.6+0.1",
+              "accessibleText": "= 1 − 0.6 + 0.1",
               "source": {
                 "pdfPage": 70,
                 "printedPageLabel": "61"
@@ -28438,7 +28378,7 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g002",
-              "latex": "\\text{= 0.5}",
+              "latex": "=0.5",
               "accessibleText": "= 0.5",
               "source": {
                 "pdfPage": 70,
@@ -28462,8 +28402,8 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g003",
-              "latex": "\\text{ReLU(z)}",
-              "accessibleText": "ReLU(𝑧)",
+              "latex": "\\operatorname{ReLU}(z)",
+              "accessibleText": "ReLU(z)",
               "source": {
                 "pdfPage": 70,
                 "printedPageLabel": "61"
@@ -28486,8 +28426,8 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g004",
-              "latex": "\\text{a= 0.5}",
-              "accessibleText": "𝑎= 0.5",
+              "latex": "a=0.5",
+              "accessibleText": "a = 0.5",
               "source": {
                 "pdfPage": 70,
                 "printedPageLabel": "61"
@@ -28538,8 +28478,8 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g005",
-              "latex": "\\text{z= 2(0.5) + 3(-1) + 0.1}",
-              "accessibleText": "𝑧= 2(0.5) + 3(-1) + 0.1",
+              "latex": "z=2(0.5)+3(-1)+0.1",
+              "accessibleText": "z = 2(0.5) + 3(−1) + 0.1",
               "source": {
                 "pdfPage": 70,
                 "printedPageLabel": "61"
@@ -28548,8 +28488,8 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g006",
-              "latex": "\\text{= 1 -3 + 0.1}",
-              "accessibleText": "= 1 -3 + 0.1",
+              "latex": "=1-3+0.1",
+              "accessibleText": "= 1 − 3 + 0.1",
               "source": {
                 "pdfPage": 70,
                 "printedPageLabel": "61"
@@ -28558,8 +28498,8 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g007",
-              "latex": "\\text{= -1.9}",
-              "accessibleText": "= -1.9",
+              "latex": "=-1.9",
+              "accessibleText": "= −1.9",
               "source": {
                 "pdfPage": 70,
                 "printedPageLabel": "61"
@@ -28582,8 +28522,8 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g008",
-              "latex": "\\text{ReLU(-1.9) = 0}",
-              "accessibleText": "ReLU(-1.9) = 0",
+              "latex": "\\operatorname{ReLU}(-1.9)=0",
+              "accessibleText": "ReLU(−1.9) = 0",
               "source": {
                 "pdfPage": 70,
                 "printedPageLabel": "61"
@@ -28606,7 +28546,7 @@
             {
               "type": "formula",
               "id": "formula-math-p070-g009",
-              "latex": "\\text{0}",
+              "latex": "0",
               "accessibleText": "0",
               "source": {
                 "pdfPage": 70,
@@ -29251,7 +29191,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "x1 ──w1──"
+                  "value": "x1 ──w1──□"
                 }
               ],
               "source": {
@@ -29279,7 +29219,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "x2 ──w2──"
+                  "value": "x2 ──w2──□"
                 }
               ],
               "source": {
@@ -29598,8 +29538,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p072-g000",
-                  "latex": "\\text{Loss } \\rightarrow \\text{ Gradient } \\rightarrow \\text{ Backward } \\rightarrow \\text{ Every Weight } \\rightarrow \\text{ Update}",
-                  "accessibleText": "Loss → Gradient → Backward → Every Weight → Update",
+                  "latex": "\\text{Loss} \\rightarrow \\text{Backward} \\rightarrow \\text{Gradients for every weight} \\rightarrow \\text{Optimizer / Update}",
+                  "accessibleText": "Loss → Backward → Gradients for every weight → Optimizer / Update",
                   "source": {
                     "pdfPage": 72,
                     "printedPageLabel": "63"
@@ -29680,8 +29620,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p072-g001",
-                  "latex": "\\text{z= w1x1 + w2x2 + } \\cdots \\text{+ wnxn+ b}",
-                  "accessibleText": "𝑧= 𝑤1𝑥1 + 𝑤2𝑥2 + ⋯+ 𝑤𝑛𝑥𝑛+ 𝑏",
+                  "latex": "z=w_1x_1+w_2x_2+\\cdots+w_nx_n+b",
+                  "accessibleText": "z = w₁x₁ + w₂x₂ + ⋯ + wₙxₙ + b",
                   "source": {
                     "pdfPage": 72,
                     "printedPageLabel": "63"
@@ -29788,8 +29728,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p072-g002",
-                  "latex": "\\text{W2(W1x+ b1) + b2}",
-                  "accessibleText": "𝑊2(𝑊1𝑥+ 𝑏1) + 𝑏2",
+                  "latex": "W_2(W_1x+b_1)+b_2",
+                  "accessibleText": "W₂(W₁x + b₁) + b₂",
                   "source": {
                     "pdfPage": 72,
                     "printedPageLabel": "63"
@@ -30051,8 +29991,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p073-g000",
-                  "latex": "\\text{weights= n} \\times \\text{ m}",
-                  "accessibleText": "𝑤𝑒𝑖𝑔ℎ𝑡𝑠= 𝑛× 𝑚",
+                  "latex": "\\mathit{weights}=n\\times m",
+                  "accessibleText": "weights = n × m",
                   "source": {
                     "pdfPage": 73,
                     "printedPageLabel": "64"
@@ -30754,8 +30694,8 @@
             {
               "type": "formula",
               "id": "formula-math-p075-g000",
-              "latex": "\\text{y= w2h+ b2}",
-              "accessibleText": "𝑦= 𝑤2ℎ+ 𝑏2",
+              "latex": "\\hat y=w_2h+b_2",
+              "accessibleText": "ŷ = w₂h + b₂",
               "source": {
                 "pdfPage": 75,
                 "printedPageLabel": "66"
@@ -30764,8 +30704,8 @@
             {
               "type": "formula",
               "id": "formula-math-p075-g001",
-              "latex": "\\text{L= (y-y)2}",
-              "accessibleText": "𝐿= (̂𝑦-𝑦)2",
+              "latex": "L=(\\hat y-y)^2",
+              "accessibleText": "L = (ŷ − y)²",
               "source": {
                 "pdfPage": 75,
                 "printedPageLabel": "66"
@@ -31068,8 +31008,8 @@
             {
               "type": "formula",
               "id": "formula-math-p075-g002",
-              "latex": "\\text{c= ab}",
-              "accessibleText": "𝑐= 𝑎𝑏",
+              "latex": "c=ab",
+              "accessibleText": "c = ab",
               "source": {
                 "pdfPage": 75,
                 "printedPageLabel": "66"
@@ -31092,8 +31032,8 @@
             {
               "type": "formula",
               "id": "formula-math-p075-g003",
-              "latex": "\\partial \\text{c } \\partial \\text{a= b, } \\partial \\text{c } \\partial \\text{b= a}",
-              "accessibleText": "𝜕𝑐\n𝜕𝑎= 𝑏,\n𝜕𝑐\n𝜕𝑏= 𝑎",
+              "latex": "\\frac{\\partial c}{\\partial a}=b,\\qquad \\frac{\\partial c}{\\partial b}=a",
+              "accessibleText": "∂c/∂a = b,  ∂c/∂b = a",
               "source": {
                 "pdfPage": 75,
                 "printedPageLabel": "66"
@@ -31243,8 +31183,8 @@
             {
               "type": "formula",
               "id": "formula-math-p076-g000",
-              "latex": "\\text{z= w1x+ b1 = 1 } \\times \\text{ 2 + 0 = 2}",
-              "accessibleText": "𝑧= 𝑤1𝑥+ 𝑏1 = 1 × 2 + 0 = 2",
+              "latex": "z=w_1x+b_1=1\\times2+0=2",
+              "accessibleText": "z = w₁x + b₁ = 1 × 2 + 0 = 2",
               "source": {
                 "pdfPage": 76,
                 "printedPageLabel": "67"
@@ -31253,8 +31193,8 @@
             {
               "type": "formula",
               "id": "formula-math-p076-g001",
-              "latex": "\\text{h= ReLU(2) = 2}",
-              "accessibleText": "ℎ= 𝑅𝑒𝐿𝑈(2) = 2̂",
+              "latex": "h=\\operatorname{ReLU}(2)=2",
+              "accessibleText": "h = ReLU(2) = 2",
               "source": {
                 "pdfPage": 76,
                 "printedPageLabel": "67"
@@ -31263,8 +31203,8 @@
             {
               "type": "formula",
               "id": "formula-math-p076-g002",
-              "latex": "\\text{y= w2h+ b2 = 1 } \\times \\text{ 2 + 0 = 2}",
-              "accessibleText": "𝑦= 𝑤2ℎ+ 𝑏2 = 1 × 2 + 0 = 2",
+              "latex": "\\hat y=w_2h+b_2=1\\times2+0=2",
+              "accessibleText": "ŷ = w₂h + b₂ = 1 × 2 + 0 = 2",
               "source": {
                 "pdfPage": 76,
                 "printedPageLabel": "67"
@@ -31273,8 +31213,8 @@
             {
               "type": "formula",
               "id": "formula-math-p076-g003",
-              "latex": "\\text{L= (2 -5)2 = 9}",
-              "accessibleText": "𝐿= (2 -5)2 = 9",
+              "latex": "L=(2-5)^2=9",
+              "accessibleText": "L = (2 − 5)² = 9",
               "source": {
                 "pdfPage": 76,
                 "printedPageLabel": "67"
@@ -31394,7 +31334,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "我的output 稍微变化时，我的input 会受到怎样的影响？"
+                  "value": "我的某个input 稍微变化时，我的output 会变化多快？"
                 }
               ],
               "source": {
@@ -31531,8 +31471,8 @@
             {
               "type": "formula",
               "id": "formula-math-p076-g004",
-              "latex": "\\text{c= a+ b}",
-              "accessibleText": "𝑐= 𝑎+ 𝑏",
+              "latex": "c=a+b",
+              "accessibleText": "c = a + b",
               "source": {
                 "pdfPage": 76,
                 "printedPageLabel": "67"
@@ -31541,8 +31481,8 @@
             {
               "type": "formula",
               "id": "formula-math-p076-g005",
-              "latex": "\\partial \\text{c } \\partial \\text{a= 1, } \\partial \\text{c } \\partial \\text{b= 1}",
-              "accessibleText": "𝜕𝑐\n𝜕𝑎= 1,\n𝜕𝑐\n𝜕𝑏= 1",
+              "latex": "\\frac{\\partial c}{\\partial a}=1,\\qquad \\frac{\\partial c}{\\partial b}=1",
+              "accessibleText": "∂c/∂a = 1,  ∂c/∂b = 1",
               "source": {
                 "pdfPage": 76,
                 "printedPageLabel": "67"
@@ -31579,8 +31519,8 @@
             {
               "type": "formula",
               "id": "formula-math-p077-g000",
-              "latex": "\\text{c= ab}",
-              "accessibleText": "𝑐= 𝑎𝑏",
+              "latex": "c=ab",
+              "accessibleText": "c = ab",
               "source": {
                 "pdfPage": 77,
                 "printedPageLabel": "68"
@@ -31589,8 +31529,8 @@
             {
               "type": "formula",
               "id": "formula-math-p077-g001",
-              "latex": "\\partial \\text{c } \\partial \\text{a= b, } \\partial \\text{c } \\partial \\text{b= a}",
-              "accessibleText": "𝜕𝑐\n𝜕𝑎= 𝑏,\n𝜕𝑐\n𝜕𝑏= 𝑎",
+              "latex": "\\frac{\\partial c}{\\partial a}=b,\\qquad \\frac{\\partial c}{\\partial b}=a",
+              "accessibleText": "∂c/∂a = b,  ∂c/∂b = a",
               "source": {
                 "pdfPage": 77,
                 "printedPageLabel": "68"
@@ -31697,8 +31637,8 @@
             {
               "type": "formula",
               "id": "formula-math-p077-g002",
-              "latex": "\\text{L= (y-y)2}",
-              "accessibleText": "𝐿= (̂𝑦-𝑦)2",
+              "latex": "L=(\\hat y-y)^2",
+              "accessibleText": "L = (ŷ − y)²",
               "source": {
                 "pdfPage": 77,
                 "printedPageLabel": "68"
@@ -31707,8 +31647,8 @@
             {
               "type": "formula",
               "id": "formula-math-p077-g003",
-              "latex": "\\partial \\text{L } \\partial \\text{y= 2(y-y)}",
-              "accessibleText": "𝜕𝐿\n𝜕̂𝑦= 2(̂𝑦-𝑦)",
+              "latex": "\\frac{\\partial L}{\\partial \\hat y}=2(\\hat y-y)",
+              "accessibleText": "∂L/∂ŷ = 2(ŷ − y)",
               "source": {
                 "pdfPage": 77,
                 "printedPageLabel": "68"
@@ -31788,8 +31728,8 @@
             {
               "type": "formula",
               "id": "formula-math-p077-g004",
-              "latex": "\\text{ReLU(z) = max(0, z)}",
-              "accessibleText": "𝑅𝑒𝐿𝑈(𝑧) = max(0, 𝑧)",
+              "latex": "\\operatorname{ReLU}(z)=\\max(0,z)",
+              "accessibleText": "ReLU(z) = max(0, z)",
               "source": {
                 "pdfPage": 77,
                 "printedPageLabel": "68"
@@ -31798,8 +31738,8 @@
             {
               "type": "formula",
               "id": "formula-math-p077-g005",
-              "latex": "\\text{ReLU} ' \\text{(z) = \\{1, z> 0 0, z< 0}",
-              "accessibleText": "𝑅𝑒𝐿𝑈′(𝑧) = {1, 𝑧> 0\n0, 𝑧< 0",
+              "latex": "\\operatorname{ReLU}'(z)=\\begin{cases}1,&z>0\\\\0,&z<0\\end{cases}",
+              "accessibleText": "ReLU′(z) = {1 if z > 0; 0 if z < 0}",
               "source": {
                 "pdfPage": 77,
                 "printedPageLabel": "68"
@@ -31904,8 +31844,8 @@
             {
               "type": "formula",
               "id": "formula-math-p077-g006",
-              "latex": "\\text{inputgradient= upstreamgradient} \\times \\text{ localderivative}",
-              "accessibleText": "𝑖𝑛𝑝𝑢𝑡𝑔𝑟𝑎𝑑𝑖𝑒𝑛𝑡= 𝑢𝑝𝑠𝑡𝑟𝑒𝑎𝑚𝑔𝑟𝑎𝑑𝑖𝑒𝑛𝑡× 𝑙𝑜𝑐𝑎𝑙𝑑𝑒𝑟𝑖𝑣𝑎𝑡𝑖𝑣𝑒",
+              "latex": "\\mathit{input\\ gradient}=\\mathit{upstream\\ gradient}\\times\\mathit{local\\ derivative}",
+              "accessibleText": "input gradient = upstream gradient × local derivative",
               "source": {
                 "pdfPage": 77,
                 "printedPageLabel": "68"
@@ -31984,8 +31924,8 @@
             {
               "type": "formula",
               "id": "formula-math-p078-g000",
-              "latex": "\\partial \\text{L } \\partial \\text{a= } \\partial \\text{L } \\partial \\text{c } \\partial \\text{c } \\partial \\text{a= (-6)(4) = -24}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑎= 𝜕𝐿\n𝜕𝑐\n𝜕𝑐\n𝜕𝑎= (-6)(4) = -24",
+              "latex": "\\frac{\\partial L}{\\partial a}=\\frac{\\partial L}{\\partial c}\\frac{\\partial c}{\\partial a}=(-6)(4)=-24",
+              "accessibleText": "∂L/∂a = (∂L/∂c)(∂c/∂a) = (−6)(4) = −24",
               "source": {
                 "pdfPage": 78,
                 "printedPageLabel": "69"
@@ -31994,8 +31934,8 @@
             {
               "type": "formula",
               "id": "formula-math-p078-g001",
-              "latex": "\\partial \\text{L } \\partial \\text{b= } \\partial \\text{L } \\partial \\text{c } \\partial \\text{c } \\partial \\text{b= (-6)(3) = -18}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑏= 𝜕𝐿\n𝜕𝑐\n𝜕𝑐\n𝜕𝑏= (-6)(3) = -18",
+              "latex": "\\frac{\\partial L}{\\partial b}=\\frac{\\partial L}{\\partial c}\\frac{\\partial c}{\\partial b}=(-6)(3)=-18",
+              "accessibleText": "∂L/∂b = (∂L/∂c)(∂c/∂b) = (−6)(3) = −18",
               "source": {
                 "pdfPage": 78,
                 "printedPageLabel": "69"
@@ -32087,8 +32027,8 @@
             {
               "type": "formula",
               "id": "formula-math-p078-g002",
-              "latex": "\\partial \\text{L } \\partial \\text{w1 = } \\partial \\text{L } \\partial \\text{y } \\partial \\text{y } \\partial \\text{h } \\partial \\text{h } \\partial \\text{z } \\partial \\text{z } \\partial \\text{w1}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑤1\n= 𝜕𝐿\n𝜕̂𝑦\n𝜕̂𝑦\n𝜕ℎ\n𝜕ℎ\n𝜕𝑧\n𝜕𝑧\n𝜕𝑤1",
+              "latex": "\\frac{\\partial L}{\\partial w_1}=\\frac{\\partial L}{\\partial \\hat y}\\frac{\\partial \\hat y}{\\partial h}\\frac{\\partial h}{\\partial z}\\frac{\\partial z}{\\partial w_1}",
+              "accessibleText": "∂L/∂w₁ = (∂L/∂ŷ)(∂ŷ/∂h)(∂h/∂z)(∂z/∂w₁)",
               "source": {
                 "pdfPage": 78,
                 "printedPageLabel": "69"
@@ -32335,8 +32275,8 @@
             {
               "type": "formula",
               "id": "formula-math-p078-g003",
-              "latex": "\\Delta \\text{y} \\approx \\text{0.01 } \\times \\text{ 2 } \\times \\text{ 1 } \\times \\text{ 3 = 0.06}",
-              "accessibleText": "Δ̂𝑦≈0.01 × 2 × 1 × 3 = 0.06",
+              "latex": "\\Delta\\hat y\\approx0.01\\times2\\times1\\times3=0.06",
+              "accessibleText": "Δŷ ≈ 0.01 × 2 × 1 × 3 = 0.06",
               "source": {
                 "pdfPage": 78,
                 "printedPageLabel": "69"
@@ -32528,8 +32468,8 @@
             {
               "type": "formula",
               "id": "formula-math-p079-g000",
-              "latex": "\\partial \\text{L } \\partial \\text{L= 1}",
-              "accessibleText": "𝜕𝐿\n𝜕𝐿= 1",
+              "latex": "\\frac{\\partial L}{\\partial L}=1",
+              "accessibleText": "∂L/∂L = 1",
               "source": {
                 "pdfPage": 79,
                 "printedPageLabel": "70"
@@ -32594,8 +32534,8 @@
             {
               "type": "formula",
               "id": "formula-math-p079-g001",
-              "latex": "\\partial \\text{L } \\partial \\text{y= 2(y-y) = 2(2 -5) = -6}",
-              "accessibleText": "𝜕𝐿\n𝜕̂𝑦= 2(̂𝑦-𝑦) = 2(2 -5) = -6",
+              "latex": "\\frac{\\partial L}{\\partial \\hat y}=2(\\hat y-y)=2(2-5)=-6",
+              "accessibleText": "∂L/∂ŷ = 2(ŷ − y) = 2(2 − 5) = −6",
               "source": {
                 "pdfPage": 79,
                 "printedPageLabel": "70"
@@ -32661,8 +32601,8 @@
             {
               "type": "formula",
               "id": "formula-math-p079-g002",
-              "latex": "\\text{y= w2h+ b2}",
-              "accessibleText": "𝑦= 𝑤2ℎ+ 𝑏2",
+              "latex": "\\hat y=w_2h+b_2",
+              "accessibleText": "ŷ = w₂h + b₂",
               "source": {
                 "pdfPage": 79,
                 "printedPageLabel": "70"
@@ -32685,8 +32625,8 @@
             {
               "type": "formula",
               "id": "formula-math-p079-g003",
-              "latex": "\\partial \\text{y } \\partial \\text{w2 = h= 2}",
-              "accessibleText": "𝜕̂𝑦\n𝜕𝑤2\n= ℎ= 2",
+              "latex": "\\frac{\\partial \\hat y}{\\partial w_2}=h=2",
+              "accessibleText": "∂ŷ/∂w₂ = h = 2",
               "source": {
                 "pdfPage": 79,
                 "printedPageLabel": "70"
@@ -32709,8 +32649,8 @@
             {
               "type": "formula",
               "id": "formula-math-p079-g004",
-              "latex": "\\partial \\text{L } \\partial \\text{w2 = } \\partial \\text{L } \\partial \\text{y } \\partial \\text{y } \\partial \\text{w2 = (-6)(2) = -12}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑤2\n= 𝜕𝐿\n𝜕̂𝑦\n𝜕̂𝑦\n𝜕𝑤2\n= (-6)(2) = -12",
+              "latex": "\\frac{\\partial L}{\\partial w_2}=\\frac{\\partial L}{\\partial \\hat y}\\frac{\\partial \\hat y}{\\partial w_2}=(-6)(2)=-12",
+              "accessibleText": "∂L/∂w₂ = (∂L/∂ŷ)(∂ŷ/∂w₂) = (−6)(2) = −12",
               "source": {
                 "pdfPage": 79,
                 "printedPageLabel": "70"
@@ -32733,8 +32673,8 @@
             {
               "type": "formula",
               "id": "formula-math-p079-g005",
-              "latex": "\\partial \\text{y } \\partial \\text{b2 = 1}",
-              "accessibleText": "𝜕̂𝑦\n𝜕𝑏2\n= 1",
+              "latex": "\\frac{\\partial \\hat y}{\\partial b_2}=1",
+              "accessibleText": "∂ŷ/∂b₂ = 1",
               "source": {
                 "pdfPage": 79,
                 "printedPageLabel": "70"
@@ -32757,8 +32697,8 @@
             {
               "type": "formula",
               "id": "formula-math-p080-g000",
-              "latex": "\\partial \\text{L } \\partial \\text{b2 = (-6)(1) = -6}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑏2\n= (-6)(1) = -6",
+              "latex": "\\frac{\\partial L}{\\partial b_2}=(-6)(1)=-6",
+              "accessibleText": "∂L/∂b₂ = (−6)(1) = −6",
               "source": {
                 "pdfPage": 80,
                 "printedPageLabel": "71"
@@ -32810,8 +32750,8 @@
             {
               "type": "formula",
               "id": "formula-math-p080-g001",
-              "latex": "\\partial \\text{y } \\partial \\text{h= w2 = 1}",
-              "accessibleText": "𝜕̂𝑦\n𝜕ℎ= 𝑤2 = 1",
+              "latex": "\\frac{\\partial \\hat y}{\\partial h}=w_2=1",
+              "accessibleText": "∂ŷ/∂h = w₂ = 1",
               "source": {
                 "pdfPage": 80,
                 "printedPageLabel": "71"
@@ -32834,8 +32774,8 @@
             {
               "type": "formula",
               "id": "formula-math-p080-g002",
-              "latex": "\\partial \\text{L } \\partial \\text{h= } \\partial \\text{L } \\partial \\text{y } \\partial \\text{y } \\partial \\text{h= (-6)(1) = -6}",
-              "accessibleText": "𝜕𝐿\n𝜕ℎ= 𝜕𝐿\n𝜕̂𝑦\n𝜕̂𝑦\n𝜕ℎ= (-6)(1) = -6",
+              "latex": "\\frac{\\partial L}{\\partial h}=\\frac{\\partial L}{\\partial \\hat y}\\frac{\\partial \\hat y}{\\partial h}=(-6)(1)=-6",
+              "accessibleText": "∂L/∂h = (∂L/∂ŷ)(∂ŷ/∂h) = (−6)(1) = −6",
               "source": {
                 "pdfPage": 80,
                 "printedPageLabel": "71"
@@ -32915,8 +32855,8 @@
             {
               "type": "formula",
               "id": "formula-math-p080-g003",
-              "latex": "\\partial \\text{h } \\partial \\text{z= 1}",
-              "accessibleText": "𝜕ℎ\n𝜕𝑧= 1",
+              "latex": "\\frac{\\partial h}{\\partial z}=1",
+              "accessibleText": "∂h/∂z = 1",
               "source": {
                 "pdfPage": 80,
                 "printedPageLabel": "71"
@@ -32939,8 +32879,8 @@
             {
               "type": "formula",
               "id": "formula-math-p080-g004",
-              "latex": "\\partial \\text{L } \\partial \\text{z= } \\partial \\text{L } \\partial \\text{h } \\partial \\text{h } \\partial \\text{z= (-6)(1) = -6}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑧= 𝜕𝐿\n𝜕ℎ\n𝜕ℎ\n𝜕𝑧= (-6)(1) = -6",
+              "latex": "\\frac{\\partial L}{\\partial z}=\\frac{\\partial L}{\\partial h}\\frac{\\partial h}{\\partial z}=(-6)(1)=-6",
+              "accessibleText": "∂L/∂z = (∂L/∂h)(∂h/∂z) = (−6)(1) = −6",
               "source": {
                 "pdfPage": 80,
                 "printedPageLabel": "71"
@@ -32992,8 +32932,8 @@
             {
               "type": "formula",
               "id": "formula-math-p080-g005",
-              "latex": "\\text{z= w1x+ b1}",
-              "accessibleText": "𝑧= 𝑤1𝑥+ 𝑏1",
+              "latex": "z=w_1x+b_1",
+              "accessibleText": "z = w₁x + b₁",
               "source": {
                 "pdfPage": 80,
                 "printedPageLabel": "71"
@@ -33016,8 +32956,8 @@
             {
               "type": "formula",
               "id": "formula-math-p080-g006",
-              "latex": "\\partial \\text{z } \\partial \\text{w1 = x= 2}",
-              "accessibleText": "𝜕𝑧\n𝜕𝑤1\n= 𝑥= 2",
+              "latex": "\\frac{\\partial z}{\\partial w_1}=x=2",
+              "accessibleText": "∂z/∂w₁ = x = 2",
               "source": {
                 "pdfPage": 80,
                 "printedPageLabel": "71"
@@ -33040,8 +32980,8 @@
             {
               "type": "formula",
               "id": "formula-math-p080-g007",
-              "latex": "\\partial \\text{L } \\partial \\text{w1 = } \\partial \\text{L } \\partial \\text{z } \\partial \\text{z } \\partial \\text{w1 = (-6)(2) = -12}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑤1\n= 𝜕𝐿\n𝜕𝑧\n𝜕𝑧\n𝜕𝑤1\n= (-6)(2) = -12",
+              "latex": "\\frac{\\partial L}{\\partial w_1}=\\frac{\\partial L}{\\partial z}\\frac{\\partial z}{\\partial w_1}=(-6)(2)=-12",
+              "accessibleText": "∂L/∂w₁ = (∂L/∂z)(∂z/∂w₁) = (−6)(2) = −12",
               "source": {
                 "pdfPage": 80,
                 "printedPageLabel": "71"
@@ -33064,8 +33004,8 @@
             {
               "type": "formula",
               "id": "formula-math-p081-g000",
-              "latex": "\\partial \\text{z } \\partial \\text{b1 = 1}",
-              "accessibleText": "𝜕𝑧\n𝜕𝑏1\n= 1",
+              "latex": "\\frac{\\partial z}{\\partial b_1}=1",
+              "accessibleText": "∂z/∂b₁ = 1",
               "source": {
                 "pdfPage": 81,
                 "printedPageLabel": "72"
@@ -33074,8 +33014,8 @@
             {
               "type": "formula",
               "id": "formula-math-p081-g001",
-              "latex": "\\partial \\text{L } \\partial \\text{b1 = (-6)(1) = -6}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑏1\n= (-6)(1) = -6",
+              "latex": "\\frac{\\partial L}{\\partial b_1}=(-6)(1)=-6",
+              "accessibleText": "∂L/∂b₁ = (−6)(1) = −6",
               "source": {
                 "pdfPage": 81,
                 "printedPageLabel": "72"
@@ -33225,8 +33165,8 @@
             {
               "type": "formula",
               "id": "formula-math-p081-g002",
-              "latex": "\\text{parameternew= parameterold-learningRate} \\times \\text{ gradient}",
-              "accessibleText": "𝑝𝑎𝑟𝑎𝑚𝑒𝑡𝑒𝑟𝑛𝑒𝑤= 𝑝𝑎𝑟𝑎𝑚𝑒𝑡𝑒𝑟𝑜𝑙𝑑-𝑙𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑅𝑎𝑡𝑒× 𝑔𝑟𝑎𝑑𝑖𝑒𝑛𝑡",
+              "latex": "parameter_{new}=parameter_{old}-learningRate\\times gradient",
+              "accessibleText": "parameterₙₑw = parameterₒₗd − learningRate × gradient",
               "source": {
                 "pdfPage": 81,
                 "printedPageLabel": "72"
@@ -33334,8 +33274,8 @@
             {
               "type": "formula",
               "id": "formula-math-p081-g003",
-              "latex": "\\text{z= (1.12)(2) + 0.06 = 2.30}",
-              "accessibleText": "𝑧= (1.12)(2) + 0.06 = 2.30",
+              "latex": "z=(1.12)(2)+0.06=2.30",
+              "accessibleText": "z = (1.12)(2) + 0.06 = 2.30",
               "source": {
                 "pdfPage": 81,
                 "printedPageLabel": "72"
@@ -33344,8 +33284,8 @@
             {
               "type": "formula",
               "id": "formula-math-p081-g004",
-              "latex": "\\text{h= ReLU(2.30) = 2.30}",
-              "accessibleText": "ℎ= 𝑅𝑒𝐿𝑈(2.30) = 2.30̂",
+              "latex": "h=\\operatorname{ReLU}(2.30)=2.30",
+              "accessibleText": "h = ReLU(2.30) = 2.30",
               "source": {
                 "pdfPage": 81,
                 "printedPageLabel": "72"
@@ -33354,8 +33294,8 @@
             {
               "type": "formula",
               "id": "formula-math-p081-g005",
-              "latex": "\\text{y= (1.12)(2.30) + 0.06 = 2.636}",
-              "accessibleText": "𝑦= (1.12)(2.30) + 0.06 = 2.636",
+              "latex": "\\hat y=(1.12)(2.30)+0.06=2.636",
+              "accessibleText": "ŷ = (1.12)(2.30) + 0.06 = 2.636",
               "source": {
                 "pdfPage": 81,
                 "printedPageLabel": "72"
@@ -33364,8 +33304,8 @@
             {
               "type": "formula",
               "id": "formula-math-p081-g006",
-              "latex": "\\text{L= (2.636 -5)2 } \\approx \\text{5.59}",
-              "accessibleText": "𝐿= (2.636 -5)2 ≈5.59",
+              "latex": "L=(2.636-5)^2\\approx5.59",
+              "accessibleText": "L = (2.636 − 5)² ≈ 5.59",
               "source": {
                 "pdfPage": 81,
                 "printedPageLabel": "72"
@@ -33894,8 +33834,8 @@
             {
               "type": "formula",
               "id": "formula-math-p082-g000",
-              "latex": "\\text{L= L1 + L2}",
-              "accessibleText": "𝐿= 𝐿1 + 𝐿2",
+              "latex": "L=L_1+L_2",
+              "accessibleText": "L = L₁ + L₂",
               "source": {
                 "pdfPage": 82,
                 "printedPageLabel": "73"
@@ -33918,8 +33858,8 @@
             {
               "type": "formula",
               "id": "formula-math-p082-g001",
-              "latex": "\\partial \\text{L } \\partial \\text{w= } \\partial \\text{L1 } \\partial \\text{w+ } \\partial \\text{L2 } \\partial \\text{w}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑤= 𝜕𝐿1\n𝜕𝑤+ 𝜕𝐿2\n𝜕𝑤",
+              "latex": "\\frac{\\partial L}{\\partial w}=\\frac{\\partial L_1}{\\partial w}+\\frac{\\partial L_2}{\\partial w}",
+              "accessibleText": "∂L/∂w = ∂L₁/∂w + ∂L₂/∂w",
               "source": {
                 "pdfPage": 82,
                 "printedPageLabel": "73"
@@ -34041,8 +33981,8 @@
             {
               "type": "formula",
               "id": "formula-math-p083-g000",
-              "latex": "\\text{L= 1 n n } \\sum \\text{ i=1 Li}",
-              "accessibleText": "𝐿= 1\n𝑛\n𝑛\n∑\n𝑖=1\n𝐿𝑖",
+              "latex": "L=\\frac{1}{n}\\sum_{i=1}^{n}L_i",
+              "accessibleText": "L = (1/n) Σᵢ₌₁ⁿ Lᵢ",
               "source": {
                 "pdfPage": 83,
                 "printedPageLabel": "74"
@@ -34065,8 +34005,8 @@
             {
               "type": "formula",
               "id": "formula-math-p083-g001",
-              "latex": "\\partial \\text{L } \\partial \\text{w= 1 n n } \\sum \\text{ i=1 } \\partial \\text{Li } \\partial \\text{w}",
-              "accessibleText": "𝜕𝐿\n𝜕𝑤= 1\n𝑛\n𝑛\n∑\n𝑖=1\n𝜕𝐿𝑖\n𝜕𝑤",
+              "latex": "\\frac{\\partial L}{\\partial w}=\\frac{1}{n}\\sum_{i=1}^{n}\\frac{\\partial L_i}{\\partial w}",
+              "accessibleText": "∂L/∂w = (1/n) Σᵢ₌₁ⁿ ∂Lᵢ/∂w",
               "source": {
                 "pdfPage": 83,
                 "printedPageLabel": "74"
@@ -34303,8 +34243,8 @@
             {
               "type": "formula",
               "id": "formula-math-p083-g002",
-              "latex": "\\text{0.520 } \\approx \\text{0.00000095}",
-              "accessibleText": "0.520 ≈0.00000095",
+              "latex": "0.5^{20}\\approx0.00000095",
+              "accessibleText": "0.5²⁰ ≈ 0.00000095",
               "source": {
                 "pdfPage": 83,
                 "printedPageLabel": "74"
@@ -34327,8 +34267,8 @@
             {
               "type": "formula",
               "id": "formula-math-p083-g003",
-              "latex": "\\text{220 = 1, 048, 576}",
-              "accessibleText": "220 = 1, 048, 576",
+              "latex": "2^{20}=1{,}048{,}576",
+              "accessibleText": "2²⁰ = 1,048,576",
               "source": {
                 "pdfPage": 83,
                 "printedPageLabel": "74"
@@ -34520,8 +34460,8 @@
             {
               "type": "formula",
               "id": "formula-math-p084-g000",
-              "latex": "\\partial \\text{prediction } \\partial \\text{w = h= 3}",
-              "accessibleText": "𝜕𝑝𝑟𝑒𝑑𝑖𝑐𝑡𝑖𝑜𝑛\n𝜕𝑤\n= ℎ= 3",
+              "latex": "\\frac{\\partial\\mathit{prediction}}{\\partial w}=h=3",
+              "accessibleText": "∂prediction/∂w = h = 3",
               "source": {
                 "pdfPage": 84,
                 "printedPageLabel": "75"
@@ -34544,8 +34484,8 @@
             {
               "type": "formula",
               "id": "formula-math-p084-g001",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w = (-4)(3) = -12}",
-              "accessibleText": "𝜕𝐿𝑜𝑠𝑠\n𝜕𝑤\n= (-4)(3) = -12",
+              "latex": "\\frac{\\partial\\mathit{Loss}}{\\partial w}=(-4)(3)=-12",
+              "accessibleText": "∂Loss/∂w = (−4)(3) = −12",
               "source": {
                 "pdfPage": 84,
                 "printedPageLabel": "75"
@@ -35812,8 +35752,8 @@
             {
               "type": "formula",
               "id": "formula-math-p086-g000",
-              "latex": "\\text{Z= XW+ b}",
-              "accessibleText": "𝑍= 𝑋𝑊+ 𝑏",
+              "latex": "Z=XW+b",
+              "accessibleText": "Z = XW + b",
               "source": {
                 "pdfPage": 86,
                 "printedPageLabel": "77"
@@ -36119,7 +36059,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "print(Z.shape) # [4, 2]"
+                  "value": "print(Z.shape) # torch.Size([4, 2])"
                 }
               ],
               "source": {
@@ -36478,8 +36418,8 @@
             {
               "type": "formula",
               "id": "formula-math-p088-g000",
-              "latex": "\\text{y= 2x+ 1}",
-              "accessibleText": "𝑦= 2𝑥+ 1",
+              "latex": "y=2x+1",
+              "accessibleText": "y = 2x + 1",
               "source": {
                 "pdfPage": 88,
                 "printedPageLabel": "79"
@@ -36586,8 +36526,8 @@
             {
               "type": "formula",
               "id": "formula-math-p088-g001",
-              "latex": "\\text{y= Xw+ b}",
-              "accessibleText": "𝑦= 𝑋𝑤+ 𝑏",
+              "latex": "\\hat y=Xw+b",
+              "accessibleText": "ŷ = Xw + b",
               "source": {
                 "pdfPage": 88,
                 "printedPageLabel": "79"
@@ -36596,8 +36536,8 @@
             {
               "type": "formula",
               "id": "formula-math-p088-g002",
-              "latex": "\\text{MSE= 1 n} \\sum \\text{(y-y)2}",
-              "accessibleText": "𝑀𝑆𝐸= 1\n𝑛∑(̂𝑦-𝑦)2",
+              "latex": "\\mathrm{MSE}=\\frac{1}{n}\\sum(\\hat y-y)^2",
+              "accessibleText": "MSE = (1/n) Σ(ŷ − y)²",
               "source": {
                 "pdfPage": 88,
                 "printedPageLabel": "79"
@@ -37014,8 +36954,8 @@
             {
               "type": "formula",
               "id": "formula-math-p089-g000",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w } \\partial \\text{Loss } \\partial \\text{b}",
-              "accessibleText": "𝜕𝐿𝑜𝑠𝑠\n𝜕𝑤\n𝜕𝐿𝑜𝑠𝑠\n𝜕𝑏",
+              "latex": "\\frac{\\partial\\mathit{Loss}}{\\partial w}\\qquad\\frac{\\partial\\mathit{Loss}}{\\partial b}",
+              "accessibleText": "∂Loss/∂w    ∂Loss/∂b",
               "source": {
                 "pdfPage": 89,
                 "printedPageLabel": "80"
@@ -37066,8 +37006,8 @@
             {
               "type": "formula",
               "id": "formula-math-p089-g001",
-              "latex": "\\partial \\text{Loss } \\partial \\text{Loss= 1}",
-              "accessibleText": "𝜕𝐿𝑜𝑠𝑠\n𝜕𝐿𝑜𝑠𝑠= 1",
+              "latex": "\\frac{\\partial\\mathit{Loss}}{\\partial\\mathit{Loss}}=1",
+              "accessibleText": "∂Loss/∂Loss = 1",
               "source": {
                 "pdfPage": 89,
                 "printedPageLabel": "80"
@@ -37118,8 +37058,8 @@
             {
               "type": "formula",
               "id": "formula-math-p089-g002",
-              "latex": "\\partial \\text{Loss } \\partial \\text{w}",
-              "accessibleText": "𝜕𝐿𝑜𝑠𝑠\n𝜕𝑤",
+              "latex": "\\frac{\\partial\\mathit{Loss}}{\\partial w}",
+              "accessibleText": "∂Loss/∂w",
               "source": {
                 "pdfPage": 89,
                 "printedPageLabel": "80"
@@ -37382,8 +37322,8 @@
             {
               "type": "formula",
               "id": "formula-math-p090-g000",
-              "latex": "\\text{parameter} : \\text{= parameter-learningRate} \\times \\text{ gradient}",
-              "accessibleText": "𝑝𝑎𝑟𝑎𝑚𝑒𝑡𝑒𝑟∶= 𝑝𝑎𝑟𝑎𝑚𝑒𝑡𝑒𝑟-𝑙𝑒𝑎𝑟𝑛𝑖𝑛𝑔𝑅𝑎𝑡𝑒× 𝑔𝑟𝑎𝑑𝑖𝑒𝑛𝑡",
+              "latex": "\\mathit{parameter}:=\\mathit{parameter}-\\mathit{learningRate}\\times\\mathit{gradient}",
+              "accessibleText": "parameter := parameter − learningRate × gradient",
               "source": {
                 "pdfPage": 90,
                 "printedPageLabel": "81"
@@ -37395,7 +37335,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "如果不使用torch.no_grad()，w -= ... 可能被当成model computation 的一部分继续记录，导致graph 跨training steps 连接起来。Parameter update 是optimizer 的控制逻辑，不是model forward 的可微分数据流。"
+                  "value": "这里的w 是requires_grad=True 的leaf tensor；在torch.no_grad() 之外执行原地更新w -= ... 会被autograd 拒绝并抛出RuntimeError。若改写成非原地的w = w - ...，新w 才可能携带历史并把迭代连接起来（同时它不再是leaf）。参数更新应放在torch.no_grad() 中，或交给optimizer.step()。"
                 }
               ],
               "source": {
@@ -39824,8 +39764,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p095-g000",
-                  "latex": "\\text{oneHot(token) } \\times \\text{ E= E[token]}",
-                  "accessibleText": "𝑜𝑛𝑒𝐻𝑜𝑡(𝑡𝑜𝑘𝑒𝑛) × 𝐸= 𝐸[𝑡𝑜𝑘𝑒𝑛]",
+                  "latex": "\\mathit{oneHot}(token)\\times E=E[token]",
+                  "accessibleText": "oneHot(token) × E = E[token]",
                   "source": {
                     "pdfPage": 95,
                     "printedPageLabel": "86"
@@ -39921,8 +39861,8 @@
             {
               "type": "formula",
               "id": "formula-math-p095-g001",
-              "latex": "\\text{E} \\in \\text{R5} \\times \\text{3}",
-              "accessibleText": "𝐸∈ℝ5×3",
+              "latex": "E\\in\\mathbb{R}^{5\\times3}",
+              "accessibleText": "E ∈ ℝ^(5 × 3)",
               "source": {
                 "pdfPage": 95,
                 "printedPageLabel": "86"
@@ -39945,8 +39885,8 @@
             {
               "type": "formula",
               "id": "formula-math-p095-g002",
-              "latex": "\\text{E= [ [[ [ 0.2 -0.1 0.7 0.6 0.3 -0.2 -0.4 0.8 0.5 0.1 0.2 0.9 -0.7 0.4 0.3 ] ]] ]}",
-              "accessibleText": "𝐸=\n⎡\n⎢⎢\n⎣\n0.2\n-0.1\n0.7\n0.6\n0.3\n-0.2\n-0.4\n0.8\n0.5\n0.1\n0.2\n0.9\n-0.7\n0.4\n0.3\n⎤\n⎥⎥\n⎦",
+              "latex": "E=\\begin{bmatrix}0.2&-0.1&0.7\\\\0.6&0.3&-0.2\\\\-0.4&0.8&0.5\\\\0.1&0.2&0.9\\\\-0.7&0.4&0.3\\end{bmatrix}",
+              "accessibleText": "E = [[0.2, −0.1, 0.7], [0.6, 0.3, −0.2], [−0.4, 0.8, 0.5], [0.1, 0.2, 0.9], [−0.7, 0.4, 0.3]]",
               "source": {
                 "pdfPage": 95,
                 "printedPageLabel": "86"
@@ -39958,7 +39898,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Token ID 2 会选择第2 行："
+                  "value": "Token ID 2 会选择索引为2 的row，也就是显示矩阵中的第3 行："
                 }
               ],
               "source": {
@@ -40084,7 +40024,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "print(x.shape) # [3, 3]"
+                  "value": "print(x.shape) # torch.Size([3, 3])"
                 }
               ],
               "source": {
@@ -40359,8 +40299,8 @@
             {
               "type": "formula",
               "id": "formula-math-p096-g000",
-              "latex": "\\partial \\text{Loss } \\partial \\text{E}",
-              "accessibleText": "𝜕𝐿𝑜𝑠𝑠\n𝜕𝐸",
+              "latex": "\\frac{\\partial\\mathit{Loss}}{\\partial E}",
+              "accessibleText": "∂Loss/∂E",
               "source": {
                 "pdfPage": 96,
                 "printedPageLabel": "87"
@@ -40372,7 +40312,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Optimizer 再更新被使用的rows。"
+                  "value": "Embedding lookup 这条路径只给被索引的rows 产生lookup gradient。"
                 }
               ],
               "source": {
@@ -40425,8 +40365,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p096-g001",
-                  "latex": "\\partial \\text{Loss } \\partial \\text{E[AI]}",
-                  "accessibleText": "𝜕𝐿𝑜𝑠𝑠\n𝜕𝐸[𝐴𝐼]",
+                  "latex": "\\frac{\\partial\\mathit{Loss}}{\\partial E[AI]}",
+                  "accessibleText": "∂Loss/∂E[AI]",
                   "source": {
                     "pdfPage": 96,
                     "printedPageLabel": "87"
@@ -40592,8 +40532,8 @@
             {
               "type": "formula",
               "id": "formula-math-p097-g000",
-              "latex": "\\text{P(tokent} \\mid \\text{token1, token2, ... , tokent-1)}",
-              "accessibleText": "𝑃(𝑡𝑜𝑘𝑒𝑛𝑡∣𝑡𝑜𝑘𝑒𝑛1, 𝑡𝑜𝑘𝑒𝑛2, … , 𝑡𝑜𝑘𝑒𝑛𝑡-1)",
+              "latex": "P(token_t\\mid token_1,token_2,\\ldots,token_{t-1})",
+              "accessibleText": "P(tokenₜ | token₁, token₂, …, tokenₜ₋₁)",
               "source": {
                 "pdfPage": 97,
                 "printedPageLabel": "88"
@@ -40858,8 +40798,8 @@
             {
               "type": "formula",
               "id": "formula-math-p097-g001",
-              "latex": "\\text{P(x1, x2, ... , xT) = T } \\prod \\text{ t=1 P(xt} \\mid \\text{x<t)}",
-              "accessibleText": "𝑃(𝑥1, 𝑥2, … , 𝑥𝑇) =\n𝑇\n∏\n𝑡=1\n𝑃(𝑥𝑡∣𝑥<𝑡)",
+              "latex": "P(x_1,x_2,\\ldots,x_T)=\\prod_{t=1}^{T}P(x_t\\mid x_{<t})",
+              "accessibleText": "P(x₁, x₂, …, x_T) = ∏ₜ₌₁ᵀ P(xₜ | x₍<t₎)",
               "source": {
                 "pdfPage": 97,
                 "printedPageLabel": "88"
@@ -41068,7 +41008,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "一个长度为T 的sequence 可以同时提供T 个训练目标。"
+                  "value": "一个包含T 个token 的原始sequence，在只使用sequence 内部的next token 时提供T−1 个训练目标。要得到长度为T 的input/target tensors，需要从原文取T+1 个连续token（或另有一个BOS/next token）。"
                 }
               ],
               "source": {
@@ -41352,8 +41292,8 @@
             {
               "type": "formula",
               "id": "formula-math-p098-g000",
-              "latex": "\\text{pi= ezi } \\sum \\text{jezj}",
-              "accessibleText": "𝑝𝑖=\n𝑒𝑧𝑖\n∑𝑗𝑒𝑧𝑗",
+              "latex": "p_i=\\frac{e^{z_i}}{\\sum_j e^{z_j}}",
+              "accessibleText": "pᵢ = eᶻⁱ / Σⱼ eᶻʲ",
               "source": {
                 "pdfPage": 98,
                 "printedPageLabel": "89"
@@ -41376,7 +41316,7 @@
             {
               "type": "formula",
               "id": "formula-math-p099-g000",
-              "latex": "\\text{[2, 1, 0]}",
+              "latex": "[2,1,0]",
               "accessibleText": "[2, 1, 0]",
               "source": {
                 "pdfPage": 99,
@@ -41470,7 +41410,7 @@
             {
               "type": "formula",
               "id": "formula-math-p099-g001",
-              "latex": "\\text{[0.665, 0.245, 0.090]}",
+              "latex": "[0.665,0.245,0.090]",
               "accessibleText": "[0.665, 0.245, 0.090]",
               "source": {
                 "pdfPage": 99,
@@ -41550,8 +41490,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p099-g002",
-                  "latex": "\\text{softmax(z) = softmax(z-max(z))}",
-                  "accessibleText": "𝑠𝑜𝑓𝑡𝑚𝑎𝑥(𝑧) = 𝑠𝑜𝑓𝑡𝑚𝑎𝑥(𝑧-max(𝑧))",
+                  "latex": "\\mathit{softmax}(z)=\\mathit{softmax}(z-\\max(z))",
+                  "accessibleText": "softmax(z) = softmax(z − max(z))",
                   "source": {
                     "pdfPage": 99,
                     "printedPageLabel": "90"
@@ -41605,8 +41545,8 @@
             {
               "type": "formula",
               "id": "formula-math-p099-g003",
-              "latex": "\\text{pcorrect= 0.665}",
-              "accessibleText": "𝑝𝑐𝑜𝑟𝑟𝑒𝑐𝑡= 0.665",
+              "latex": "p_{correct}=0.665",
+              "accessibleText": "p_correct = 0.665",
               "source": {
                 "pdfPage": 99,
                 "printedPageLabel": "90"
@@ -41629,8 +41569,8 @@
             {
               "type": "formula",
               "id": "formula-math-p099-g004",
-              "latex": "\\text{Loss= -log(pcorrect)}",
-              "accessibleText": "𝐿𝑜𝑠𝑠= -log(𝑝𝑐𝑜𝑟𝑟𝑒𝑐𝑡)",
+              "latex": "\\mathit{Loss}=-\\log(p_{correct})",
+              "accessibleText": "Loss = −log(p_correct)",
               "source": {
                 "pdfPage": 99,
                 "printedPageLabel": "90"
@@ -41653,8 +41593,8 @@
             {
               "type": "formula",
               "id": "formula-math-p099-g005",
-              "latex": "\\text{Loss= -log(0.665) } \\approx \\text{0.408}",
-              "accessibleText": "𝐿𝑜𝑠𝑠= -log(0.665) ≈0.408",
+              "latex": "\\mathit{Loss}=-\\log(0.665)\\approx0.408",
+              "accessibleText": "Loss = −log(0.665) ≈ 0.408",
               "source": {
                 "pdfPage": 99,
                 "printedPageLabel": "90"
@@ -42971,8 +42911,8 @@
             {
               "type": "formula",
               "id": "formula-math-p102-g000",
-              "latex": "\\text{Perplexity= eLoss}",
-              "accessibleText": "𝑃𝑒𝑟𝑝𝑙𝑒𝑥𝑖𝑡𝑦= 𝑒𝐿𝑜𝑠𝑠",
+              "latex": "\\mathit{Perplexity}=e^{\\mathit{Loss}}",
+              "accessibleText": "Perplexity = e^Loss",
               "source": {
                 "pdfPage": 102,
                 "printedPageLabel": "93"
@@ -43481,8 +43421,8 @@
             {
               "type": "formula",
               "id": "formula-math-p104-g000",
-              "latex": "\\text{x1, x2, x3}",
-              "accessibleText": "𝑥1, 𝑥2, 𝑥3",
+              "latex": "x_1,x_2,x_3",
+              "accessibleText": "x₁, x₂, x₃",
               "source": {
                 "pdfPage": 104,
                 "printedPageLabel": "95"
@@ -43505,8 +43445,8 @@
             {
               "type": "formula",
               "id": "formula-math-p104-g001",
-              "latex": "\\text{context= x1 + x2 + x3 3}",
-              "accessibleText": "𝑐𝑜𝑛𝑡𝑒𝑥𝑡= 𝑥1 + 𝑥2 + 𝑥3\n3",
+              "latex": "\\mathit{context}=\\frac{x_1+x_2+x_3}{3}",
+              "accessibleText": "context = (x₁ + x₂ + x₃) / 3",
               "source": {
                 "pdfPage": 104,
                 "printedPageLabel": "95"
@@ -43741,8 +43681,8 @@
             {
               "type": "formula",
               "id": "formula-math-p105-g000",
-              "latex": "\\text{Q= XWQ}",
-              "accessibleText": "𝑄= 𝑋𝑊𝑄",
+              "latex": "Q=XW_Q",
+              "accessibleText": "Q = XW_Q",
               "source": {
                 "pdfPage": 105,
                 "printedPageLabel": "96"
@@ -43751,8 +43691,8 @@
             {
               "type": "formula",
               "id": "formula-math-p105-g001",
-              "latex": "\\text{K= XWK}",
-              "accessibleText": "𝐾= 𝑋𝑊𝐾",
+              "latex": "K=XW_K",
+              "accessibleText": "K = XW_K",
               "source": {
                 "pdfPage": 105,
                 "printedPageLabel": "96"
@@ -43761,8 +43701,8 @@
             {
               "type": "formula",
               "id": "formula-math-p105-g002",
-              "latex": "\\text{V= XWV}",
-              "accessibleText": "𝑉= 𝑋𝑊𝑉",
+              "latex": "V=XW_V",
+              "accessibleText": "V = XW_V",
               "source": {
                 "pdfPage": 105,
                 "printedPageLabel": "96"
@@ -43774,7 +43714,34 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "其中𝑊𝑄、𝑊𝐾、𝑊𝑉都是parameters。"
+                  "value": "其中"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "W_Q",
+                  "accessibleText": "W_Q"
+                },
+                {
+                  "type": "text",
+                  "value": "、"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "W_K",
+                  "accessibleText": "W_K"
+                },
+                {
+                  "type": "text",
+                  "value": "、"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "W_V",
+                  "accessibleText": "W_V"
+                },
+                {
+                  "type": "text",
+                  "value": "都是parameters。"
                 }
               ],
               "source": {
@@ -43971,8 +43938,8 @@
             {
               "type": "formula",
               "id": "formula-math-p105-g004",
-              "latex": "\\text{score(q, k) = q} \\cdot \\text{k}",
-              "accessibleText": "𝑠𝑐𝑜𝑟𝑒(𝑞, 𝑘) = 𝑞⋅𝑘",
+              "latex": "\\mathit{score}(q,k)=q\\cdot k",
+              "accessibleText": "score(q, k) = q · k",
               "source": {
                 "pdfPage": 105,
                 "printedPageLabel": "96"
@@ -43995,8 +43962,8 @@
             {
               "type": "formula",
               "id": "formula-math-p105-g005",
-              "latex": "\\text{q= [1, 0]}",
-              "accessibleText": "𝑞= [1, 0]",
+              "latex": "q=[1,0]",
+              "accessibleText": "q = [1, 0]",
               "source": {
                 "pdfPage": 105,
                 "printedPageLabel": "96"
@@ -44019,8 +43986,8 @@
             {
               "type": "formula",
               "id": "formula-math-p105-g006",
-              "latex": "\\text{k1 = [1, 0], k2 = [0, 1], k3 = [1, 1]}",
-              "accessibleText": "𝑘1 = [1, 0],\n𝑘2 = [0, 1],\n𝑘3 = [1, 1]",
+              "latex": "k_1=[1,0],\\quad k_2=[0,1],\\quad k_3=[1,1]",
+              "accessibleText": "k₁ = [1, 0],  k₂ = [0, 1],  k₃ = [1, 1]",
               "source": {
                 "pdfPage": 105,
                 "printedPageLabel": "96"
@@ -44043,8 +44010,8 @@
             {
               "type": "formula",
               "id": "formula-math-p106-g000",
-              "latex": "\\text{q} \\cdot \\text{k1 = 1}",
-              "accessibleText": "𝑞⋅𝑘1 = 1",
+              "latex": "q\\cdot k_1=1",
+              "accessibleText": "q · k₁ = 1",
               "source": {
                 "pdfPage": 106,
                 "printedPageLabel": "97"
@@ -44053,8 +44020,8 @@
             {
               "type": "formula",
               "id": "formula-math-p106-g001",
-              "latex": "\\text{q} \\cdot \\text{k2 = 0}",
-              "accessibleText": "𝑞⋅𝑘2 = 0",
+              "latex": "q\\cdot k_2=0",
+              "accessibleText": "q · k₂ = 0",
               "source": {
                 "pdfPage": 106,
                 "printedPageLabel": "97"
@@ -44063,8 +44030,8 @@
             {
               "type": "formula",
               "id": "formula-math-p106-g002",
-              "latex": "\\text{q} \\cdot \\text{k3 = 1}",
-              "accessibleText": "𝑞⋅𝑘3 = 1",
+              "latex": "q\\cdot k_3=1",
+              "accessibleText": "q · k₃ = 1",
               "source": {
                 "pdfPage": 106,
                 "printedPageLabel": "97"
@@ -44087,7 +44054,7 @@
             {
               "type": "formula",
               "id": "formula-math-p106-g003",
-              "latex": "\\text{[1, 0, 1]}",
+              "latex": "[1,0,1]",
               "accessibleText": "[1, 0, 1]",
               "source": {
                 "pdfPage": 106,
@@ -44184,8 +44151,8 @@
             {
               "type": "formula",
               "id": "formula-math-p106-g004",
-              "latex": "\\text{softmax([1, 0, 1]) } \\approx \\text{[0.422, 0.155, 0.422]}",
-              "accessibleText": "𝑠𝑜𝑓𝑡𝑚𝑎𝑥([1, 0, 1]) ≈[0.422, 0.155, 0.422]",
+              "latex": "\\mathit{softmax}([1,0,1])\\approx[0.422,0.155,0.422]",
+              "accessibleText": "softmax([1, 0, 1]) ≈ [0.422, 0.155, 0.422]",
               "source": {
                 "pdfPage": 106,
                 "printedPageLabel": "97"
@@ -44294,8 +44261,8 @@
             {
               "type": "formula",
               "id": "formula-math-p106-g005",
-              "latex": "\\text{v1 = [1, 0], v2 = [0, 1], v3 = [1, 1]}",
-              "accessibleText": "𝑣1 = [1, 0],\n𝑣2 = [0, 1],\n𝑣3 = [1, 1]",
+              "latex": "v_1=[1,0],\\quad v_2=[0,1],\\quad v_3=[1,1]",
+              "accessibleText": "v₁ = [1, 0],  v₂ = [0, 1],  v₃ = [1, 1]",
               "source": {
                 "pdfPage": 106,
                 "printedPageLabel": "97"
@@ -44318,8 +44285,8 @@
             {
               "type": "formula",
               "id": "formula-math-p106-g006",
-              "latex": "\\text{output= 0.422v1 + 0.155v2 + 0.422v3}",
-              "accessibleText": "𝑜𝑢𝑡𝑝𝑢𝑡= 0.422𝑣1 + 0.155𝑣2 + 0.422𝑣3",
+              "latex": "\\mathit{output}=0.422v_1+0.155v_2+0.422v_3",
+              "accessibleText": "output = 0.422v₁ + 0.155v₂ + 0.422v₃",
               "source": {
                 "pdfPage": 106,
                 "printedPageLabel": "97"
@@ -44328,8 +44295,8 @@
             {
               "type": "formula",
               "id": "formula-math-p106-g007",
-              "latex": "\\approx \\text{[0.844, 0.577]}",
-              "accessibleText": "≈[0.844, 0.577]",
+              "latex": "\\approx[0.844,0.577]",
+              "accessibleText": "≈ [0.844, 0.577]",
               "source": {
                 "pdfPage": 106,
                 "printedPageLabel": "97"
@@ -44560,7 +44527,7 @@
         {
           "id": "o0266-8-sqrt-d-k",
           "aliases": [],
-          "title": "8. 为什么除以√𝑑𝑘",
+          "title": "8. 为什么除以√𝑑ₖ",
           "navDepth": 2,
           "showInToc": true,
           "isCompletable": true,
@@ -44603,7 +44570,16 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "除以√𝑑𝑘是一个尺度校正：让不同dimension 下的score 范围更稳定。"
+                  "value": "除以"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "\\sqrt{d_k}",
+                  "accessibleText": "sqrt(d_k)"
+                },
+                {
+                  "type": "text",
+                  "value": "是一个尺度校正：让不同dimension 下的score 范围更稳定。"
                 }
               ],
               "source": {
@@ -44760,7 +44736,16 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "V: [B, T, d]"
+                  "value": "V: [B, T, "
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "d_v",
+                  "accessibleText": "d_v"
+                },
+                {
+                  "type": "text",
+                  "value": "]"
                 }
               ],
               "source": {
@@ -44900,7 +44885,16 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "[B, T, T] @ [B, T, d]"
+                  "value": "[B, T, T] @ [B, T, "
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "d_v",
+                  "accessibleText": "d_v"
+                },
+                {
+                  "type": "text",
+                  "value": "]"
                 }
               ],
               "source": {
@@ -44928,7 +44922,16 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "[B, T, d]"
+                  "value": "[B, T, "
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "d_v",
+                  "accessibleText": "d_v"
+                },
+                {
+                  "type": "text",
+                  "value": "]"
                 }
               ],
               "source": {
@@ -45043,7 +45046,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "当模型在位置1 预测“喜欢”时，不能提前看到位置2 的“AI”。否则答案已经泄露。"
+                  "value": "使用紧接下来的zero-based positions：位置0 的input “我”负责预测target “喜欢”，因此不能看到位置1 的input “喜欢”或位置2 的input “AI”。位置1 负责预测“AI”，不是“喜欢”。"
                 }
               ],
               "source": {
@@ -45124,8 +45127,8 @@
             {
               "type": "formula",
               "id": "formula-math-p108-g000",
-              "latex": "\\text{[ 1 0 0 1 1 0 1 1 1 ]}",
-              "accessibleText": "[\n1 0 0\n1 1 0\n1 1 1\n]",
+              "latex": "\\begin{bmatrix}1&0&0\\\\1&1&0\\\\1&1&1\\end{bmatrix}",
+              "accessibleText": "[[1, 0, 0], [1, 1, 0], [1, 1, 1]]",
               "source": {
                 "pdfPage": 108,
                 "printedPageLabel": "99"
@@ -45195,7 +45198,7 @@
         {
           "id": "o0272-11-mask-softmax-infty",
           "aliases": [],
-          "title": "11. 为什么Mask 在Softmax 前使用-∞",
+          "title": "11. 为什么Mask 在Softmax 前使用−∞",
           "navDepth": 2,
           "showInToc": true,
           "isCompletable": true,
@@ -45354,8 +45357,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p109-g002",
-                  "latex": "\\text{Q= XWQ, K= XWK, V= XWV}",
-                  "accessibleText": "𝑄= 𝑋𝑊𝑄,\n𝐾= 𝑋𝑊𝐾,\n𝑉= 𝑋𝑊𝑉",
+                  "latex": "Q=XW_Q,\\quad K=XW_K,\\quad V=XW_V",
+                  "accessibleText": "Q = XW_Q,  K = XW_K,  V = XW_V",
                   "source": {
                     "pdfPage": 109,
                     "printedPageLabel": "100"
@@ -45421,8 +45424,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p110-g000",
-                  "latex": "\\text{S= QKT } \\surd \\text{dk}",
-                  "accessibleText": "𝑆= 𝑄𝐾𝑇\n√𝑑𝑘",
+                  "latex": "S=\\frac{QK^T}{\\sqrt{d_k}}",
+                  "accessibleText": "S = QKᵀ / √dₖ",
                   "source": {
                     "pdfPage": 110,
                     "printedPageLabel": "101"
@@ -45474,8 +45477,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p110-g001",
-                  "latex": "\\text{A= softmax(S)}",
-                  "accessibleText": "𝐴= 𝑠𝑜𝑓𝑡𝑚𝑎𝑥(𝑆)",
+                  "latex": "A=\\mathit{softmax}(S)",
+                  "accessibleText": "A = softmax(S)",
                   "source": {
                     "pdfPage": 110,
                     "printedPageLabel": "101"
@@ -45484,8 +45487,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p110-g002",
-                  "latex": "\\text{O= AV}",
-                  "accessibleText": "𝑂= 𝐴𝑉",
+                  "latex": "O=AV",
+                  "accessibleText": "O = AV",
                   "source": {
                     "pdfPage": 110,
                     "printedPageLabel": "101"
@@ -45641,7 +45644,34 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "一个attention head 只有一套𝑊𝑄、𝑊𝐾、𝑊𝑉。"
+                  "value": "一个attention head 只有一套"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "W_Q",
+                  "accessibleText": "W_Q"
+                },
+                {
+                  "type": "text",
+                  "value": "、"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "W_K",
+                  "accessibleText": "W_K"
+                },
+                {
+                  "type": "text",
+                  "value": "、"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "W_V",
+                  "accessibleText": "W_V"
+                },
+                {
+                  "type": "text",
+                  "value": "。"
                 }
               ],
               "source": {
@@ -45736,8 +45766,8 @@
             {
               "type": "formula",
               "id": "formula-math-p110-g004",
-              "latex": "\\text{MultiHead(Q, K, V) = Concat(head1, ... , headh)WO}",
-              "accessibleText": "𝑀𝑢𝑙𝑡𝑖𝐻𝑒𝑎𝑑(𝑄, 𝐾, 𝑉) = 𝐶𝑜𝑛𝑐𝑎𝑡(ℎ𝑒𝑎𝑑1, … , ℎ𝑒𝑎𝑑ℎ)𝑊𝑂",
+              "latex": "\\mathit{MultiHead}(Q,K,V)=\\mathit{Concat}(head_1,\\ldots,head_h)W_O",
+              "accessibleText": "MultiHead(Q, K, V) = Concat(head₁, …, head_h)W_O",
               "source": {
                 "pdfPage": 110,
                 "printedPageLabel": "101"
@@ -45953,8 +45983,8 @@
             {
               "type": "formula",
               "id": "formula-math-p111-g000",
-              "latex": "\\text{O(T2)}",
-              "accessibleText": "𝑂(𝑇2)",
+              "latex": "O(T^2)",
+              "accessibleText": "O(T²)",
               "source": {
                 "pdfPage": 111,
                 "printedPageLabel": "102"
@@ -46294,7 +46324,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Self-Attention"
+                  "value": "LayerNorm → Self-Attention"
                 }
               ],
               "source": {
@@ -46322,7 +46352,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Residual + LayerNorm"
+                  "value": "Residual add with x"
                 }
               ],
               "source": {
@@ -46350,7 +46380,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Feed-Forward Network"
+                  "value": "LayerNorm → Feed-Forward Network"
                 }
               ],
               "source": {
@@ -46378,7 +46408,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Residual + LayerNorm"
+                  "value": "Residual add"
                 }
               ],
               "source": {
@@ -46653,7 +46683,7 @@
                   "children": [
                     {
                       "type": "text",
-                      "value": "如果没有position information，同时对sequence 的token rows 做同样排列变化，Q/K/V 和attention outputs 也会跟着排列；operation 本身主要根据内容匹配，不天然拥有“第一个、前一个、相距三步”的坐标系统。"
+                      "value": "不带位置输入且不带位置相关mask 的self-attention 对token-row permutation 是equivariant。"
                     }
                   ],
                   "source": {
@@ -46667,7 +46697,7 @@
                   "children": [
                     {
                       "type": "text",
-                      "value": "语言却高度依赖顺序。因此必须在进入blocks 前或attention 计算中注入位置关系，否则“猫追狗”和“狗追猫”包含相同token identities，模型很难区分角色关系。"
+                      "value": "GPT 的固定causal mask 本身不对任意permutation 保持不变，因此已经提供了一部分顺序/前缀信息；显式position embeddings 或RoPE 仍然用于给模型直接、稳定的绝对或相对位置坐标。"
                     }
                   ],
                   "source": {
@@ -47107,8 +47137,8 @@
             {
               "type": "formula",
               "id": "formula-math-p115-g000",
-              "latex": "\\text{FFN(x) = W2 GELU(W1x+ b1) + b2}",
-              "accessibleText": "𝐹𝐹𝑁(𝑥) = 𝑊2 𝐺𝐸𝐿𝑈(𝑊1𝑥+ 𝑏1) + 𝑏2",
+              "latex": "FFN(x)=W_2\\,GELU(W_1x+b_1)+b_2",
+              "accessibleText": "FFN(x) = W₂ GELU(W₁x + b₁) + b₂",
               "source": {
                 "pdfPage": 115,
                 "printedPageLabel": "106"
@@ -47326,8 +47356,8 @@
             {
               "type": "formula",
               "id": "formula-math-p115-g001",
-              "latex": "\\text{W2(W1x+ b1) + b2}",
-              "accessibleText": "𝑊2(𝑊1𝑥+ 𝑏1) + 𝑏2",
+              "latex": "W_2(W_1x+b_1)+b_2",
+              "accessibleText": "W₂(W₁x + b₁) + b₂",
               "source": {
                 "pdfPage": 115,
                 "printedPageLabel": "106"
@@ -47406,8 +47436,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p115-g002",
-                  "latex": "\\text{W2(W1x+ b1) + b2 = (W2W1)x+ (W2b1 + b2)}",
-                  "accessibleText": "𝑊2(𝑊1𝑥+ 𝑏1) + 𝑏2 = (𝑊2𝑊1)𝑥+ (𝑊2𝑏1 + 𝑏2)",
+                  "latex": "W_2(W_1x+b_1)+b_2=(W_2W_1)x+(W_2b_1+b_2)",
+                  "accessibleText": "W₂(W₁x + b₁) + b₂ = (W₂W₁)x + (W₂b₁ + b₂)",
                   "source": {
                     "pdfPage": 115,
                     "printedPageLabel": "106"
@@ -47475,8 +47505,8 @@
             {
               "type": "formula",
               "id": "formula-math-p115-g003",
-              "latex": "\\text{y= x+ F(x)}",
-              "accessibleText": "𝑦= 𝑥+ 𝐹(𝑥)",
+              "latex": "y=x+F(x)",
+              "accessibleText": "y = x + F(x)",
               "source": {
                 "pdfPage": 115,
                 "printedPageLabel": "106"
@@ -47555,8 +47585,8 @@
             {
               "type": "formula",
               "id": "formula-math-p116-g000",
-              "latex": "\\partial \\text{y } \\partial \\text{x= 1 + } \\partial \\text{F(x) } \\partial \\text{x}",
-              "accessibleText": "𝜕𝑦\n𝜕𝑥= 1 + 𝜕𝐹(𝑥)\n𝜕𝑥",
+              "latex": "\\frac{\\partial y}{\\partial x} = 1 + \\frac{\\partial F(x)}{\\partial x}",
+              "accessibleText": "∂y/∂x = 1 + ∂F(x)/∂x",
               "source": {
                 "pdfPage": 116,
                 "printedPageLabel": "107"
@@ -47568,7 +47598,16 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "即使𝐹的gradient 很弱，仍然有identity path 中的1。"
+                  "value": "即使"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "F",
+                  "accessibleText": "F"
+                },
+                {
+                  "type": "text",
+                  "value": "的gradient 很弱，仍然有identity path 中的1。"
                 }
               ],
               "source": {
@@ -47835,8 +47874,8 @@
             {
               "type": "formula",
               "id": "formula-math-p116-g002",
-              "latex": "\\text{xi= xi-} \\mu \\text{ } \\surd \\text{ } \\sigma \\text{2 + } \\varepsilon",
-              "accessibleText": "𝑥𝑖= 𝑥𝑖-𝜇\n√\n𝜎2 + 𝜖",
+              "latex": "\\hat{x}_i = \\frac{x_i - \\mu}{\\sqrt{\\sigma^2 + \\varepsilon}}",
+              "accessibleText": "x_hat_i = (x_i - μ) / sqrt(σ^2 + ε)",
               "source": {
                 "pdfPage": 116,
                 "printedPageLabel": "107"
@@ -47859,8 +47898,8 @@
             {
               "type": "formula",
               "id": "formula-math-p116-g003",
-              "latex": "\\text{yi= } \\gamma \\text{xi+ } \\beta",
-              "accessibleText": "𝑦𝑖= 𝛾̂𝑥𝑖+ 𝛽",
+              "latex": "y_i = \\gamma \\hat{x}_i + \\beta",
+              "accessibleText": "y_i = γ x_hat_i + β",
               "source": {
                 "pdfPage": 116,
                 "printedPageLabel": "107"
@@ -48082,8 +48121,8 @@
             {
               "type": "formula",
               "id": "formula-math-p117-g000",
-              "latex": "\\text{x} ' \\text{ = x+ Attention(LN(x))}",
-              "accessibleText": "𝑥′ = 𝑥+ 𝐴𝑡𝑡𝑒𝑛𝑡𝑖𝑜𝑛(𝐿𝑁(𝑥))",
+              "latex": "x' = x + \\operatorname{Attention}(\\operatorname{LN}(x))",
+              "accessibleText": "x' = x + Attention(LN(x))",
               "source": {
                 "pdfPage": 117,
                 "printedPageLabel": "108"
@@ -48092,8 +48131,8 @@
             {
               "type": "formula",
               "id": "formula-math-p117-g001",
-              "latex": "\\text{y= x} ' \\text{ + FFN(LN(x} ' \\text{))}",
-              "accessibleText": "𝑦= 𝑥′ + 𝐹𝐹𝑁(𝐿𝑁(𝑥′))",
+              "latex": "y = x' + \\operatorname{FFN}(\\operatorname{LN}(x'))",
+              "accessibleText": "y = x' + FFN(LN(x'))",
               "source": {
                 "pdfPage": 117,
                 "printedPageLabel": "108"
@@ -48915,8 +48954,8 @@
             {
               "type": "formula",
               "id": "formula-math-p118-g000",
-              "latex": "\\text{logits= xWvocab+ b}",
-              "accessibleText": "𝑙𝑜𝑔𝑖𝑡𝑠= 𝑥𝑊𝑣𝑜𝑐𝑎𝑏+ 𝑏",
+              "latex": "\\mathit{logits} = xW_{\\mathit{vocab}} + b",
+              "accessibleText": "logits = x W_vocab + b",
               "source": {
                 "pdfPage": 118,
                 "printedPageLabel": "109"
@@ -48998,7 +49037,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "这就是Week 6 Cross Entropy 需要的格式。"
+                  "value": "这是每个batch/position 都有V 个class logits 的模型输出布局。调用PyTorch cross_entropy 前，应reshape 为[B*T, V] 并把targets reshape 为[B*T]；也可把logits permute 为[B, V, T]，配合targets [B, T]。"
                 }
               ],
               "source": {
@@ -51815,7 +51854,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Embedding row 42 学到的是“训练tokenizer 中ID 42 的使用方式”。如果加载另一个tokenizer，row42 的数值还在，却被错误地赋给另一token。程序常常不会shape error，但输出会严重异常，这是一种语义层面的schema mismatch。"
+                  "value": "Embedding row 42 学到的是“训练tokenizer 中ID 42 的使用方式”。如果加载另一个tokenizer，row 42 的数值还在，却被错误地赋给另一token。程序常常不会shape error，但输出会严重异常，这是一种语义层面的schema mismatch。"
                 }
               ],
               "source": {
@@ -52167,7 +52206,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Padding mask 与causal mask 可能同时存在。前者处理batch 的矩形对齐，后者处理时间方向的信息边界。一个位置即使属于过去，如果它只是<PAD> 也不应被读取；一个位置即使是真实token，如果位于未来也不应被读取。"
+                  "value": "Padding mask 与causal mask 可能同时存在。前者处理batch 的矩形对齐，后者处理时间方向的信息边界。一个位置即使属于过去，如果它只是<PAD> 也不应被读取；一个位置即使是真实token，如果位于未来也不应被读取。以上padding mask 处理的是attention 的读取边界。若target tensors 也包含<PAD>，训练loss 还必须排除这些positions，例如使用cross_entropy(..., ignore_index=pad_id) 或显式per-token loss mask；否则普通mean cross entropy 会把PAD targets 计入训练与平均值。若保留PAD query positions，也应保证这些outputs 不参与目标loss。"
                 }
               ],
               "source": {
@@ -53896,8 +53935,8 @@
             {
               "type": "formula",
               "id": "formula-math-p130-g000",
-              "latex": "\\text{model\\_dimmod num\\_heads= 0}",
-              "accessibleText": "𝑚𝑜𝑑𝑒𝑙_𝑑𝑖𝑚mod 𝑛𝑢𝑚_ℎ𝑒𝑎𝑑𝑠= 0",
+              "latex": "\\mathit{model\\_dim} \\bmod \\mathit{num\\_heads} = 0",
+              "accessibleText": "model_dim mod num_heads = 0",
               "source": {
                 "pdfPage": 130,
                 "printedPageLabel": "121"
@@ -55111,8 +55150,8 @@
             {
               "type": "formula",
               "id": "formula-math-p132-g000",
-              "latex": "\\text{C= H} \\times \\text{ D}",
-              "accessibleText": "𝐶= 𝐻× 𝐷",
+              "latex": "C = H \\times D",
+              "accessibleText": "C = H × D",
               "source": {
                 "pdfPage": 132,
                 "printedPageLabel": "123"
@@ -56555,7 +56594,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "同理，直接把Tensor 放进普通list也不会自动变成registered Parameter。框架只有通过nn.Module、nn.ModuleList、n等机制才能发现状态。"
+                  "value": "子modules 通过赋值给Module attribute，或放入ModuleList/ModuleDict 来注册；可训练tensors 必须作为nn.Parameter 赋值给module，或放入ParameterList/ParameterDict；非parameter 状态用register_buffer。普通Python list 不会自动注册其中的modules 或tensors。"
                 }
               ],
               "source": {
@@ -56946,8 +56985,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p135-g000",
-                  "latex": "\\text{V} \\times \\text{ C}",
-                  "accessibleText": "𝑉× 𝐶",
+                  "latex": "V \\times C",
+                  "accessibleText": "V × C",
                   "source": {
                     "pdfPage": 135,
                     "printedPageLabel": "126"
@@ -56971,8 +57010,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p135-g001",
-                  "latex": "\\text{T} \\times \\text{ C}",
-                  "accessibleText": "𝑇× 𝐶",
+                  "latex": "T \\times C",
+                  "accessibleText": "T × C",
                   "source": {
                     "pdfPage": 135,
                     "printedPageLabel": "126"
@@ -57010,8 +57049,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p135-g002",
-                  "latex": "\\text{C} \\times \\text{ 3C= 3C2}",
-                  "accessibleText": "𝐶× 3𝐶= 3𝐶2",
+                  "latex": "C \\times 3C = 3C^2",
+                  "accessibleText": "C × 3C = 3C^2",
                   "source": {
                     "pdfPage": 135,
                     "printedPageLabel": "126"
@@ -57034,8 +57073,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p135-g003",
-                  "latex": "\\text{C} \\times \\text{ C= C2}",
-                  "accessibleText": "𝐶× 𝐶= 𝐶2",
+                  "latex": "C \\times C = C^2",
+                  "accessibleText": "C × C = C^2",
                   "source": {
                     "pdfPage": 135,
                     "printedPageLabel": "126"
@@ -57059,8 +57098,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p135-g004",
-                  "latex": "\\text{C} \\times \\text{ 4C+ 4C} \\times \\text{ C= 8C2}",
-                  "accessibleText": "𝐶× 4𝐶+ 4𝐶× 𝐶= 8𝐶2",
+                  "latex": "C \\times 4C + 4C \\times C = 8C^2",
+                  "accessibleText": "C × 4C + 4C × C = 8C^2",
                   "source": {
                     "pdfPage": 135,
                     "printedPageLabel": "126"
@@ -57083,8 +57122,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p135-g005",
-                  "latex": "\\text{12C2}",
-                  "accessibleText": "12𝐶2",
+                  "latex": "12C^2",
+                  "accessibleText": "12 C^2",
                   "source": {
                     "pdfPage": 135,
                     "printedPageLabel": "126"
@@ -57136,8 +57175,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p136-g000",
-                  "latex": "\\text{12C2 = 12 } \\times \\text{ 1282 = 196, 608}",
-                  "accessibleText": "12𝐶2 = 12 × 1282 = 196, 608",
+                  "latex": "12C^2 = 12 \\times 128^2 = 196{,}608",
+                  "accessibleText": "12 C^2 = 12 × 128^2 = 196,608",
                   "source": {
                     "pdfPage": 136,
                     "printedPageLabel": "127"
@@ -57866,8 +57905,8 @@
             {
               "type": "formula",
               "id": "formula-math-p137-g000",
-              "latex": "\\text{y= wx+ b}",
-              "accessibleText": "𝑦= 𝑤𝑥+ 𝑏",
+              "latex": "\\hat{y} = wx + b",
+              "accessibleText": "y_hat = w x + b",
               "source": {
                 "pdfPage": 137,
                 "printedPageLabel": "128"
@@ -57890,8 +57929,8 @@
             {
               "type": "formula",
               "id": "formula-math-p137-g001",
-              "latex": "\\text{Y= XW+ b}",
-              "accessibleText": "𝑌= 𝑋𝑊+ 𝑏",
+              "latex": "Y = XW + b",
+              "accessibleText": "Y = X W + b",
               "source": {
                 "pdfPage": 137,
                 "printedPageLabel": "128"
@@ -58434,7 +58473,7 @@
             {
               "type": "formula",
               "id": "formula-math-p139-g000",
-              "latex": "\\text{4 } \\times \\text{ 128 = 512}",
+              "latex": "4 \\times 128 = 512",
               "accessibleText": "4 × 128 = 512",
               "source": {
                 "pdfPage": 139,
@@ -58742,8 +58781,8 @@
             {
               "type": "formula",
               "id": "formula-math-p140-g000",
-              "latex": "\\theta : \\text{= } \\theta \\text{-} \\alpha \\text{g}",
-              "accessibleText": "𝜃∶= 𝜃-𝛼𝑔",
+              "latex": "\\theta \\mathrel{:=} \\theta - \\alpha g",
+              "accessibleText": "θ := θ - α g",
               "source": {
                 "pdfPage": 140,
                 "printedPageLabel": "131"
@@ -58906,8 +58945,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p140-g001",
-                  "latex": "\\text{mt} \\approx \\text{movingAverage(gt)}",
-                  "accessibleText": "𝑚𝑡≈𝑚𝑜𝑣𝑖𝑛𝑔𝐴𝑣𝑒𝑟𝑎𝑔𝑒(𝑔𝑡)",
+                  "latex": "m_t \\approx \\operatorname{movingAverage}(g_t)",
+                  "accessibleText": "m_t ≈ movingAverage(g_t)",
                   "source": {
                     "pdfPage": 140,
                     "printedPageLabel": "131"
@@ -58916,8 +58955,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p140-g002",
-                  "latex": "\\text{vt} \\approx \\text{movingAverage(g2 t)}",
-                  "accessibleText": "𝑣𝑡≈𝑚𝑜𝑣𝑖𝑛𝑔𝐴𝑣𝑒𝑟𝑎𝑔𝑒(𝑔2\n𝑡)",
+                  "latex": "v_t \\approx \\operatorname{movingAverage}(g_t^2)",
+                  "accessibleText": "v_t ≈ movingAverage(g_t^2)",
                   "source": {
                     "pdfPage": 140,
                     "printedPageLabel": "131"
@@ -58926,8 +58965,8 @@
                 {
                   "type": "formula",
                   "id": "formula-math-p140-g003",
-                  "latex": "\\text{update} \\propto \\text{ mt } \\surd \\text{vt+ } \\varepsilon",
-                  "accessibleText": "𝑢𝑝𝑑𝑎𝑡𝑒∝\n𝑚𝑡\n√𝑣𝑡+ 𝜖",
+                  "latex": "\\mathit{update} \\propto \\frac{m_t}{\\sqrt{v_t} + \\varepsilon}",
+                  "accessibleText": "update ∝ m_t / (sqrt(v_t) + ε)",
                   "source": {
                     "pdfPage": 140,
                     "printedPageLabel": "131"
@@ -60008,8 +60047,8 @@
             {
               "type": "formula",
               "id": "formula-math-p142-g000",
-              "latex": "\\text{p} \\approx \\text{1 V}",
-              "accessibleText": "𝑝≈1\n𝑉",
+              "latex": "p \\approx \\frac{1}{V}",
+              "accessibleText": "p ≈ 1 / V",
               "source": {
                 "pdfPage": 142,
                 "printedPageLabel": "133"
@@ -60032,8 +60071,8 @@
             {
               "type": "formula",
               "id": "formula-math-p142-g001",
-              "latex": "\\text{Loss} \\approx \\text{-log ( 1 V) = log(V)}",
-              "accessibleText": "𝐿𝑜𝑠𝑠≈-log ( 1\n𝑉) = log(𝑉)",
+              "latex": "\\mathit{Loss} \\approx -\\log\\left(\\frac{1}{V}\\right) = \\log(V)",
+              "accessibleText": "Loss ≈ -log(1 / V) = log(V)",
               "source": {
                 "pdfPage": 142,
                 "printedPageLabel": "133"
@@ -60056,8 +60095,8 @@
             {
               "type": "formula",
               "id": "formula-math-p143-g000",
-              "latex": "\\text{log(100) } \\approx \\text{4.605}",
-              "accessibleText": "log(100) ≈4.605",
+              "latex": "\\log(100) \\approx 4.605",
+              "accessibleText": "log(100) ≈ 4.605",
               "source": {
                 "pdfPage": 143,
                 "printedPageLabel": "134"
@@ -61342,7 +61381,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Checkpoint 是“可恢复训练状态的快照”，不仅是一个weights 文件。要精确resume，至少需要model、optimizer、step、config、tokenizer，若使用scheduler 或mixed precision，还要保存它们的状态。"
+                  "value": "Checkpoint 可以保存恢复训练所需的核心状态，但本附录只提供从头train 和从checkpoint generate，不承诺精确resume。若要在同一受支持环境中恢复到相同的下一步随机状态，除model、optimizer、已完成step、config 和tokenizer 外，还必须保持相同的corpus bytes/token stream、train/validation split、training hyperparameters 与control-flow schedule（包括evaluation 时机），恢复training mode、scheduler/GradScaler 等状态，并恢复训练路径实际消耗的所有RNG states。本例中get_batch 使用CPU torch RNG，dropout 使用活动device/backend RNG；当前代码没有sampler cursor，Python random 虽被seed 但训练后未被消耗。PyTorch 不保证跨release、平台或不同nondeterministic backend 的完全复现。"
                 }
               ],
               "source": {
@@ -61650,8 +61689,8 @@
             {
               "type": "formula",
               "id": "formula-math-p146-g000",
-              "latex": "\\text{z} ' \\text{ i= zi temperature}",
-              "accessibleText": "𝑧′\n𝑖=\n𝑧𝑖\n𝑡𝑒𝑚𝑝𝑒𝑟𝑎𝑡𝑢𝑟𝑒",
+              "latex": "z'_i = \\frac{z_i}{\\mathit{temperature}}",
+              "accessibleText": "z'_i = z_i / temperature",
               "source": {
                 "pdfPage": 146,
                 "printedPageLabel": "137"
@@ -61787,7 +61826,7 @@
             {
               "type": "formula",
               "id": "formula-math-p146-g001",
-              "latex": "\\text{[2, 1, 0]}",
+              "latex": "\\left[2, 1, 0\\right]",
               "accessibleText": "[2, 1, 0]",
               "source": {
                 "pdfPage": 146,
@@ -61811,7 +61850,7 @@
             {
               "type": "formula",
               "id": "formula-math-p146-g002",
-              "latex": "\\text{[4, 2, 0]}",
+              "latex": "\\left[4, 2, 0\\right]",
               "accessibleText": "[4, 2, 0]",
               "source": {
                 "pdfPage": 146,
@@ -61849,7 +61888,7 @@
             {
               "type": "formula",
               "id": "formula-math-p147-g000",
-              "latex": "\\text{[1, 0.5, 0]}",
+              "latex": "\\left[1, 0.5, 0\\right]",
               "accessibleText": "[1, 0.5, 0]",
               "source": {
                 "pdfPage": 147,
@@ -61891,7 +61930,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "Top-k 只保留概率最高的k 个候选，其余设置为负无穷："
+                  "value": "保留所有不低于第k 大logit cutoff 的候选；若cutoff 处并列，可能超过k 个，其余设置为负无穷："
                 }
               ],
               "source": {
@@ -62875,7 +62914,16 @@
                 [
                   {
                     "type": "text",
-                    "value": "初始random loss 约为log(𝑉)。"
+                    "value": "初始random loss 约为"
+                  },
+                  {
+                    "type": "inlineMath",
+                    "value": "\\log(V)",
+                    "accessibleText": "log(V)"
+                  },
+                  {
+                    "type": "text",
+                    "value": "。"
                   }
                 ],
                 [
@@ -65469,7 +65517,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "因此当前step 的loss 只依赖这些rows；没有被lookup 的rows 通常不会从这条路径收到gradient。"
+                  "value": "Embedding lookup 这条路径只给被索引的rows 产生lookup gradient。"
                 }
               ],
               "source": {
@@ -65497,7 +65545,7 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "这是一种稀疏的lookup gradient：当前step 只更新被读取的rows，但Transformer 与LM Head 的很多parameters 会从所有positions 收到密集gradient。两种更新模式同时存在，解释了为什么embedding的某些rows 在单步检查中保持没有gradient，并不代表embedding 永远不会学习。"
+                  "value": "但本课程参考模型把embedding weight 与LM-head weight tying；作为输出矩阵时，所有vocabulary rows 通常都会从cross-entropy 收到dense gradient。即使没有tying，AdamW 的decoupled weight decay（以及既有optimizer moments）也可能改变当前lookup gradient 为零的rows。因此不能把“未被lookup”直接等同于“该step 参数不更新”。"
                 }
               ],
               "source": {
@@ -66863,7 +66911,29 @@
               "children": [
                 {
                   "type": "text",
-                  "value": "独立意味着可以替换实现；耦合意味着替换时必须同步更新V、embedding rows、LM Head columns 和checkpoint metadata。接口独立不等于语义可以任意互换。"
+                  "value": "独立意味着可以替换实现；耦合意味着替换时必须同步更新V、embedding 的vocabulary rows、LM Head 的vocabulary axis（数学记号"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "W_{\\mathrm{vocab}} \\in \\mathbb{R}^{C \\times V}",
+                  "accessibleText": "W_vocab ∈ R^(C×V)"
+                },
+                {
+                  "type": "text",
+                  "value": "中是columns；PyTorch 的"
+                },
+                {
+                  "type": "inlineCode",
+                  "value": "lm_head.weight"
+                },
+                {
+                  "type": "inlineMath",
+                  "value": "\\in \\mathbb{R}^{V \\times C}",
+                  "accessibleText": "∈ R^(V×C)"
+                },
+                {
+                  "type": "text",
+                  "value": "中是rows），以及checkpoint metadata。接口独立不等于语义可以任意互换。"
                 }
               ],
               "source": {
@@ -68242,8 +68312,8 @@
             {
               "type": "formula",
               "id": "formula-math-p160-g000",
-              "latex": "\\text{Learning= findingparametersthatminimizeloss}",
-              "accessibleText": "𝐿𝑒𝑎𝑟𝑛𝑖𝑛𝑔= 𝑓𝑖𝑛𝑑𝑖𝑛𝑔𝑝𝑎𝑟𝑎𝑚𝑒𝑡𝑒𝑟𝑠𝑡ℎ𝑎𝑡𝑚𝑖𝑛𝑖𝑚𝑖𝑧𝑒𝑙𝑜𝑠𝑠",
+              "latex": "\\boxed{\\mathit{Learning} = \\mathit{finding\\ parameters\\ that\\ minimize\\ loss}}",
+              "accessibleText": "Learning = finding parameters that minimize loss",
               "source": {
                 "pdfPage": 160,
                 "printedPageLabel": "151"

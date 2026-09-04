@@ -7,6 +7,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
+import { gunzipSync } from 'node:zlib';
 
 import type {
   ContentBlock,
@@ -15,34 +16,25 @@ import type {
   PageManifestEntry,
   SectionNode,
 } from '../src/content/schema';
-import {
-  APPENDIX_CORRECTION,
-  CODE_CORRECTIONS,
-  COURSE_CONTENT_CORRECTIONS,
-  FORMULA_CORRECTIONS,
-  KNOWLEDGE_CHECK_OUTLINE_INDEXES,
-  TABLE_CORRECTIONS,
-  assertCourseContentCorrectionLedger,
-  courseContentCorrectionFingerprint,
-  courseContentCorrectionOutcome,
-  type CorrectionAuditEntry,
-  type LineRangeCorrection,
-  type ReviewedCourseCorrection,
+import type {
+  CorrectionAuditEntry,
+  LineRangeCorrection,
+  ReviewedCourseCorrection,
 } from './content-corrections.mts';
 import {
   assertCorrectionBackedDecision,
   candidateFingerprint,
   decisionMap,
-  readCandidateReviewLedger,
   type CandidateCategory,
   type CandidateReviewDecision,
+  type CandidateReviewLedger,
 } from './candidate-review-ledger.mts';
 import { CONTENT_REVIEW_TRUST_ROOT } from './content-review-trust-root.mts';
 import { deriveSourceHeadingAnchors } from './source-heading-anchors.mts';
 import {
   assertFormulaReviewLedger,
   formulaReviewMaps,
-  readFormulaReviewLedger,
+  type FormulaReviewLedger,
 } from './formula-review-ledger.mts';
 import {
   detectCodeCandidates,
@@ -50,7 +42,6 @@ import {
   detectKnowledgeCandidates,
   detectTableCandidates,
   formulaGeometryChecksum,
-  readSourceAudit,
   type DetectedCandidate,
   type FormulaCandidate,
   type RawSpan,
@@ -70,11 +61,12 @@ const REVIEW_LEDGER_PATH = path.resolve(
 const FORMULA_REVIEW_LEDGER_PATH = path.resolve(
   'src/content/formula-review-ledger.json',
 );
+const COURSE_CONTENT_CORRECTIONS_PATH = path.resolve(
+  'scripts/content-corrections.mts',
+);
 const PUBLIC_FILENAME =
   'AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf';
-const GENERATED_AT = '2026-09-03';
-const EXPECTED_FORMULA_GEOMETRY_SHA256 =
-  '822e96785d8609335a71ac79501f3eec23194cb744f786601443698e3e7ce5ba';
+const GENERATED_AT = '2026-09-04';
 
 type RawLine = {
   id: string;
@@ -141,15 +133,59 @@ type CandidateAudit = {
   blockId?: string;
 };
 
-const raw = readSourceAudit(SOURCE_AUDIT_PATH) as RawExtraction;
+const sourceAuditBytes = readFileSync(SOURCE_AUDIT_PATH);
 const reviewLedgerBytes = readFileSync(REVIEW_LEDGER_PATH);
-if (
-  sha256(reviewLedgerBytes) !== CONTENT_REVIEW_TRUST_ROOT.candidateLedgerSha256
-) {
-  fail('Pinned review ledger bytes changed');
+const formulaReviewLedgerBytes = readFileSync(FORMULA_REVIEW_LEDGER_PATH);
+const courseContentCorrectionBytes = readFileSync(
+  COURSE_CONTENT_CORRECTIONS_PATH,
+);
+const trustedInputs: readonly [string, Buffer, string][] = [
+  [
+    'source audit',
+    sourceAuditBytes,
+    CONTENT_REVIEW_TRUST_ROOT.sourceAuditSha256,
+  ],
+  [
+    'candidate review ledger',
+    reviewLedgerBytes,
+    CONTENT_REVIEW_TRUST_ROOT.candidateLedgerSha256,
+  ],
+  [
+    'formula review ledger',
+    formulaReviewLedgerBytes,
+    CONTENT_REVIEW_TRUST_ROOT.formulaLedgerSha256,
+  ],
+  [
+    'course-content correction source',
+    courseContentCorrectionBytes,
+    CONTENT_REVIEW_TRUST_ROOT.courseContentCorrectionsSha256,
+  ],
+];
+for (const [label, bytes, expectedDigest] of trustedInputs) {
+  if (sha256(bytes) !== expectedDigest) {
+    fail(`Pinned ${label} bytes changed`);
+  }
 }
-const reviewLedger = readCandidateReviewLedger(REVIEW_LEDGER_PATH);
-const formulaReviewLedger = readFormulaReviewLedger(FORMULA_REVIEW_LEDGER_PATH);
+const {
+  APPENDIX_CORRECTION,
+  CODE_CORRECTIONS,
+  COURSE_CONTENT_CORRECTIONS,
+  FORMULA_CORRECTIONS,
+  KNOWLEDGE_CHECK_OUTLINE_INDEXES,
+  TABLE_CORRECTIONS,
+  assertCourseContentCorrectionLedger,
+  courseContentCorrectionFingerprint,
+  courseContentCorrectionOutcome,
+} = await import('./content-corrections.mts');
+const raw = JSON.parse(
+  gunzipSync(sourceAuditBytes).toString('utf8'),
+) as RawExtraction;
+const reviewLedger = JSON.parse(
+  reviewLedgerBytes.toString('utf8'),
+) as CandidateReviewLedger;
+const formulaReviewLedger = JSON.parse(
+  formulaReviewLedgerBytes.toString('utf8'),
+) as FormulaReviewLedger;
 
 function fail(message: string): never {
   throw new Error(message);
@@ -180,7 +216,7 @@ function joinWrappedText(left: string, right: string): string {
 
 function tokenSequence(value: string): string[] {
   return (
-    normalizeHyphens(value.replace(/[‐‑–−]\r?\n(?=\p{L})/gu, ''))
+    normalizeHyphens(value.replace(/(?<=\p{L})[‐‑–−]\r?\n(?=\p{L})/gu, ''))
       .normalize('NFC')
       .replaceAll('\u0000', '')
       .replace(/(\p{Script=Han})/gu, ' $1 ')
@@ -332,7 +368,7 @@ if (raw.outline.length !== 461)
   fail(`Expected 461 outline destinations, got ${raw.outline.length}`);
 if (
   formulaGeometryChecksum(raw as SourceAudit) !==
-  EXPECTED_FORMULA_GEOMETRY_SHA256
+  CONTENT_REVIEW_TRUST_ROOT.formulaRoutingGeometrySha256
 )
   fail('Pinned formula span geometry changed');
 
@@ -2596,7 +2632,7 @@ const course: Course = {
   title: 'AI First Principles · 核心教程深度扩展版',
   description: '从数据、参数与梯度一路学习到可运行的 Mini GPT。',
   sourceFilename: PUBLIC_FILENAME,
-  version: '2026-09-03',
+  version: GENERATED_AT,
   overview: roots[0],
   units: [
     ...roots.slice(1, 13).map((root, index) => {
@@ -2702,50 +2738,237 @@ function sectionProjection(section: SectionNode): string {
   ].join('\n');
 }
 
-function sourceProjection(startPage: number, endPage: number): string {
-  return raw.pages
+const ROOT_RANGES = [
+  ['overview', 10, 10],
+  ['week1', 11, 20],
+  ['week2', 21, 35],
+  ['week3', 36, 73],
+  ['week4', 74, 84],
+  ['week5', 85, 93],
+  ['week6', 94, 103],
+  ['week7', 104, 112],
+  ['week8', 113, 120],
+  ['week9', 121, 128],
+  ['week10', 129, 138],
+  ['week11', 139, 149],
+  ['week12', 150, 160],
+  ['appendixA', 161, 170],
+] as const;
+
+type SourceReplacement = {
+  projectionId: string;
+  sourceSpanIds: readonly string[];
+  replacement: string;
+};
+
+function projectionFragmentText(
+  fragment: Extract<
+    ReviewedCourseCorrection['sourceProjection'],
+    { kind: 'replace' }
+  >['targetFragments'][number],
+): string {
+  if ('sectionId' in fragment) {
+    return resolveSection(postCorrectionSections, fragment.sectionId).title;
+  }
+  const location =
+    postCorrectionBlocks.get(fragment.blockId) ??
+    fail(`Source projection block ${fragment.blockId} is missing`);
+  switch (fragment.field) {
+    case 'children':
+      if (location.block.type !== 'paragraph')
+        return fail(`${fragment.blockId} source projection is not a paragraph`);
+      return inlineProjection(location.block.children);
+    case 'item':
+      if (location.block.type !== 'list')
+        return fail(`${fragment.blockId} source projection is not a list`);
+      return `${location.block.ordered ? `${fragment.itemIndex + 1}. ` : '・'}${inlineProjection(
+        location.block.items[fragment.itemIndex] ??
+          fail(`${fragment.blockId} source projection item is missing`),
+      )}`;
+    case 'steps':
+      if (location.block.type !== 'conceptChain')
+        return fail(
+          `${fragment.blockId} source projection is not a concept chain`,
+        );
+      return location.block.steps.join(' → ');
+    case 'accessibleText':
+      if (location.block.type !== 'formula')
+        return fail(`${fragment.blockId} source projection is not a formula`);
+      return location.block.accessibleText;
+  }
+}
+
+function correctionSourceReplacements(): SourceReplacement[] {
+  const replacements: SourceReplacement[] = [];
+  const absorptionFormulaIds = new Set(
+    COURSE_CONTENT_CORRECTIONS.flatMap((correction) =>
+      correction.target.kind === 'formulaAbsorption'
+        ? [correction.target.formulaBlockId]
+        : [],
+    ),
+  );
+  for (const formula of formulaReviewLedger.formulas) {
+    if (absorptionFormulaIds.has(formula.blockId)) continue;
+    replacements.push({
+      projectionId: `formula:${formula.candidateId}`,
+      sourceSpanIds: formula.sourceSpanIds,
+      replacement: formula.accessibleText,
+    });
+  }
+  for (const correction of COURSE_CONTENT_CORRECTIONS) {
+    if (correction.sourceProjection.kind !== 'replace') continue;
+    const projected = new Set(correction.sourceProjection.sourceSpanIds);
+    const evidenceSegments = correction.sourceEvidence
+      .map((evidence) =>
+        evidence.sourceSpanIds.filter((spanId) => projected.has(spanId)),
+      )
+      .filter((spanIds) => spanIds.length > 0);
+    const lineSegments = correction.sourceEvidence
+      .flatMap((evidence) => {
+        if (evidence.kind !== 'pageLines') return [];
+        const page = pageByNumber(evidence.pdfPage);
+        return evidence.lineIndexes.map((lineIndex) =>
+          (
+            page.lines[lineIndex] ??
+            fail(`${correction.correctionId} projection line is missing`)
+          ).spanIds.filter((spanId) => projected.has(spanId)),
+        );
+      })
+      .filter((spanIds) => spanIds.length > 0);
+    const fragments = correction.sourceProjection.targetFragments;
+    const pairedSegments =
+      evidenceSegments.length === fragments.length
+        ? evidenceSegments
+        : lineSegments.length === fragments.length
+          ? lineSegments
+          : undefined;
+    if (pairedSegments) {
+      pairedSegments.forEach((sourceSpanIds, index) =>
+        replacements.push({
+          projectionId: correction.correctionId,
+          sourceSpanIds,
+          replacement: projectionFragmentText(fragments[index]),
+        }),
+      );
+    } else {
+      if (fragments.length !== 1 || evidenceSegments.length === 0)
+        fail(
+          `${correction.correctionId} source-projection boundary count changed`,
+        );
+      replacements.push({
+        projectionId: correction.correctionId,
+        sourceSpanIds: correction.sourceProjection.sourceSpanIds,
+        replacement: fragments.map(projectionFragmentText).join('\n'),
+      });
+    }
+  }
+  return replacements;
+}
+
+const sourceSpanOrder = new Map(
+  raw.pages
+    .flatMap((page) => page.spans)
+    .map((span, index) => [span.id, index]),
+);
+const sourceReplacementByFirstSpan = new Map<string, SourceReplacement>();
+const sourceReplacementBySpan = new Map<string, SourceReplacement>();
+for (const replacement of correctionSourceReplacements()) {
+  if (
+    replacement.sourceSpanIds.length === 0 ||
+    new Set(replacement.sourceSpanIds).size !== replacement.sourceSpanIds.length
+  ) {
+    fail(`${replacement.projectionId} has invalid source replacement spans`);
+  }
+  let previousIndex = -1;
+  for (const spanId of replacement.sourceSpanIds) {
+    const spanIndex =
+      sourceSpanOrder.get(spanId) ?? fail(`Unknown projection span ${spanId}`);
+    if (spanIndex <= previousIndex || sourceReplacementBySpan.has(spanId)) {
+      fail(
+        `${replacement.projectionId} source replacement overlaps or reorders`,
+      );
+    }
+    previousIndex = spanIndex;
+    sourceReplacementBySpan.set(spanId, replacement);
+  }
+  const firstSpanId = replacement.sourceSpanIds[0];
+  if (sourceReplacementByFirstSpan.has(firstSpanId))
+    fail(`Two source replacements begin at ${firstSpanId}`);
+  sourceReplacementByFirstSpan.set(firstSpanId, replacement);
+}
+
+function correctionAwareSourceProjection(
+  startPage: number,
+  endPage: number,
+): { text: string; projectionIds: string[] } {
+  const projectionIds: string[] = [];
+  const seenReplacements = new Set<SourceReplacement>();
+  const lines = raw.pages
     .filter((page) => page.pdfPage >= startPage && page.pdfPage <= endPage)
-    .flatMap((page) =>
-      page.lines.filter((line) => line.bbox[1] >= 50 && line.bbox[1] <= 790),
-    )
-    .map((line) => line.lineRaw)
-    .join('\n');
+    .flatMap((page) => {
+      const spansById = new Map(page.spans.map((span) => [span.id, span]));
+      return page.lines
+        .filter((line) => line.bbox[1] >= 50 && line.bbox[1] <= 790)
+        .map((line) =>
+          line.spanIds
+            .map((spanId) => {
+              const replacement = sourceReplacementBySpan.get(spanId);
+              if (!replacement)
+                return (
+                  spansById.get(spanId) ?? fail(`Missing source span ${spanId}`)
+                ).textRaw;
+              if (sourceReplacementByFirstSpan.get(spanId) !== replacement)
+                return '';
+              if (seenReplacements.has(replacement))
+                fail(`${replacement.projectionId} source replacement repeated`);
+              seenReplacements.add(replacement);
+              projectionIds.push(replacement.projectionId);
+              return replacement.replacement;
+            })
+            .join(''),
+        );
+    });
+  if (startPage === 161 && endPage === 170) projectionIds.push('CC-25');
+  return { text: lines.join('\n'), projectionIds };
 }
 
 function proseEvidence(startPage: number, endPage: number, root: SectionNode) {
-  const sourceTokens = tokenSequence(sourceProjection(startPage, endPage));
-  const normalizedTokens = tokenSequence(sectionProjection(root));
+  const sourceProjection = correctionAwareSourceProjection(startPage, endPage);
+  const sourceTokens = tokenSequence(sourceProjection.text);
+  const outputTokens = tokenSequence(sectionProjection(root));
   return {
+    pageRange: [startPage, endPage] as [number, number],
     sourceTokenCount: sourceTokens.length,
-    normalizedTokenCount: normalizedTokens.length,
+    outputTokenCount: outputTokens.length,
     sourceTokenChecksum: sha256(JSON.stringify(sourceTokens)),
-    normalizedTokenChecksum: sha256(JSON.stringify(normalizedTokens)),
-    matches: JSON.stringify(sourceTokens) === JSON.stringify(normalizedTokens),
+    outputTokenChecksum: sha256(JSON.stringify(outputTokens)),
+    correctionProjectionIds: sourceProjection.projectionIds,
+    matches: JSON.stringify(sourceTokens) === JSON.stringify(outputTokens),
   };
 }
 
-const week2Evidence = proseEvidence(21, 35, roots[2]);
-const week3Evidence = proseEvidence(36, 73, roots[3]);
-if (!week2Evidence.matches || !week3Evidence.matches) {
-  const debugMismatch = (
-    startPage: number,
-    endPage: number,
-    root: SectionNode,
-  ) => {
-    const source = tokenSequence(sourceProjection(startPage, endPage));
-    const output = tokenSequence(sectionProjection(root));
+const prosePreservation = Object.fromEntries(
+  ROOT_RANGES.map(([label, startPage, endPage], index) => [
+    label,
+    proseEvidence(startPage, endPage, roots[index]),
+  ]),
+) as Record<(typeof ROOT_RANGES)[number][0], ReturnType<typeof proseEvidence>>;
+for (const [label, evidence] of Object.entries(prosePreservation)) {
+  if (!evidence.matches) {
+    const [startPage, endPage] = evidence.pageRange;
+    const source = tokenSequence(
+      correctionAwareSourceProjection(startPage, endPage).text,
+    );
+    const output = tokenSequence(
+      sectionProjection(roots[ROOT_RANGES.findIndex(([key]) => key === label)]),
+    );
     const index = source.findIndex(
       (token, position) => token !== output[position],
     );
-    return {
-      index,
-      source: source.slice(Math.max(0, index - 5), index + 6),
-      output: output.slice(Math.max(0, index - 5), index + 6),
-    };
-  };
-  fail(
-    `Week 2/Week 3 normalized token sequences differ: ${JSON.stringify({ week2: debugMismatch(21, 35, roots[2]), week3: debugMismatch(36, 73, roots[3]) })}`,
-  );
+    fail(
+      `${label} correction-aware token sequence differs: ${JSON.stringify({ index, source: source.slice(Math.max(0, index - 15), index + 16), output: output.slice(Math.max(0, index - 15), index + 16) })}`,
+    );
+  }
 }
 
 const discovered = {
@@ -2781,6 +3004,7 @@ const typedBlocks = {
   ).length,
 };
 const report = {
+  schemaVersion: 2,
   generatedAt: GENERATED_AT,
   source: raw.source,
   pages: { total: 170, classified: manifest.length },
@@ -2828,7 +3052,7 @@ const report = {
     assigned,
     excluded,
   },
-  prosePreservation: { week2: week2Evidence, week3: week3Evidence },
+  prosePreservation,
   appendix: {
     lineCount: APPENDIX_CORRECTION.expectedLineCount,
     characterCount: appendix.code.length,
@@ -2896,12 +3120,14 @@ Generated from the pinned source on ${GENERATED_AT}. This report is backed by th
 
 Every independently detected candidate is joined to the immutable checked review ledger, which records its source fingerprint, physical page, reviewer, rationale, disposition, and structured target where applicable. Normalization does not create or overwrite review decisions. The validator also checks the 13 ledger-linked contact sheets and their 148-page cell/checksum index.
 
+The reviewed rendering authority contains exactly 371 structured formulas and 17 inline-math nodes. The correction ledger contains 16 body/inline records plus 25 correctness records: 41 correction-audit entries with 46 \`pageLines\` evidence objects and one \`crossPageSelector\`, split into 34 applied and 7 non-mutating records. Three assertion-only audit records target five formula blocks: four corrected formula-ledger entries plus the unchanged MSE context guard \`formula-p032-l0017\`; the guard is not itself a correction.
+
 ## Prose preservation
 
-- Week 2: ${week2Evidence.normalizedTokenCount} normalized tokens; source/output checksum \`${week2Evidence.sourceTokenChecksum}\`; match: ${week2Evidence.matches}
-- Week 3: ${week3Evidence.normalizedTokenCount} normalized tokens; source/output checksum \`${week3Evidence.sourceTokenChecksum}\`; match: ${week3Evidence.matches}
+- All ${ROOT_RANGES.length} roots have exact correction-aware source/output token parity.
+- Root token evidence: ${ROOT_RANGES.map(([label]) => `${label}=${prosePreservation[label].outputTokenCount}`).join(', ')}
 
-The comparison projection applies Unicode NFC, whitespace tokenization, proven visual-line dehyphenation, removal of extraction NUL artifacts, and only U+2010/U+2011/U+2013/U+2212 to ASCII-hyphen compatibility. The source-side stream is independently rebuilt from every body line on physical pages 21-73; it does not use generated span assignments. Raw text and source span text remain unchanged in the checked-in compressed source audit.
+The comparison projection applies Unicode NFC, whitespace tokenization, proven visual-line dehyphenation, removal of extraction NUL artifacts, and only U+2010/U+2011/U+2013/U+2212 to ASCII-hyphen compatibility. The source-side stream is rebuilt from every body line on physical pages 10-170 and applies only the trust-pinned formula and course-correction projection owners; it does not use generated span assignments. Raw text and source span text remain unchanged in the checked-in compressed source audit.
 
 ## Appendix A
 

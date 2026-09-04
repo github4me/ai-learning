@@ -1,6 +1,14 @@
 export const CONTENT_REVIEW_TRUST_ROOT = {
+  sourceAuditSha256:
+    'f26c0033c8cd4b7a6b47459281f1c6887037a84685312d2565dfc01fd4a23dfd',
   candidateLedgerSha256:
     '58895fc9ae892ee7401d45da9a568e80f1bec787d756c5e3be05ac370d2349d2',
+  formulaLedgerSha256:
+    'b3572f832e5faeb2ea8d0fdee2adaf11f3edff67bb08fba3e6b4eff903a25970',
+  formulaRoutingGeometrySha256:
+    '822e96785d8609335a71ac79501f3eec23194cb744f786601443698e3e7ce5ba',
+  courseContentCorrectionsSha256:
+    'f5e08b3d43721ace31cf92e3ec0b538ca84ce3f3c1f336f6b3a96da23b108f5b',
   visualIndexSha256:
     '2627c3f304a0b42a5d9676501df7a1063fa49b15d3f8b59f1425ddd04427f98d',
   sheetWidth: 3308,

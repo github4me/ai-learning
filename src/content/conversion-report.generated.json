@@ -1,5 +1,6 @@
 {
-  "generatedAt": "2026-09-03",
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-04",
   "source": {
     "filename": "AI_First_Principles_12_Week_Complete_Guide_Expanded.pdf",
     "sha256": "3ED047406DE297352B38635D01CF080B0213C9FD899AEA80520AA8A8283E1D52",
@@ -55330,6 +55331,1961 @@
       "blockId": "knowledge-check-o0458"
     }
   ],
+  "correctionAudit": [
+    {
+      "correctionId": "body-fraction-p023-gradient",
+      "category": "fidelity",
+      "outcome": "applied",
+      "target": {
+        "kind": "formulaAbsorption",
+        "sectionIds": [
+          "o0047-8-gradient"
+        ],
+        "blockIds": [
+          "formula-math-p023-g001",
+          "body-00374",
+          "body-00375"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 23,
+          "lineIndexes": [
+            31,
+            32,
+            33
+          ],
+          "sourceSpanIds": [
+            "p023-s00043",
+            "p023-s00044",
+            "p023-s00045",
+            "p023-s00046"
+          ],
+          "sourceChecksum": "5757992eb30d56407ec7e13ba45b40751f55f06efe28e72bb656383364e8e0f7",
+          "sourceGeometryChecksum": "053181612e7fe1f46bd11d5f5c63ba823c3e54b6c18a608e73dc9a3a294a790b"
+        }
+      ],
+      "expectedTargetFingerprint": "3d21eeb35e2bff3f100d7f1214058da1ce20fb4dce18ee11fe8fe2cb74eaf032",
+      "actualTargetFingerprint": "3d21eeb35e2bff3f100d7f1214058da1ce20fb4dce18ee11fe8fe2cb74eaf032",
+      "replacementFingerprint": "06aa447b481eb6bff7f29b93def2a5ac42c0dbb2bc5cbb232411678dccbe1570",
+      "reviewer": "Codex body/inline correction design",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "body-fraction-p025-chain-rule",
+      "category": "fidelity",
+      "outcome": "applied",
+      "target": {
+        "kind": "formulaAbsorption",
+        "sectionIds": [
+          "o0053-step-3-gradient"
+        ],
+        "blockIds": [
+          "formula-math-p025-g005",
+          "body-00417",
+          "body-00418"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 25,
+          "lineIndexes": [
+            20,
+            21,
+            22
+          ],
+          "sourceSpanIds": [
+            "p025-s00035",
+            "p025-s00036",
+            "p025-s00037",
+            "p025-s00038",
+            "p025-s00039",
+            "p025-s00040",
+            "p025-s00041"
+          ],
+          "sourceChecksum": "6fd72e8dd1bf52f52e3583f5603d2adfef02f71bad39b4960a0833202f77c074",
+          "sourceGeometryChecksum": "a9e1510853357ebff68eb95e092cc82630e05b9f666e40f0af9b5297960d7708"
+        }
+      ],
+      "expectedTargetFingerprint": "33f05bc788b068f52628e971b445b94beac6522c98bd388a47eeded86eac7b58",
+      "actualTargetFingerprint": "33f05bc788b068f52628e971b445b94beac6522c98bd388a47eeded86eac7b58",
+      "replacementFingerprint": "4d1c8b27590462f15387afa782898500173f65a4c9dd6ba069a5b1fdc965e8dd",
+      "reviewer": "Codex body/inline correction design",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "body-fraction-p025-result",
+      "category": "fidelity",
+      "outcome": "applied",
+      "target": {
+        "kind": "formulaAbsorption",
+        "sectionIds": [
+          "o0053-step-3-gradient"
+        ],
+        "blockIds": [
+          "formula-math-p025-g007",
+          "body-00425",
+          "body-00426"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 25,
+          "lineIndexes": [
+            30,
+            31,
+            32
+          ],
+          "sourceSpanIds": [
+            "p025-s00052",
+            "p025-s00053",
+            "p025-s00054"
+          ],
+          "sourceChecksum": "c6bf739af0ca735fadbf28a1edab7cf2324ae125e2271d7f1093895b033ef1d1",
+          "sourceGeometryChecksum": "9831af281862a6fac7fdbde325a6ed1551ab08481658a2006dd0112d9dd464cc"
+        }
+      ],
+      "expectedTargetFingerprint": "2af126704410f31fa205b0f89aa109f4e881954d3a584a1ea06cbcf93a409df8",
+      "actualTargetFingerprint": "2af126704410f31fa205b0f89aa109f4e881954d3a584a1ea06cbcf93a409df8",
+      "replacementFingerprint": "faa23aaa237004b67f28516a6e5c3dd966aa03d02df4cc887a770ec0b622df74",
+      "reviewer": "Codex body/inline correction design",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "body-neuron-nodes-p071",
+      "category": "fidelity",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0169-58-week-3-week-4"
+        ],
+        "blockIds": [
+          "body-01786",
+          "body-01788"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 71,
+          "lineIndexes": [
+            36,
+            38
+          ],
+          "sourceSpanIds": [
+            "p071-s00038",
+            "p071-s00039",
+            "p071-s00041"
+          ],
+          "sourceChecksum": "aedada828114bc1af3fe7b4c45b75e4b5f9c4197380dc3b3b130c623dd07265d",
+          "sourceGeometryChecksum": "ba4176a3fa24824a4f77635fa28d0eb2ff5f532176e7916c92d5b8cbe1c36345"
+        }
+      ],
+      "expectedTargetFingerprint": "4540a9eab916f8886ae31b6cba274fb1fc9d413da0cc23cfc9c5411635b5ba9c",
+      "actualTargetFingerprint": "4540a9eab916f8886ae31b6cba274fb1fc9d413da0cc23cfc9c5411635b5ba9c",
+      "replacementFingerprint": "717f052815348cb8aedb64eabc45cfe780b079e1dbaac18465a31e46f6ee18a7",
+      "reviewer": "Codex body/inline correction design",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "body-value-dv-p108",
+      "category": "fidelity",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0268-9-self-attention-shape"
+        ],
+        "blockIds": [
+          "body-02859",
+          "body-02870",
+          "body-02872"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 108,
+          "lineIndexes": [
+            3,
+            14,
+            16
+          ],
+          "sourceSpanIds": [
+            "p108-s00007",
+            "p108-s00008",
+            "p108-s00026",
+            "p108-s00027",
+            "p108-s00029"
+          ],
+          "sourceChecksum": "508681c2e0494861c793578a3d1beae3f5b1b4e88dac63f0bc39311903c5896f",
+          "sourceGeometryChecksum": "63de24a999cec4f9b175431d0060f2020cc08da4dca3cb3c5bad21f501a0f68a"
+        }
+      ],
+      "expectedTargetFingerprint": "efae2e33e9cd84c6618bf620278ba80ba202066a087a044e446e8005f7f95b75",
+      "actualTargetFingerprint": "efae2e33e9cd84c6618bf620278ba80ba202066a087a044e446e8005f7f95b75",
+      "replacementFingerprint": "9beae76dbd013cdf3f308c767c97968ead5c16d4e25267c0c34eaa722c32ce1d",
+      "reviewer": "Codex body/inline correction design",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "body-row42-p125",
+      "category": "fidelity",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0340-9-tokenizer-model"
+        ],
+        "blockIds": [
+          "body-03355"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 125,
+          "lineIndexes": [
+            11,
+            12,
+            13
+          ],
+          "sourceSpanIds": [
+            "p125-s00013",
+            "p125-s00014",
+            "p125-s00015"
+          ],
+          "sourceChecksum": "1144826892ff919bbd02009a5dddc8675639bce5388aebdec91a2001b6be7866",
+          "sourceGeometryChecksum": "7026fdd8a300672da376191a88f1428140889f097bf53eed24aca7b82ff10091"
+        }
+      ],
+      "expectedTargetFingerprint": "6369fc843e3dcd84263b05587a7b2eb5660eda39ba7a0e9ad6e56b37860e8e1b",
+      "actualTargetFingerprint": "6369fc843e3dcd84263b05587a7b2eb5660eda39ba7a0e9ad6e56b37860e8e1b",
+      "replacementFingerprint": "c7e525d9865361d475b282904dc85e536e6bd0749a3e28285fea9b1a3240c300",
+      "reviewer": "Codex body/inline correction design",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p006-g000",
+      "category": "inlineMath",
+      "candidateId": "math-p006-g000",
+      "outcome": "excludedNavigation",
+      "target": {
+        "kind": "excludedNavigation",
+        "sectionIds": [],
+        "blockIds": []
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 6,
+          "lineIndexes": [
+            90
+          ],
+          "sourceSpanIds": [
+            "p006-s02223",
+            "p006-s02224",
+            "p006-s02225",
+            "p006-s02226",
+            "p006-s02227",
+            "p006-s02228",
+            "p006-s02229",
+            "p006-s02230",
+            "p006-s02231",
+            "p006-s02232",
+            "p006-s02233",
+            "p006-s02234",
+            "p006-s02235",
+            "p006-s02236",
+            "p006-s02237",
+            "p006-s02238",
+            "p006-s02239",
+            "p006-s02240",
+            "p006-s02241",
+            "p006-s02242",
+            "p006-s02243",
+            "p006-s02244",
+            "p006-s02245",
+            "p006-s02246",
+            "p006-s02247",
+            "p006-s02248",
+            "p006-s02249",
+            "p006-s02250",
+            "p006-s02251",
+            "p006-s02252",
+            "p006-s02253",
+            "p006-s02254",
+            "p006-s02255",
+            "p006-s02256",
+            "p006-s02257",
+            "p006-s02258",
+            "p006-s02259",
+            "p006-s02260",
+            "p006-s02261",
+            "p006-s02262",
+            "p006-s02263",
+            "p006-s02264",
+            "p006-s02265",
+            "p006-s02266",
+            "p006-s02267",
+            "p006-s02268",
+            "p006-s02269",
+            "p006-s02270",
+            "p006-s02271",
+            "p006-s02272",
+            "p006-s02273",
+            "p006-s02274",
+            "p006-s02275",
+            "p006-s02276",
+            "p006-s02277",
+            "p006-s02278",
+            "p006-s02279",
+            "p006-s02280",
+            "p006-s02281",
+            "p006-s02282",
+            "p006-s02283",
+            "p006-s02284",
+            "p006-s02285",
+            "p006-s02286",
+            "p006-s02287",
+            "p006-s02288",
+            "p006-s02289",
+            "p006-s02290",
+            "p006-s02291",
+            "p006-s02292",
+            "p006-s02293",
+            "p006-s02294",
+            "p006-s02295",
+            "p006-s02296",
+            "p006-s02297",
+            "p006-s02298",
+            "p006-s02299",
+            "p006-s02300"
+          ],
+          "sourceChecksum": "127e25ee4bd9182eea985770bb1c267a2bf877841bb5469ee09372dc2e3896cd",
+          "sourceGeometryChecksum": "915d9fc4b65bbe621390f45b9c2773c7844ff98832dafc48382fdcc2aa64fac6"
+        }
+      ],
+      "expectedTargetFingerprint": null,
+      "actualTargetFingerprint": null,
+      "replacementFingerprint": null,
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p006-g001",
+      "category": "inlineMath",
+      "candidateId": "math-p006-g001",
+      "outcome": "excludedNavigation",
+      "target": {
+        "kind": "excludedNavigation",
+        "sectionIds": [],
+        "blockIds": []
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 6,
+          "lineIndexes": [
+            103
+          ],
+          "sourceSpanIds": [
+            "p006-s02638",
+            "p006-s02639",
+            "p006-s02640",
+            "p006-s02641"
+          ],
+          "sourceChecksum": "7bea6dc05b1c7dd14a5d266a153ecf70baa2331e0209ee1cc3e3dd65940bec8f",
+          "sourceGeometryChecksum": "177bbd62d4fa02dc86cbebd84345cc70e18b87a6cf54b705198a32babc3e93bf"
+        }
+      ],
+      "expectedTargetFingerprint": null,
+      "actualTargetFingerprint": null,
+      "replacementFingerprint": null,
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p105-g003",
+      "category": "inlineMath",
+      "candidateId": "math-p105-g003",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0258-2-q-k-v"
+        ],
+        "blockIds": [
+          "body-02792"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 105,
+          "lineIndexes": [
+            8
+          ],
+          "sourceSpanIds": [
+            "p105-s00011",
+            "p105-s00012",
+            "p105-s00013",
+            "p105-s00014",
+            "p105-s00015",
+            "p105-s00016",
+            "p105-s00017",
+            "p105-s00018",
+            "p105-s00019",
+            "p105-s00020"
+          ],
+          "sourceChecksum": "f3b1fe993cc969389cae39e10c8b5c127ad6bb7af9713a4edccfa58d239a219c",
+          "sourceGeometryChecksum": "6a7a7bfe8e699ab3c370eebc8247ab8a8dda3caa0d8f980dd236e8bf2bd39721"
+        }
+      ],
+      "expectedTargetFingerprint": "1556dbb42a749c66160925877a1fa2ccf649fada828bf1c36fa6983acaa2e7e9",
+      "actualTargetFingerprint": "1556dbb42a749c66160925877a1fa2ccf649fada828bf1c36fa6983acaa2e7e9",
+      "replacementFingerprint": "90e53d060dac535b1af3c362f7409b69d3d64e295b1a4da089ef26ed8000fdbd",
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p107-g005",
+      "category": "inlineMath",
+      "candidateId": "math-p107-g005",
+      "outcome": "applied",
+      "target": {
+        "kind": "sectionTitle",
+        "sectionIds": [
+          "o0266-8-sqrt-d-k"
+        ],
+        "blockIds": []
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 107,
+          "lineIndexes": [
+            25
+          ],
+          "sourceSpanIds": [
+            "p107-s00043",
+            "p107-s00044",
+            "p107-s00045",
+            "p107-s00046",
+            "p107-s00047"
+          ],
+          "sourceChecksum": "f4858d8055c3ca3932969c7099ab34655b236e6f3b48e0e9a092c00391517306",
+          "sourceGeometryChecksum": "4e5bc7e365b2a53c59e840ec00597c4754db6104be77ffc995fc278d4c3b6326"
+        }
+      ],
+      "expectedTargetFingerprint": "cc72dc1fd3ad6cc393ed9d05e497e994762ba1ec8b920b848e7e69cc1123e743",
+      "actualTargetFingerprint": "cc72dc1fd3ad6cc393ed9d05e497e994762ba1ec8b920b848e7e69cc1123e743",
+      "replacementFingerprint": "cf923f3bc030ebae0ad33bcce495633a3ef2cb92afb854f4d0c83923464cb78f",
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p107-g006",
+      "category": "inlineMath",
+      "candidateId": "math-p107-g006",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0266-8-sqrt-d-k"
+        ],
+        "blockIds": [
+          "body-02848"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 107,
+          "lineIndexes": [
+            28
+          ],
+          "sourceSpanIds": [
+            "p107-s00050",
+            "p107-s00051",
+            "p107-s00052",
+            "p107-s00053"
+          ],
+          "sourceChecksum": "8c066da858a193e2073dd67dc3489ecd5a3c5c0a98cf6fc5f0f05bfd496035fc",
+          "sourceGeometryChecksum": "a86877e90b253936fcb252adff23b344c316686844a2392cc880d8e8480e0fc6"
+        }
+      ],
+      "expectedTargetFingerprint": "de4f38a945f653093ce424ad1f3489048008a17503ee09e44556cdcba7853d7b",
+      "actualTargetFingerprint": "de4f38a945f653093ce424ad1f3489048008a17503ee09e44556cdcba7853d7b",
+      "replacementFingerprint": "f14f4e70b8b495e0af9a84e5e3bb1833f2399727a86e306d223db18620cd0bf6",
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p109-g000",
+      "category": "inlineMath",
+      "candidateId": "math-p109-g000",
+      "outcome": "applied",
+      "target": {
+        "kind": "sectionTitle",
+        "sectionIds": [
+          "o0272-11-mask-softmax-infty"
+        ],
+        "blockIds": []
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 109,
+          "lineIndexes": [
+            1
+          ],
+          "sourceSpanIds": [
+            "p109-s00001",
+            "p109-s00002",
+            "p109-s00003",
+            "p109-s00004"
+          ],
+          "sourceChecksum": "56792573046f69176b8513043327511c8bb39676ac2d3fe501c0cfd54fb51816",
+          "sourceGeometryChecksum": "f20d6c49d5338304478066a5ac197be4a86a856fc8957fe6eeb0b3d05dff13d5"
+        }
+      ],
+      "expectedTargetFingerprint": "c57a2005038f363377f858f7c6712de62e561dccccfe918769a5ecf653470e18",
+      "actualTargetFingerprint": "c57a2005038f363377f858f7c6712de62e561dccccfe918769a5ecf653470e18",
+      "replacementFingerprint": "25247471db4a923c1183bff4f36ca0d04917b8724039816dd061784c1f60da85",
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p110-g003",
+      "category": "inlineMath",
+      "candidateId": "math-p110-g003",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0279-15-multi-head-attention"
+        ],
+        "blockIds": [
+          "body-02914"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 110,
+          "lineIndexes": [
+            23
+          ],
+          "sourceSpanIds": [
+            "p110-s00063",
+            "p110-s00064",
+            "p110-s00065",
+            "p110-s00066",
+            "p110-s00067",
+            "p110-s00068",
+            "p110-s00069",
+            "p110-s00070",
+            "p110-s00071",
+            "p110-s00072"
+          ],
+          "sourceChecksum": "8cb4761bacf0f7c8ee4531560d6b611601035648b0e9377e973e13a0ee929b98",
+          "sourceGeometryChecksum": "10d729ee6353fd1cc63fb6c6b583c73ff7d502b6a5282c388023797cf6ae37ab"
+        }
+      ],
+      "expectedTargetFingerprint": "74ea9b6fe5b04e4ff2727f996a81b890bddeecd6d9df13c4a12108828d2c402b",
+      "actualTargetFingerprint": "74ea9b6fe5b04e4ff2727f996a81b890bddeecd6d9df13c4a12108828d2c402b",
+      "replacementFingerprint": "cb40af8d4f4999ebbb9b929f583019aa519247af9ea69954271284cdce9f0af0",
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p116-g001",
+      "category": "inlineMath",
+      "candidateId": "math-p116-g001",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0299-7-residual-connection"
+        ],
+        "blockIds": [
+          "body-03052"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 116,
+          "lineIndexes": [
+            6
+          ],
+          "sourceSpanIds": [
+            "p116-s00009",
+            "p116-s00010",
+            "p116-s00011",
+            "p116-s00012",
+            "p116-s00013"
+          ],
+          "sourceChecksum": "73e61a2cc073754ff07a981ce2212257dae337bb022adf6ad1d07c5ab7d5b7f4",
+          "sourceGeometryChecksum": "27843b8d6c4cd47389b6f5f984c41e506fd1279d66113f67a3f320e896e0a3b1"
+        }
+      ],
+      "expectedTargetFingerprint": "9d25a3bd9ac3c2d1da1065c7417d7c7375268e84321eca00f6c1ab52b04d748f",
+      "actualTargetFingerprint": "9d25a3bd9ac3c2d1da1065c7417d7c7375268e84321eca00f6c1ab52b04d748f",
+      "replacementFingerprint": "a70090f2678fc934acd1a16184287362a3bc22f3c9c3da549f9902e5404834b8",
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p149-g000",
+      "category": "inlineMath",
+      "candidateId": "math-p149-g000",
+      "outcome": "applied",
+      "target": {
+        "kind": "listItem",
+        "sectionIds": [
+          "o0411-21-week-11-7"
+        ],
+        "blockIds": [
+          "list-body-04164"
+        ],
+        "itemIndex": 3
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 149,
+          "lineIndexes": [
+            5
+          ],
+          "sourceSpanIds": [
+            "p149-s00017",
+            "p149-s00018",
+            "p149-s00019",
+            "p149-s00020",
+            "p149-s00021"
+          ],
+          "sourceChecksum": "4ced7e6bb66a475dd61faec0590c83f98cdbab58e0a76557d6d3e83b57f219df",
+          "sourceGeometryChecksum": "1445468b86ae4347d47f5e707d7ebf80bbaf477d36860bc5d155743c5c643abb"
+        }
+      ],
+      "expectedTargetFingerprint": "00fb96688a011c119d526a146e7a1beda5f7f1a9ef79f2f9dc85da50b954535a",
+      "actualTargetFingerprint": "00fb96688a011c119d526a146e7a1beda5f7f1a9ef79f2f9dc85da50b954535a",
+      "replacementFingerprint": "729478e579e8d30b5a75fc89cb99a356c72c8f50581e9d3befd5c6cfe991f2ce",
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "inline-math-p154-g000",
+      "category": "inlineMath",
+      "candidateId": "math-p154-g000",
+      "outcome": "semanticNoop",
+      "target": {
+        "kind": "conceptChain",
+        "sectionIds": [
+          "o0426-12-optimizer-step"
+        ],
+        "blockIds": [
+          "chain-body-04382"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 154,
+          "lineIndexes": [
+            30
+          ],
+          "sourceSpanIds": [
+            "p154-s00046"
+          ],
+          "sourceChecksum": "760eae5f5c27435ac2c5f9d282a424ad86e5bde9da555e7e02a584c2ad4dc1a9",
+          "sourceGeometryChecksum": "9abbee88c1dbb6caa2818c76efe8a014ea36c406096de333791b328addf70327"
+        }
+      ],
+      "expectedTargetFingerprint": "949998a1d3b67b6e8960c02f419a340a9606ed17af5e0cb247985a623d15417f",
+      "actualTargetFingerprint": "949998a1d3b67b6e8960c02f419a340a9606ed17af5e0cb247985a623d15417f",
+      "replacementFingerprint": "2fce163f0dbaadba04b168f310c8defbb6f23bc6f93875c47e4b1f7e7023af77",
+      "reviewer": "Codex rendered-source candidate review",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-01",
+      "category": "correctness",
+      "contentCorrectionId": "CC-01",
+      "outcome": "assertedFormulaReference",
+      "target": {
+        "kind": "formulaReference",
+        "sectionIds": [
+          "o0034-14-ai"
+        ],
+        "blockIds": [
+          "formula-math-p018-g003"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 18,
+          "lineIndexes": [
+            30
+          ],
+          "sourceSpanIds": [
+            "p018-s00053"
+          ],
+          "sourceChecksum": "dec78fd1be9145204d4324781bdad4a3b55ce26dfefde04f334de5d27f239c73",
+          "sourceGeometryChecksum": "8ee27aa45f6b147a58ae660f85f97d2f7504e065305f66c68a645660597275ce"
+        }
+      ],
+      "expectedTargetFingerprint": "7c84778f07c6a95bdb72d5a3033bc1607de9e87db7ba79fdfed55301e546ff0e",
+      "actualTargetFingerprint": "7c84778f07c6a95bdb72d5a3033bc1607de9e87db7ba79fdfed55301e546ff0e",
+      "replacementFingerprint": "a7164afadc1410af47f01e8e5c26d8378299c2734b942b91e5f8de1a555ab698",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-02",
+      "category": "correctness",
+      "contentCorrectionId": "CC-02",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0062-19-forward-pass-backward-pass"
+        ],
+        "blockIds": [
+          "body-00547",
+          "body-00548",
+          "body-00549",
+          "body-00550",
+          "body-00551",
+          "body-00552",
+          "body-00553"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 30,
+          "lineIndexes": [
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "sourceSpanIds": [
+            "p030-s00012",
+            "p030-s00013",
+            "p030-s00014",
+            "p030-s00015",
+            "p030-s00016",
+            "p030-s00017",
+            "p030-s00018"
+          ],
+          "sourceChecksum": "1bf5990fdd0e6c1908575ca8ff83da95997611ae4b9d7cc25991cb9fa5e0ef1f",
+          "sourceGeometryChecksum": "17c42cb1c8604a145731445879fbcefa0077b67440007be98acfafc5a8ff4fa3"
+        }
+      ],
+      "expectedTargetFingerprint": "4b0b250e5fdf6e32982f3848c8eb6d5ddc7cf1f942a9d79fd4bb2779e6e27342",
+      "actualTargetFingerprint": "4b0b250e5fdf6e32982f3848c8eb6d5ddc7cf1f942a9d79fd4bb2779e6e27342",
+      "replacementFingerprint": "81045188d8d2d6f63f6a675f6171e83789481e027f41910cd46f242f4ced260a",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-03",
+      "category": "correctness",
+      "contentCorrectionId": "CC-03",
+      "outcome": "applied",
+      "target": {
+        "kind": "conceptChain",
+        "sectionIds": [
+          "o0063-20-epoch-batch"
+        ],
+        "blockIds": [
+          "chain-body-00558"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 30,
+          "lineIndexes": [
+            22
+          ],
+          "sourceSpanIds": [
+            "p030-s00031"
+          ],
+          "sourceChecksum": "8b8bc2772f242677172b5bb357a647630d1a1298fcc105bd78cf627ef699e348",
+          "sourceGeometryChecksum": "2a08bb80c5b324397f4f8a396a4bab02d2ff25a4030ebdf891f7dcfe4fb94f52"
+        }
+      ],
+      "expectedTargetFingerprint": "a1df46a322f53d144478a18b2ed7463886c12cb8d40a5f3ae9a04036a346c722",
+      "actualTargetFingerprint": "a1df46a322f53d144478a18b2ed7463886c12cb8d40a5f3ae9a04036a346c722",
+      "replacementFingerprint": "b8a7978ed8ed6384ef0c6766641830eb68d1f97f46b6c1dd750821a4b748569d",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-04",
+      "category": "correctness",
+      "contentCorrectionId": "CC-04",
+      "outcome": "assertedFormulaReference",
+      "target": {
+        "kind": "formulaReference",
+        "sectionIds": [
+          "o0067-24-week-2-5"
+        ],
+        "blockIds": [
+          "formula-p032-l0017",
+          "formula-p032-l0019-21",
+          "formula-p032-l0023-25"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 32,
+          "lineIndexes": [
+            17,
+            19,
+            20,
+            21,
+            23,
+            24,
+            25
+          ],
+          "sourceSpanIds": [
+            "p032-s00026",
+            "p032-s00027",
+            "p032-s00028",
+            "p032-s00029",
+            "p032-s00030",
+            "p032-s00031",
+            "p032-s00032",
+            "p032-s00036",
+            "p032-s00037",
+            "p032-s00038",
+            "p032-s00039",
+            "p032-s00043",
+            "p032-s00044",
+            "p032-s00045",
+            "p032-s00046"
+          ],
+          "sourceChecksum": "c8db5ccc405dcda619a91a2e66b4cb4b9ff8db7250a5db5652d0fda4f90e6568",
+          "sourceGeometryChecksum": "9584e8adc660c65d629bce5c2ab476586ee0ec04d67fabc9de0ec6d99a9b60ee"
+        }
+      ],
+      "expectedTargetFingerprint": "cce8400b57b946a987bf1f85a47709e8c8d7c061c10241b5583b239630ec15f8",
+      "actualTargetFingerprint": "cce8400b57b946a987bf1f85a47709e8c8d7c061c10241b5583b239630ec15f8",
+      "replacementFingerprint": "15f2762439a2e2e5f00259564f2b2707e885da857b26032c1fcc57fb3e6f712c",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-05",
+      "category": "correctness",
+      "contentCorrectionId": "CC-05",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0144-wx-b"
+        ],
+        "blockIds": [
+          "body-01518"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 63,
+          "lineIndexes": [
+            17
+          ],
+          "sourceSpanIds": [
+            "p063-s00019"
+          ],
+          "sourceChecksum": "3089b03fd7f1cea0bf5c12a86d3d4081c15d20ce8af6644786bfc0a05e4bb338",
+          "sourceGeometryChecksum": "3c170928127b720b5a773d3a406c11a4ae1b3d7606357110b237b06095c4b074"
+        }
+      ],
+      "expectedTargetFingerprint": "72ea05419f31a2ffb6ff25aec0e521beb8c128a3cb0982d3be29b028375f3001",
+      "actualTargetFingerprint": "72ea05419f31a2ffb6ff25aec0e521beb8c128a3cb0982d3be29b028375f3001",
+      "replacementFingerprint": "bf41996677ee69146ba515474742544e818bc0a170c78792ddba79e357f7646d",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-06",
+      "category": "correctness",
+      "contentCorrectionId": "CC-06",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0128-37-python-neuron",
+          "o0129-38-layer"
+        ],
+        "blockIds": [
+          "body-01342",
+          "body-01380"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 58,
+          "lineIndexes": [
+            6
+          ],
+          "sourceSpanIds": [
+            "p058-s00006"
+          ],
+          "sourceChecksum": "a9c8e7dbf48c0f9ddaff29ab8e231f1e95df12c7ee52ccbc937e21487b85d0b4",
+          "sourceGeometryChecksum": "c5da5a5c3eedd62147fff1395d24082c89398a97b6aaa78e1dcfc5c88a4af301"
+        },
+        {
+          "kind": "pageLines",
+          "pdfPage": 59,
+          "lineIndexes": [
+            8
+          ],
+          "sourceSpanIds": [
+            "p059-s00008"
+          ],
+          "sourceChecksum": "70d76680106cdd556152a95a9a36e9764e22ccf583253786e9f3279a44021dac",
+          "sourceGeometryChecksum": "97f4cd94a4ec7a74604eb83c94452eab8df39cd03caf03feae958f9aa606caa8"
+        }
+      ],
+      "expectedTargetFingerprint": "19c250a5f563f1299e5b1dbdb76ffd4bde461a393bc46999ddc3c81d9d7a5211",
+      "actualTargetFingerprint": "19c250a5f563f1299e5b1dbdb76ffd4bde461a393bc46999ddc3c81d9d7a5211",
+      "replacementFingerprint": "42de3f96546f6d591a26cc925fdf0c95bc1bc66c481e75fe841d36dc99ed96ab",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-07",
+      "category": "correctness",
+      "contentCorrectionId": "CC-07",
+      "outcome": "applied",
+      "target": {
+        "kind": "list",
+        "sectionIds": [
+          "o0162-54-week-3-7"
+        ],
+        "blockIds": [
+          "list-body-01709"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 68,
+          "lineIndexes": [
+            51
+          ],
+          "sourceSpanIds": [
+            "p068-s00053",
+            "p068-s00054",
+            "p068-s00055"
+          ],
+          "sourceChecksum": "5e0b59aa7ce67265d8e89c392eca2c1c91cbf99055b84dee1deff4cf606d3283",
+          "sourceGeometryChecksum": "9b55e424e49ec1a048b1faab9bf0df93827d93aaee09d5a79db33e014ff1b68e"
+        }
+      ],
+      "expectedTargetFingerprint": "380f3afa10c5c41404dcaf7cb5d2e07090aacb2bce82fd2ca36de334bb99ba99",
+      "actualTargetFingerprint": "380f3afa10c5c41404dcaf7cb5d2e07090aacb2bce82fd2ca36de334bb99ba99",
+      "replacementFingerprint": "d5a46b333b74c78d7ae0b52d8045c101f3593820be079ad555b20af95fbceeb5",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-08",
+      "category": "correctness",
+      "contentCorrectionId": "CC-08",
+      "outcome": "assertedFormulaReference",
+      "target": {
+        "kind": "formulaReference",
+        "sectionIds": [
+          "o0170-backpropagation"
+        ],
+        "blockIds": [
+          "formula-math-p072-g000"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 72,
+          "lineIndexes": [
+            19
+          ],
+          "sourceSpanIds": [
+            "p072-s00021",
+            "p072-s00022",
+            "p072-s00023",
+            "p072-s00024",
+            "p072-s00025",
+            "p072-s00026",
+            "p072-s00027",
+            "p072-s00028",
+            "p072-s00029"
+          ],
+          "sourceChecksum": "a2d1fc5ba9a47d3b7e53a9be591aa2f2607d12b83be862a09d3811dc406f3c42",
+          "sourceGeometryChecksum": "f350fe496197832cbf7cb01d7fc7f18dcd4b307a01539db35072df3022e66f1b"
+        }
+      ],
+      "expectedTargetFingerprint": "9adc8539d9019977db7747c94d4aae12f0589daf12bb8952483ab7435045d452",
+      "actualTargetFingerprint": "9adc8539d9019977db7747c94d4aae12f0589daf12bb8952483ab7435045d452",
+      "replacementFingerprint": "6ab7190328b72b71f264512d89a6040629ec294031775c09e407790d59e5b435",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-09",
+      "category": "correctness",
+      "contentCorrectionId": "CC-09",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0184-4-local-derivative"
+        ],
+        "blockIds": [
+          "body-01932"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 76,
+          "lineIndexes": [
+            16
+          ],
+          "sourceSpanIds": [
+            "p076-s00043"
+          ],
+          "sourceChecksum": "9b51f359341a87f499677dd3a0479fe9956b9a31d1d0727ccabbdf41b532f621",
+          "sourceGeometryChecksum": "969300b154a9362457a03a4566180ecc9ec0c33b655b990e09296e3d96881d4d"
+        }
+      ],
+      "expectedTargetFingerprint": "24b13c18af8186726f429aa61bf90cbd3c9378f3fa52500c85348195ec19a191",
+      "actualTargetFingerprint": "24b13c18af8186726f429aa61bf90cbd3c9378f3fa52500c85348195ec19a191",
+      "replacementFingerprint": "bb1b89c23a82cc1ca1f58a9137a43549a7596871579604dbf6917e70ca0b122d",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-10",
+      "category": "correctness",
+      "contentCorrectionId": "CC-10",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0206-4-tensor-layer"
+        ],
+        "blockIds": [
+          "body-02252"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 87,
+          "lineIndexes": [
+            21
+          ],
+          "sourceSpanIds": [
+            "p087-s00080",
+            "p087-s00081",
+            "p087-s00082"
+          ],
+          "sourceChecksum": "a41df04dcc8411fce5187f3f409634140d3ed03503dc987951e81500959ab25c",
+          "sourceGeometryChecksum": "3d975c4e2c6ddbbcdda1498c9fd687553271518f19755381fc57a606c3a559ae"
+        }
+      ],
+      "expectedTargetFingerprint": "ba848790b401e1fc3aed9ec720295f60e658c241e13a3f419dc1e9e31b52c60f",
+      "actualTargetFingerprint": "ba848790b401e1fc3aed9ec720295f60e658c241e13a3f419dc1e9e31b52c60f",
+      "replacementFingerprint": "267f3f281f1c95e5c89fa592d2bcce5b19631c64a009f63bb70e930af741ad98",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-11",
+      "category": "correctness",
+      "contentCorrectionId": "CC-11",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0212-10-parameter"
+        ],
+        "blockIds": [
+          "body-02344"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 90,
+          "lineIndexes": [
+            13,
+            14,
+            15
+          ],
+          "sourceSpanIds": [
+            "p090-s00026",
+            "p090-s00027",
+            "p090-s00028",
+            "p090-s00029",
+            "p090-s00030",
+            "p090-s00031",
+            "p090-s00032",
+            "p090-s00033"
+          ],
+          "sourceChecksum": "e32583224ae7916c19c590f46b156dcc239382797e8529c13990f822cd5f1e67",
+          "sourceGeometryChecksum": "bcaa224e06c7cb59bad543b493b6c48abfb9522d45eec600ad42d9415d2fa9f3"
+        }
+      ],
+      "expectedTargetFingerprint": "43ed88178a6493c95de132ab8d6b969ffecc940733af1c13b42cb3c3303d7d0f",
+      "actualTargetFingerprint": "43ed88178a6493c95de132ab8d6b969ffecc940733af1c13b42cb3c3303d7d0f",
+      "replacementFingerprint": "7b44d381d2a90ef2b3ad4dd92b419ef35e198fb48e46091ee26f21ff9743c31e",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-12",
+      "category": "correctness",
+      "contentCorrectionId": "CC-12",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0228-3-embedding-matrix"
+        ],
+        "blockIds": [
+          "body-02526"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 95,
+          "lineIndexes": [
+            47
+          ],
+          "sourceSpanIds": [
+            "p095-s00072",
+            "p095-s00073",
+            "p095-s00074"
+          ],
+          "sourceChecksum": "3f24dc01b3e7b06a878396d7da3e28f21c48b9a84d708b1b03593e0c3acbbec3",
+          "sourceGeometryChecksum": "cccf6b4db0d9332a49d90e7c88208d9ee9819795e1ebde899c0ac50030d45e60"
+        }
+      ],
+      "expectedTargetFingerprint": "8944fb394f1cbdb9d2dbeb420a6daa8d57ee5804fd6dd308bce56903212bcb07",
+      "actualTargetFingerprint": "8944fb394f1cbdb9d2dbeb420a6daa8d57ee5804fd6dd308bce56903212bcb07",
+      "replacementFingerprint": "5852fc72bfc3ecee2b602f61538f827dfe3ba2433ca203543b5cbbef828885d8",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-13",
+      "category": "correctness",
+      "contentCorrectionId": "CC-13",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0228-3-embedding-matrix"
+        ],
+        "blockIds": [
+          "body-02535"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 96,
+          "lineIndexes": [
+            1
+          ],
+          "sourceSpanIds": [
+            "p096-s00001",
+            "p096-s00002",
+            "p096-s00003"
+          ],
+          "sourceChecksum": "81c1234681557e2a5fba1cf6920b58102df33db5f85d8e2c394fb0295df217c5",
+          "sourceGeometryChecksum": "a4fed46f22d719d3f54bf06c47d1e616efd105406e2ac25859cf982feb054cc8"
+        }
+      ],
+      "expectedTargetFingerprint": "5397129a9b9c9177d6de628f075029cc8e10dc14b935e9c045e4c2f2c7f82241",
+      "actualTargetFingerprint": "5397129a9b9c9177d6de628f075029cc8e10dc14b935e9c045e4c2f2c7f82241",
+      "replacementFingerprint": "72d9a6f62a51a44ae5a0b52ffd82b521e79f00b74aba5872cf7d3007fdf1f608",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-14",
+      "category": "correctness",
+      "contentCorrectionId": "CC-14",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0235-8-input-target"
+        ],
+        "blockIds": [
+          "body-02608"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 98,
+          "lineIndexes": [
+            12
+          ],
+          "sourceSpanIds": [
+            "p098-s00016",
+            "p098-s00017",
+            "p098-s00018",
+            "p098-s00019",
+            "p098-s00020"
+          ],
+          "sourceChecksum": "00786ab561f7ae16a46363497bc96a8ba4d0fe95937c36b67ffe061b1c74c4f2",
+          "sourceGeometryChecksum": "2bfee90d86ef4375870099410c6d205497bedb3fa76167580930b296f13b40b3"
+        }
+      ],
+      "expectedTargetFingerprint": "f3bff9177a230447555d37845cf4bd2e38bb30a00988ea8d51fbd8c8fa72275a",
+      "actualTargetFingerprint": "f3bff9177a230447555d37845cf4bd2e38bb30a00988ea8d51fbd8c8fa72275a",
+      "replacementFingerprint": "2702d32842cbcff0f56412f70b265c40d308fc41881276e2bebaa55c5c7d96d4",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-15",
+      "category": "correctness",
+      "contentCorrectionId": "CC-15",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0270-10-gpt-causal-mask"
+        ],
+        "blockIds": [
+          "body-02881"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 108,
+          "lineIndexes": [
+            27
+          ],
+          "sourceSpanIds": [
+            "p108-s00051"
+          ],
+          "sourceChecksum": "069dfbbcb55ca6bb2bdaa6af500221e3ffdf82fb4fb5bc3c582db2012ced9bf1",
+          "sourceGeometryChecksum": "d99533cb30265e32402936d77f091ec9dcd10df14c839a8e3528a4f203e8771e"
+        }
+      ],
+      "expectedTargetFingerprint": "9fbddbade618f98c715728437edd1df6c70d1c0633fa3c327d4e1ab5d151785b",
+      "actualTargetFingerprint": "9fbddbade618f98c715728437edd1df6c70d1c0633fa3c327d4e1ab5d151785b",
+      "replacementFingerprint": "93408c3bb487d12860c09de480aca4d562fcef5af191f57ed31a8beb66751da3",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-16",
+      "category": "correctness",
+      "contentCorrectionId": "CC-16",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0286-week-8"
+        ],
+        "blockIds": [
+          "body-02959",
+          "body-02960",
+          "body-02961",
+          "body-02962",
+          "body-02963",
+          "body-02964",
+          "body-02965",
+          "body-02966",
+          "body-02967",
+          "body-02968",
+          "body-02969"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 113,
+          "lineIndexes": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "sourceSpanIds": [
+            "p113-s00005",
+            "p113-s00006",
+            "p113-s00007",
+            "p113-s00008",
+            "p113-s00009",
+            "p113-s00010",
+            "p113-s00011",
+            "p113-s00012",
+            "p113-s00013",
+            "p113-s00014",
+            "p113-s00015"
+          ],
+          "sourceChecksum": "f1450a4ef2c4a35376a51cd5749c8045575d2e2d70b804266d23af285a379793",
+          "sourceGeometryChecksum": "2580f3775473965d559516bf8ab1eb95a3064d06440ded68e1c36b82a5888194"
+        }
+      ],
+      "expectedTargetFingerprint": "98fd34166b175b4402c5747234fb0d7890f3586393d793bdf08de92b90fec4eb",
+      "actualTargetFingerprint": "98fd34166b175b4402c5747234fb0d7890f3586393d793bdf08de92b90fec4eb",
+      "replacementFingerprint": "45bff56a4cb9f3aec9504ada313b97234ab2d5c1c975076afa6bd96acffef7c9",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-17",
+      "category": "correctness",
+      "contentCorrectionId": "CC-17",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0289-attention"
+        ],
+        "blockIds": [
+          "body-02988",
+          "body-02991"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 113,
+          "lineIndexes": [
+            37,
+            38,
+            39
+          ],
+          "sourceSpanIds": [
+            "p113-s00057",
+            "p113-s00058",
+            "p113-s00059"
+          ],
+          "sourceChecksum": "3692e7a00e371dba5ff9b6e8983619a799c7973065b82e1420f33c20c1fd414d",
+          "sourceGeometryChecksum": "42a984390916dc4aa6db1ea70e00dab27fa78b82e786065f960424922691f408"
+        },
+        {
+          "kind": "pageLines",
+          "pdfPage": 114,
+          "lineIndexes": [
+            1,
+            2
+          ],
+          "sourceSpanIds": [
+            "p114-s00001",
+            "p114-s00002"
+          ],
+          "sourceChecksum": "ef45e6e81a4fd6f1b54c7197a03a2b98af10525f9e22e74010a2e203af1f6b0d",
+          "sourceGeometryChecksum": "28d67fc9f7274265c09052a800513aa935fc772c739ea4ab24ff5546ba43df7f"
+        }
+      ],
+      "expectedTargetFingerprint": "e2e55cdce3df3ac6582ef92079d054e28b6a0b138987358de6115f484f6a8660",
+      "actualTargetFingerprint": "e2e55cdce3df3ac6582ef92079d054e28b6a0b138987358de6115f484f6a8660",
+      "replacementFingerprint": "08060e76a76b462cdd3b2c3fe41a96e5693625c9df5b1c5438ae14ff1a821b7c",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-18",
+      "category": "correctness",
+      "contentCorrectionId": "CC-18",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0308-13-transformer-output-vocabulary-logits"
+        ],
+        "blockIds": [
+          "body-03151"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 118,
+          "lineIndexes": [
+            42
+          ],
+          "sourceSpanIds": [
+            "p118-s00070"
+          ],
+          "sourceChecksum": "6b122894b45b95aa00b7e70ae450486a91fa55f9b6fab13d62c67b733bb94f0d",
+          "sourceGeometryChecksum": "646542b46a76df61b8fd0fb082dc53933fbeba844f89c5b9ec115b428613a89c"
+        }
+      ],
+      "expectedTargetFingerprint": "623168c85bd74aaa5e060e6e6848d9e709b0a6135834ba6ae9d2eaa5ed923acf",
+      "actualTargetFingerprint": "623168c85bd74aaa5e060e6e6848d9e709b0a6135834ba6ae9d2eaa5ed923acf",
+      "replacementFingerprint": "65c7ec90165aa03374d893c85f39afcb38e53628941012d89091e91684a6e940",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-19",
+      "category": "correctness",
+      "contentCorrectionId": "CC-19",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0342-11-padding-attention-mask"
+        ],
+        "blockIds": [
+          "body-03382"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 125,
+          "lineIndexes": [
+            35,
+            36,
+            37,
+            38,
+            39
+          ],
+          "sourceSpanIds": [
+            "p125-s00053",
+            "p125-s00054",
+            "p125-s00055",
+            "p125-s00056",
+            "p125-s00057",
+            "p125-s00058",
+            "p125-s00059",
+            "p125-s00060",
+            "p125-s00061"
+          ],
+          "sourceChecksum": "7f1e7378cbdd3425d86e826e3d33a55945f12c8227d6b25fc5cd4940aa945028",
+          "sourceGeometryChecksum": "bb004ce7ee3e7ba05e20a6c4c14aa521558299441c50c34c0345a89d367128a4"
+        },
+        {
+          "kind": "pageLines",
+          "pdfPage": 126,
+          "lineIndexes": [
+            1,
+            2,
+            3
+          ],
+          "sourceSpanIds": [
+            "p126-s00001",
+            "p126-s00002",
+            "p126-s00003",
+            "p126-s00004",
+            "p126-s00005"
+          ],
+          "sourceChecksum": "0c824527321afd2fcf31c2d21f71e3218bcb859189eb6ffa3f068e5a2d55b76d",
+          "sourceGeometryChecksum": "6cf94fb170eb90380184b374a91f9b4deff653fa4630a7858824e8facec9e964"
+        }
+      ],
+      "expectedTargetFingerprint": "aab8f465f3a99ae557f99636bdc8aa38cc00f533ceeac34bbe1ac20986d5e960",
+      "actualTargetFingerprint": "aab8f465f3a99ae557f99636bdc8aa38cc00f533ceeac34bbe1ac20986d5e960",
+      "replacementFingerprint": "767763469fc8135df150ac377816fb5245f6bf5a87a239a7723c9ffd1f75725f",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-20",
+      "category": "correctness",
+      "contentCorrectionId": "CC-20",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0363-8-modulelist"
+        ],
+        "blockIds": [
+          "body-03699"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 134,
+          "lineIndexes": [
+            32,
+            33
+          ],
+          "sourceSpanIds": [
+            "p134-s00056",
+            "p134-s00057",
+            "p134-s00058",
+            "p134-s00059",
+            "p134-s00060",
+            "p134-s00061",
+            "p134-s00062"
+          ],
+          "sourceChecksum": "f1da683b4111846a281cb4a405c7811fbfd966d27398dbc1f706b874da9e3594",
+          "sourceGeometryChecksum": "1cb1baed809fb78a2078be309fe6294042f8751a5f0e3f0589d7e43f7d78602c"
+        }
+      ],
+      "expectedTargetFingerprint": "018f1887a0d69d70ebeac56d76847c818f914200f8640f270b9035c67b54db3e",
+      "actualTargetFingerprint": "018f1887a0d69d70ebeac56d76847c818f914200f8640f270b9035c67b54db3e",
+      "replacementFingerprint": "c6e555124b57c46693582e4c78c2dc47873850b1dc54857196b74119f80ef540",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-21",
+      "category": "correctness",
+      "contentCorrectionId": "CC-21",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0397-12-checkpoint"
+        ],
+        "blockIds": [
+          "body-04058"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 145,
+          "lineIndexes": [
+            32,
+            33,
+            34
+          ],
+          "sourceSpanIds": [
+            "p145-s00052",
+            "p145-s00053",
+            "p145-s00054",
+            "p145-s00055",
+            "p145-s00056",
+            "p145-s00057",
+            "p145-s00058"
+          ],
+          "sourceChecksum": "4a63d87544e0397afda6377d4940a3c7892c742d3bed72050e4fd47d01cea7d4",
+          "sourceGeometryChecksum": "fee42c69134e9d925bf80a16a2a77c3b53dd5ae95e15401dade214a51ec10fa7"
+        }
+      ],
+      "expectedTargetFingerprint": "ec6b3689e4692d188e23f38825c297c61b4b41c568c30a0d40e418036ae67c11",
+      "actualTargetFingerprint": "ec6b3689e4692d188e23f38825c297c61b4b41c568c30a0d40e418036ae67c11",
+      "replacementFingerprint": "fddfde22ba71b5d8225513f674cfe89fa04124c05f7e620ad99143776a7acf11",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-22",
+      "category": "correctness",
+      "contentCorrectionId": "CC-22",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0402-17-top-k-sampling"
+        ],
+        "blockIds": [
+          "body-04098"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 147,
+          "lineIndexes": [
+            4
+          ],
+          "sourceSpanIds": [
+            "p147-s00006",
+            "p147-s00007",
+            "p147-s00008"
+          ],
+          "sourceChecksum": "f47c6be8a2b013a9a7df30d4d9bf094bacd3ab5c40444426f9410bd6aae90130",
+          "sourceGeometryChecksum": "b92858498a051db5f48e950883769a2abfb2e62bda1f2d1f274a8f93a4b7a22c"
+        },
+        {
+          "kind": "pageLines",
+          "pdfPage": 147,
+          "lineIndexes": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sourceSpanIds": [
+            "p147-s00009",
+            "p147-s00010",
+            "p147-s00011",
+            "p147-s00012",
+            "p147-s00013",
+            "p147-s00014",
+            "p147-s00015",
+            "p147-s00016",
+            "p147-s00017",
+            "p147-s00018",
+            "p147-s00019",
+            "p147-s00020",
+            "p147-s00021",
+            "p147-s00022",
+            "p147-s00023",
+            "p147-s00024",
+            "p147-s00025",
+            "p147-s00026",
+            "p147-s00027",
+            "p147-s00028",
+            "p147-s00029",
+            "p147-s00030"
+          ],
+          "sourceChecksum": "cd04bc06ed5519c0fa66ea27d8290766b73723d51812ce5341e2ab8c663f6ec4",
+          "sourceGeometryChecksum": "9019708c4ab371033330671c20ac94d52816a8cdb01d3893d1b52459803d20b1"
+        }
+      ],
+      "expectedTargetFingerprint": "b84dd62dcccff681330d8711459a8c39cdb3b66313711818dcbe83fe34a8a5d2",
+      "actualTargetFingerprint": "b84dd62dcccff681330d8711459a8c39cdb3b66313711818dcbe83fe34a8a5d2",
+      "replacementFingerprint": "a474dc01cd3a33a469254dc795a7bb015f1781ca75679991e06710e76af0a391",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-23",
+      "category": "correctness",
+      "contentCorrectionId": "CC-23",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0230-5-embedding",
+          "o0425-11-embedding-rows"
+        ],
+        "blockIds": [
+          "body-02556",
+          "body-04366",
+          "body-04368"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 96,
+          "lineIndexes": [
+            26
+          ],
+          "sourceSpanIds": [
+            "p096-s00045"
+          ],
+          "sourceChecksum": "aeebfdcd9b83e3580b290f52e915c3d08a727a9aa1d7a8e4e9f16b3d0351bd29",
+          "sourceGeometryChecksum": "5525198aa9fcb051f2cf106bb815df9b44430edacd53c8767fa5a398d270c82e"
+        },
+        {
+          "kind": "pageLines",
+          "pdfPage": 154,
+          "lineIndexes": [
+            13
+          ],
+          "sourceSpanIds": [
+            "p154-s00019"
+          ],
+          "sourceChecksum": "b53c586143b897955da46b4ea0a52c53f3f6962d1e42a6c472d48c6934be74e8",
+          "sourceGeometryChecksum": "672ffb68d848d6a51758ed601c48d93f2dd6acea521a1aa5691d1751066d54c2"
+        },
+        {
+          "kind": "pageLines",
+          "pdfPage": 154,
+          "lineIndexes": [
+            15,
+            16,
+            17
+          ],
+          "sourceSpanIds": [
+            "p154-s00021",
+            "p154-s00022",
+            "p154-s00023"
+          ],
+          "sourceChecksum": "6fe3273366b4535c4b2cdde3636e466f9bcffae603aa42a0fa4bbb911788bea1",
+          "sourceGeometryChecksum": "036ef54fe40a1997d1894c2e6f299939a394325b02b92c17b0ced4b98f901e0c"
+        }
+      ],
+      "expectedTargetFingerprint": "e227b6e861424af335bc64702faa617339314c2769fdfeeb5634e387349ab58e",
+      "actualTargetFingerprint": "e227b6e861424af335bc64702faa617339314c2769fdfeeb5634e387349ab58e",
+      "replacementFingerprint": "90553bd1eaa4defba49b45b915983ed415bee2e6d2fdacfeeaf8e337b00a789d",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-24",
+      "category": "correctness",
+      "contentCorrectionId": "CC-24",
+      "outcome": "applied",
+      "target": {
+        "kind": "paragraph",
+        "sectionIds": [
+          "o0435-18-character-tokenizer-subword"
+        ],
+        "blockIds": [
+          "body-04472"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "pageLines",
+          "pdfPage": 157,
+          "lineIndexes": [
+            6,
+            7
+          ],
+          "sourceSpanIds": [
+            "p157-s00006",
+            "p157-s00007",
+            "p157-s00008",
+            "p157-s00009"
+          ],
+          "sourceChecksum": "b4ff48627e126e1e18dc373e903f0674950b54565f162c89eafa4785055f386c",
+          "sourceGeometryChecksum": "b0814757b9128682d7821f76bd04af5db3f75db54b61b67d3a0d9294f6493978"
+        }
+      ],
+      "expectedTargetFingerprint": "39a16bd59646e3d92a75d4a5497c904f149ac61b860c60725feabed6b03c1a62",
+      "actualTargetFingerprint": "39a16bd59646e3d92a75d4a5497c904f149ac61b860c60725feabed6b03c1a62",
+      "replacementFingerprint": "1a7e55863928800bf3eb4cf9d005a51a2ffb79ba81df2714c5db6123586ac583",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    },
+    {
+      "correctionId": "CC-25",
+      "category": "correctness",
+      "contentCorrectionId": "CC-25",
+      "outcome": "sourceOnlyNoop",
+      "target": {
+        "kind": "sourceOnlyNoop",
+        "sectionIds": [
+          "o0460-a-mini-gpt"
+        ],
+        "blockIds": [
+          "body-04576",
+          "code-appendix-a-mini-gpt"
+        ]
+      },
+      "sourceEvidence": [
+        {
+          "kind": "crossPageSelector",
+          "pageRange": [
+            161,
+            169
+          ],
+          "selector": "textRaw-includes-U+2011",
+          "lineIndexesByPage": {
+            "p161": [
+              0,
+              1,
+              4,
+              5,
+              25,
+              41,
+              49
+            ],
+            "p162": [
+              3,
+              5,
+              11,
+              14,
+              28,
+              30,
+              49,
+              50
+            ],
+            "p163": [
+              3,
+              5,
+              13,
+              21,
+              24,
+              30,
+              35
+            ],
+            "p164": [
+              1,
+              12,
+              28,
+              41,
+              49,
+              51,
+              53
+            ],
+            "p165": [
+              1,
+              4,
+              6,
+              12,
+              20,
+              30,
+              38
+            ],
+            "p166": [
+              1,
+              29,
+              42
+            ],
+            "p167": [
+              4,
+              6,
+              9
+            ],
+            "p168": [
+              45,
+              47
+            ],
+            "p169": [
+              14,
+              18,
+              20,
+              24,
+              25,
+              26,
+              27,
+              28,
+              29,
+              30,
+              31,
+              32,
+              33,
+              34,
+              35,
+              36,
+              37,
+              38,
+              39,
+              40,
+              41,
+              47,
+              48,
+              49,
+              50,
+              51,
+              52,
+              53,
+              56
+            ]
+          },
+          "sourceSpanIds": [
+            "p161-s00000",
+            "p161-s00001",
+            "p161-s00004",
+            "p161-s00005",
+            "p161-s00038",
+            "p161-s00118",
+            "p161-s00150",
+            "p162-s00006",
+            "p162-s00012",
+            "p162-s00052",
+            "p162-s00065",
+            "p162-s00110",
+            "p162-s00120",
+            "p162-s00164",
+            "p162-s00167",
+            "p162-s00175",
+            "p163-s00009",
+            "p163-s00015",
+            "p163-s00045",
+            "p163-s00066",
+            "p163-s00074",
+            "p163-s00093",
+            "p163-s00111",
+            "p164-s00003",
+            "p164-s00038",
+            "p164-s00103",
+            "p164-s00135",
+            "p164-s00168",
+            "p164-s00176",
+            "p164-s00190",
+            "p165-s00004",
+            "p165-s00014",
+            "p165-s00020",
+            "p165-s00042",
+            "p165-s00073",
+            "p165-s00087",
+            "p165-s00109",
+            "p166-s00002",
+            "p166-s00066",
+            "p166-s00090",
+            "p167-s00011",
+            "p167-s00021",
+            "p167-s00031",
+            "p168-s00120",
+            "p168-s00127",
+            "p169-s00044",
+            "p169-s00068",
+            "p169-s00075",
+            "p169-s00087",
+            "p169-s00095",
+            "p169-s00103",
+            "p169-s00111",
+            "p169-s00119",
+            "p169-s00127",
+            "p169-s00135",
+            "p169-s00143",
+            "p169-s00148",
+            "p169-s00151",
+            "p169-s00159",
+            "p169-s00167",
+            "p169-s00175",
+            "p169-s00183",
+            "p169-s00191",
+            "p169-s00199",
+            "p169-s00207",
+            "p169-s00215",
+            "p169-s00223",
+            "p169-s00242",
+            "p169-s00249",
+            "p169-s00254",
+            "p169-s00262",
+            "p169-s00270",
+            "p169-s00278",
+            "p169-s00286",
+            "p169-s00298"
+          ],
+          "sourceChecksum": "d738e50f29670ec57f26f1f33999608dfd0ea7abe6f19ea0d79b3200dcb29312",
+          "sourceGeometryChecksum": "f42023a6976106fc0708117bfd4716b841316929657a19b0dfc4b9762bd6854b"
+        }
+      ],
+      "expectedTargetFingerprint": "3555afd5e8200838625ef40a67bef1029eb21df34a063452b2ef944fb2ec6803",
+      "actualTargetFingerprint": "3555afd5e8200838625ef40a67bef1029eb21df34a063452b2ef944fb2ec6803",
+      "replacementFingerprint": "0508e93ca8c3c344b258a995797c2b7b485aae004c3e8ef5ded8f440144071cf",
+      "reviewer": "Codex content-correctness independent rereview",
+      "status": "reviewed"
+    }
+  ],
   "spanAccounting": {
     "positionedSpanCount": 42408,
     "assignedCount": 10762,
@@ -58885,11 +60841,11 @@
       },
       {
         "spanId": "p023-s00045",
-        "blockId": "body-00374"
+        "blockId": "formula-math-p023-g001"
       },
       {
         "spanId": "p023-s00046",
-        "blockId": "body-00375"
+        "blockId": "formula-math-p023-g001"
       },
       {
         "spanId": "p023-s00047",
@@ -59217,11 +61173,11 @@
       },
       {
         "spanId": "p025-s00035",
-        "blockId": "body-00417"
+        "blockId": "formula-math-p025-g005"
       },
       {
         "spanId": "p025-s00036",
-        "blockId": "body-00418"
+        "blockId": "formula-math-p025-g005"
       },
       {
         "spanId": "p025-s00037",
@@ -59285,11 +61241,11 @@
       },
       {
         "spanId": "p025-s00052",
-        "blockId": "body-00425"
+        "blockId": "formula-math-p025-g007"
       },
       {
         "spanId": "p025-s00053",
-        "blockId": "body-00426"
+        "blockId": "formula-math-p025-g007"
       },
       {
         "spanId": "p025-s00054",
@@ -288264,18 +290220,611 @@
     ]
   },
   "prosePreservation": {
+    "overview": {
+      "pageRange": [
+        10,
+        10
+      ],
+      "sourceTokenCount": 449,
+      "outputTokenCount": 449,
+      "sourceTokenChecksum": "e2069a2df6b912f51dd659c8ed5d2f9d111b48d0df225b5f54e0b83751d4c845",
+      "outputTokenChecksum": "e2069a2df6b912f51dd659c8ed5d2f9d111b48d0df225b5f54e0b83751d4c845",
+      "correctionProjectionIds": [],
+      "matches": true
+    },
+    "week1": {
+      "pageRange": [
+        11,
+        20
+      ],
+      "sourceTokenCount": 4593,
+      "outputTokenCount": 4593,
+      "sourceTokenChecksum": "ac25154a2ab104d1333b615c9c08608eadbe03ac05ac4d3436c2a2b06922d72a",
+      "outputTokenChecksum": "ac25154a2ab104d1333b615c9c08608eadbe03ac05ac4d3436c2a2b06922d72a",
+      "correctionProjectionIds": [
+        "formula:math-p012-g000",
+        "formula:math-p013-g000",
+        "formula:math-p013-g001",
+        "formula:math-p014-g000",
+        "formula:math-p014-g001",
+        "formula:math-p014-g002",
+        "formula:math-p014-g003",
+        "formula:math-p015-g000",
+        "formula:math-p015-g001",
+        "formula:math-p015-g002",
+        "formula:math-p015-g003",
+        "formula:math-p016-g000",
+        "formula:math-p016-g001",
+        "formula:math-p017-g000",
+        "formula:math-p017-g001",
+        "formula:math-p017-g002",
+        "formula:math-p017-g003",
+        "formula:math-p017-g004",
+        "formula:math-p018-g000",
+        "formula:math-p018-g001",
+        "formula:math-p018-g002",
+        "formula:math-p018-g003",
+        "formula:math-p020-g000",
+        "formula:math-p020-g001",
+        "formula:math-p020-g002",
+        "formula:math-p020-g003"
+      ],
+      "matches": true
+    },
     "week2": {
-      "sourceTokenCount": 3956,
-      "normalizedTokenCount": 3956,
-      "sourceTokenChecksum": "2aa668a91a5538319d52ba39a747d9a530dd433e84d9de9b54e3397c894768ea",
-      "normalizedTokenChecksum": "2aa668a91a5538319d52ba39a747d9a530dd433e84d9de9b54e3397c894768ea",
+      "pageRange": [
+        21,
+        35
+      ],
+      "sourceTokenCount": 4110,
+      "outputTokenCount": 4110,
+      "sourceTokenChecksum": "58b639dbcb53735178951554a94465f73b99e0ef97e4b94819acdf862511f69f",
+      "outputTokenChecksum": "58b639dbcb53735178951554a94465f73b99e0ef97e4b94819acdf862511f69f",
+      "correctionProjectionIds": [
+        "formula:math-p021-g000",
+        "formula:math-p021-g001",
+        "formula:math-p022-g000",
+        "formula:math-p022-g001",
+        "formula:math-p022-g002",
+        "formula:math-p022-g003",
+        "formula:math-p022-g004",
+        "formula:math-p023-g000",
+        "body-fraction-p023-gradient",
+        "formula:math-p024-g000",
+        "formula:math-p024-g001",
+        "formula:math-p025-g000",
+        "formula:math-p025-g001",
+        "formula:math-p025-g002",
+        "formula:math-p025-g003",
+        "formula:math-p025-g004",
+        "body-fraction-p025-chain-rule",
+        "formula:math-p025-g006",
+        "body-fraction-p025-result",
+        "formula:math-p026-g000",
+        "formula:math-p026-g001",
+        "formula:math-p026-g002",
+        "formula:math-p026-g003",
+        "formula:math-p026-g004",
+        "formula:math-p026-g005",
+        "formula:math-p026-g006",
+        "formula:math-p027-g000",
+        "formula:math-p027-g001",
+        "formula:math-p027-g002",
+        "formula:math-p029-g000",
+        "formula:math-p029-g001",
+        "formula:math-p029-g002",
+        "formula:math-p029-g003",
+        "formula:math-p029-g004",
+        "CC-02",
+        "CC-02",
+        "CC-02",
+        "CC-02",
+        "CC-02",
+        "CC-02",
+        "CC-02",
+        "CC-03",
+        "formula:math-p030-g000",
+        "formula:math-p030-g001",
+        "formula:math-p032-g000",
+        "formula:math-p032-g001",
+        "formula:math-p032-g002",
+        "formula:math-p032-g003",
+        "formula:math-p032-g004",
+        "formula:math-p033-g000",
+        "formula:math-p033-g001",
+        "formula:math-p033-g002",
+        "formula:math-p033-g003",
+        "formula:math-p033-g004",
+        "formula:math-p034-g000",
+        "formula:math-p034-g001",
+        "formula:math-p034-g002",
+        "formula:math-p034-g003",
+        "formula:math-p034-g004"
+      ],
       "matches": true
     },
     "week3": {
-      "sourceTokenCount": 7775,
-      "normalizedTokenCount": 7775,
-      "sourceTokenChecksum": "21fdd80f8a074ba7594d7531a0af5378e0173dac0749e2362226c70b25385097",
-      "normalizedTokenChecksum": "21fdd80f8a074ba7594d7531a0af5378e0173dac0749e2362226c70b25385097",
+      "pageRange": [
+        36,
+        73
+      ],
+      "sourceTokenCount": 7861,
+      "outputTokenCount": 7861,
+      "sourceTokenChecksum": "1586e35bd21290f67dd9de3849094f0407599a1f44efc2566ab0c0cc68c195d7",
+      "outputTokenChecksum": "1586e35bd21290f67dd9de3849094f0407599a1f44efc2566ab0c0cc68c195d7",
+      "correctionProjectionIds": [
+        "formula:math-p036-g000",
+        "formula:math-p036-g001",
+        "formula:math-p036-g002",
+        "formula:math-p036-g003",
+        "formula:math-p036-g004",
+        "formula:math-p037-g000",
+        "formula:math-p037-g001",
+        "formula:math-p037-g002",
+        "formula:math-p038-g000",
+        "formula:math-p038-g001",
+        "formula:math-p038-g002",
+        "formula:math-p039-g000",
+        "formula:math-p039-g001",
+        "formula:math-p039-g002",
+        "formula:math-p039-g003",
+        "formula:math-p040-g000",
+        "formula:math-p040-g001",
+        "formula:math-p040-g002",
+        "formula:math-p040-g003",
+        "formula:math-p040-g004",
+        "formula:math-p040-g005",
+        "formula:math-p040-g006",
+        "formula:math-p040-g007",
+        "formula:math-p041-g000",
+        "formula:math-p041-g001",
+        "formula:math-p041-g002",
+        "formula:math-p041-g003",
+        "formula:math-p041-g004",
+        "formula:math-p041-g005",
+        "formula:math-p041-g006",
+        "formula:math-p041-g007",
+        "formula:math-p041-g008",
+        "formula:math-p042-g000",
+        "formula:math-p042-g001",
+        "formula:math-p042-g002",
+        "formula:math-p043-g000",
+        "formula:math-p043-g001",
+        "formula:math-p043-g002",
+        "formula:math-p043-g003",
+        "formula:math-p044-g000",
+        "formula:math-p044-g001",
+        "formula:math-p044-g002",
+        "formula:math-p044-g003",
+        "formula:math-p044-g004",
+        "formula:math-p044-g005",
+        "formula:math-p045-g000",
+        "formula:math-p045-g001",
+        "formula:math-p045-g002",
+        "formula:math-p045-g003",
+        "formula:math-p045-g004",
+        "formula:math-p045-g005",
+        "formula:math-p045-g006",
+        "formula:math-p045-g007",
+        "formula:math-p045-g008",
+        "formula:math-p045-g009",
+        "formula:math-p045-g010",
+        "formula:math-p045-g011",
+        "formula:math-p045-g012",
+        "formula:math-p046-g000",
+        "formula:math-p046-g001",
+        "formula:math-p046-g002",
+        "formula:math-p046-g003",
+        "formula:math-p046-g004",
+        "formula:math-p046-g005",
+        "formula:math-p047-g000",
+        "formula:math-p047-g001",
+        "formula:math-p049-g000",
+        "formula:math-p049-g001",
+        "formula:math-p049-g002",
+        "formula:math-p049-g003",
+        "formula:math-p049-g004",
+        "formula:math-p049-g005",
+        "formula:math-p049-g006",
+        "formula:math-p050-g000",
+        "formula:math-p050-g001",
+        "formula:math-p050-g002",
+        "formula:math-p050-g003",
+        "formula:math-p050-g004",
+        "formula:math-p050-g005",
+        "formula:math-p050-g006",
+        "formula:math-p050-g007",
+        "formula:math-p050-g008",
+        "formula:math-p050-g009",
+        "formula:math-p050-g010",
+        "formula:math-p050-g011",
+        "formula:math-p051-g000",
+        "formula:math-p051-g001",
+        "formula:math-p051-g002",
+        "formula:math-p051-g003",
+        "formula:math-p051-g004",
+        "formula:math-p051-g005",
+        "formula:math-p051-g006",
+        "formula:math-p051-g007",
+        "formula:math-p051-g008",
+        "formula:math-p052-g000",
+        "formula:math-p052-g001",
+        "formula:math-p052-g002",
+        "formula:math-p052-g003",
+        "formula:math-p052-g004",
+        "formula:math-p052-g005",
+        "formula:math-p053-g000",
+        "formula:math-p054-g000",
+        "formula:math-p054-g001",
+        "formula:math-p054-g002",
+        "formula:math-p054-g003",
+        "formula:math-p054-g004",
+        "formula:math-p055-g000",
+        "formula:math-p055-g001",
+        "formula:math-p055-g002",
+        "formula:math-p056-g000",
+        "formula:math-p056-g001",
+        "formula:math-p056-g002",
+        "formula:math-p056-g003",
+        "formula:math-p056-g004",
+        "formula:math-p056-g005",
+        "formula:math-p057-g000",
+        "formula:math-p057-g001",
+        "CC-06",
+        "CC-06",
+        "formula:math-p060-g000",
+        "formula:math-p060-g001",
+        "formula:math-p061-g000",
+        "formula:math-p061-g001",
+        "formula:math-p061-g002",
+        "formula:math-p061-g003",
+        "formula:math-p061-g004",
+        "formula:math-p061-g005",
+        "formula:math-p062-g000",
+        "formula:math-p062-g001",
+        "formula:math-p062-g002",
+        "formula:math-p063-g000",
+        "formula:math-p063-g001",
+        "CC-05",
+        "formula:math-p064-g000",
+        "formula:math-p064-g001",
+        "formula:math-p064-g002",
+        "formula:math-p064-g003",
+        "formula:math-p064-g004",
+        "formula:math-p066-g000",
+        "formula:math-p067-g000",
+        "CC-07",
+        "formula:math-p069-g000",
+        "formula:math-p069-g001",
+        "formula:math-p069-g002",
+        "formula:math-p069-g003",
+        "formula:math-p069-g004",
+        "formula:math-p070-g000",
+        "formula:math-p070-g001",
+        "formula:math-p070-g002",
+        "formula:math-p070-g003",
+        "formula:math-p070-g004",
+        "formula:math-p070-g005",
+        "formula:math-p070-g006",
+        "formula:math-p070-g007",
+        "formula:math-p070-g008",
+        "formula:math-p070-g009",
+        "body-neuron-nodes-p071",
+        "body-neuron-nodes-p071",
+        "formula:math-p072-g000",
+        "formula:math-p072-g001",
+        "formula:math-p072-g002",
+        "formula:math-p073-g000"
+      ],
+      "matches": true
+    },
+    "week4": {
+      "pageRange": [
+        74,
+        84
+      ],
+      "sourceTokenCount": 4737,
+      "outputTokenCount": 4737,
+      "sourceTokenChecksum": "864b5e3db7ac2117fa9726adac7d582bed8ef051847088c7759b5cad80931d70",
+      "outputTokenChecksum": "864b5e3db7ac2117fa9726adac7d582bed8ef051847088c7759b5cad80931d70",
+      "correctionProjectionIds": [
+        "formula:math-p074-g000",
+        "formula:math-p074-g001",
+        "formula:math-p075-g000",
+        "formula:math-p075-g001",
+        "formula:math-p075-g002",
+        "formula:math-p075-g003",
+        "formula:math-p076-g000",
+        "formula:math-p076-g001",
+        "formula:math-p076-g002",
+        "formula:math-p076-g003",
+        "CC-09",
+        "formula:math-p076-g004",
+        "formula:math-p076-g005",
+        "formula:math-p077-g000",
+        "formula:math-p077-g001",
+        "formula:math-p077-g002",
+        "formula:math-p077-g003",
+        "formula:math-p077-g004",
+        "formula:math-p077-g005",
+        "formula:math-p077-g006",
+        "formula:math-p078-g000",
+        "formula:math-p078-g001",
+        "formula:math-p078-g002",
+        "formula:math-p078-g003",
+        "formula:math-p079-g000",
+        "formula:math-p079-g001",
+        "formula:math-p079-g002",
+        "formula:math-p079-g003",
+        "formula:math-p079-g004",
+        "formula:math-p079-g005",
+        "formula:math-p080-g000",
+        "formula:math-p080-g001",
+        "formula:math-p080-g002",
+        "formula:math-p080-g003",
+        "formula:math-p080-g004",
+        "formula:math-p080-g005",
+        "formula:math-p080-g006",
+        "formula:math-p080-g007",
+        "formula:math-p081-g000",
+        "formula:math-p081-g001",
+        "formula:math-p081-g002",
+        "formula:math-p081-g003",
+        "formula:math-p081-g004",
+        "formula:math-p081-g005",
+        "formula:math-p081-g006",
+        "formula:math-p082-g000",
+        "formula:math-p082-g001",
+        "formula:math-p083-g000",
+        "formula:math-p083-g001",
+        "formula:math-p083-g002",
+        "formula:math-p083-g003",
+        "formula:math-p084-g000",
+        "formula:math-p084-g001"
+      ],
+      "matches": true
+    },
+    "week5": {
+      "pageRange": [
+        85,
+        93
+      ],
+      "sourceTokenCount": 4174,
+      "outputTokenCount": 4174,
+      "sourceTokenChecksum": "f2027211284d551ba892159ea1838e2bf7d9ca490f0f024964cf45ad2efca0a9",
+      "outputTokenChecksum": "f2027211284d551ba892159ea1838e2bf7d9ca490f0f024964cf45ad2efca0a9",
+      "correctionProjectionIds": [
+        "formula:math-p086-g000",
+        "CC-10",
+        "formula:math-p088-g000",
+        "formula:math-p088-g001",
+        "formula:math-p088-g002",
+        "formula:math-p089-g000",
+        "formula:math-p089-g001",
+        "formula:math-p089-g002",
+        "formula:math-p090-g000",
+        "CC-11"
+      ],
+      "matches": true
+    },
+    "week6": {
+      "pageRange": [
+        94,
+        103
+      ],
+      "sourceTokenCount": 4251,
+      "outputTokenCount": 4251,
+      "sourceTokenChecksum": "fb3036d14a74c499d2379f52e62e02cfbcd59f238096018e3304a8e23194a88a",
+      "outputTokenChecksum": "fb3036d14a74c499d2379f52e62e02cfbcd59f238096018e3304a8e23194a88a",
+      "correctionProjectionIds": [
+        "formula:math-p095-g000",
+        "formula:math-p095-g001",
+        "formula:math-p095-g002",
+        "CC-12",
+        "CC-13",
+        "formula:math-p096-g000",
+        "CC-23",
+        "formula:math-p096-g001",
+        "formula:math-p097-g000",
+        "formula:math-p097-g001",
+        "CC-14",
+        "formula:math-p098-g000",
+        "formula:math-p099-g000",
+        "formula:math-p099-g001",
+        "formula:math-p099-g002",
+        "formula:math-p099-g003",
+        "formula:math-p099-g004",
+        "formula:math-p099-g005",
+        "formula:math-p102-g000"
+      ],
+      "matches": true
+    },
+    "week7": {
+      "pageRange": [
+        104,
+        112
+      ],
+      "sourceTokenCount": 4096,
+      "outputTokenCount": 4096,
+      "sourceTokenChecksum": "066ea69978534f868300df254ad234d25e6fd1d014b71d5e92bb346f2cae89d3",
+      "outputTokenChecksum": "066ea69978534f868300df254ad234d25e6fd1d014b71d5e92bb346f2cae89d3",
+      "correctionProjectionIds": [
+        "formula:math-p104-g000",
+        "formula:math-p104-g001",
+        "formula:math-p105-g000",
+        "formula:math-p105-g001",
+        "formula:math-p105-g002",
+        "inline-math-p105-g003",
+        "formula:math-p105-g004",
+        "formula:math-p105-g005",
+        "formula:math-p105-g006",
+        "formula:math-p106-g000",
+        "formula:math-p106-g001",
+        "formula:math-p106-g002",
+        "formula:math-p106-g003",
+        "formula:math-p106-g004",
+        "formula:math-p106-g005",
+        "formula:math-p106-g006",
+        "formula:math-p106-g007",
+        "formula:math-p107-g000",
+        "formula:math-p107-g001",
+        "formula:math-p107-g002",
+        "formula:math-p107-g003",
+        "formula:math-p107-g004",
+        "inline-math-p107-g005",
+        "inline-math-p107-g006",
+        "body-value-dv-p108",
+        "body-value-dv-p108",
+        "body-value-dv-p108",
+        "CC-15",
+        "formula:math-p108-g000",
+        "inline-math-p109-g000",
+        "formula:math-p109-g001",
+        "formula:math-p109-g002",
+        "formula:math-p110-g000",
+        "formula:math-p110-g001",
+        "formula:math-p110-g002",
+        "inline-math-p110-g003",
+        "formula:math-p110-g004",
+        "formula:math-p111-g000"
+      ],
+      "matches": true
+    },
+    "week8": {
+      "pageRange": [
+        113,
+        120
+      ],
+      "sourceTokenCount": 4106,
+      "outputTokenCount": 4106,
+      "sourceTokenChecksum": "1e68b2ad9490ef77f9ef38a9460c7e54a59cc17a223802d774c45dac9c21b243",
+      "outputTokenChecksum": "1e68b2ad9490ef77f9ef38a9460c7e54a59cc17a223802d774c45dac9c21b243",
+      "correctionProjectionIds": [
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-16",
+        "CC-17",
+        "CC-17",
+        "formula:math-p115-g000",
+        "formula:math-p115-g001",
+        "formula:math-p115-g002",
+        "formula:math-p115-g003",
+        "formula:math-p116-g000",
+        "inline-math-p116-g001",
+        "formula:math-p116-g002",
+        "formula:math-p116-g003",
+        "formula:math-p117-g000",
+        "formula:math-p117-g001",
+        "formula:math-p118-g000",
+        "CC-18"
+      ],
+      "matches": true
+    },
+    "week9": {
+      "pageRange": [
+        121,
+        128
+      ],
+      "sourceTokenCount": 3804,
+      "outputTokenCount": 3804,
+      "sourceTokenChecksum": "e6946e3d386586d693742061bf94894aac8988a5773db5e35a60b9af293a9a12",
+      "outputTokenChecksum": "e6946e3d386586d693742061bf94894aac8988a5773db5e35a60b9af293a9a12",
+      "correctionProjectionIds": [
+        "body-row42-p125",
+        "CC-19"
+      ],
+      "matches": true
+    },
+    "week10": {
+      "pageRange": [
+        129,
+        138
+      ],
+      "sourceTokenCount": 4114,
+      "outputTokenCount": 4114,
+      "sourceTokenChecksum": "68dd228f66385edb18248a9e4f0835cc481dcb3b078834cc1810ae7702bee869",
+      "outputTokenChecksum": "68dd228f66385edb18248a9e4f0835cc481dcb3b078834cc1810ae7702bee869",
+      "correctionProjectionIds": [
+        "formula:math-p130-g000",
+        "formula:math-p132-g000",
+        "CC-20",
+        "formula:math-p135-g000",
+        "formula:math-p135-g001",
+        "formula:math-p135-g002",
+        "formula:math-p135-g003",
+        "formula:math-p135-g004",
+        "formula:math-p135-g005",
+        "formula:math-p136-g000",
+        "formula:math-p137-g000",
+        "formula:math-p137-g001"
+      ],
+      "matches": true
+    },
+    "week11": {
+      "pageRange": [
+        139,
+        149
+      ],
+      "sourceTokenCount": 4706,
+      "outputTokenCount": 4706,
+      "sourceTokenChecksum": "b9f70003d77b51ef83ce6beaf0526d17df4b49b64c6c9876db586ce548cb194d",
+      "outputTokenChecksum": "b9f70003d77b51ef83ce6beaf0526d17df4b49b64c6c9876db586ce548cb194d",
+      "correctionProjectionIds": [
+        "formula:math-p139-g000",
+        "formula:math-p140-g000",
+        "formula:math-p140-g001",
+        "formula:math-p140-g002",
+        "formula:math-p140-g003",
+        "formula:math-p142-g000",
+        "formula:math-p142-g001",
+        "formula:math-p143-g000",
+        "CC-21",
+        "formula:math-p146-g000",
+        "formula:math-p146-g001",
+        "formula:math-p146-g002",
+        "formula:math-p147-g000",
+        "CC-22",
+        "inline-math-p149-g000"
+      ],
+      "matches": true
+    },
+    "week12": {
+      "pageRange": [
+        150,
+        160
+      ],
+      "sourceTokenCount": 4165,
+      "outputTokenCount": 4165,
+      "sourceTokenChecksum": "cda7f1db92a78c24a2cad15fea9f48aadeb371af94ff67f9e4c23cb05a40b1a8",
+      "outputTokenChecksum": "cda7f1db92a78c24a2cad15fea9f48aadeb371af94ff67f9e4c23cb05a40b1a8",
+      "correctionProjectionIds": [
+        "CC-23",
+        "CC-23",
+        "CC-24",
+        "formula:math-p160-g000"
+      ],
+      "matches": true
+    },
+    "appendixA": {
+      "pageRange": [
+        161,
+        170
+      ],
+      "sourceTokenCount": 4144,
+      "outputTokenCount": 4144,
+      "sourceTokenChecksum": "dbb37e28cc1b21aa8ab4145c6d52d6ca1d9d708d5497e9141bdff62e3744cb4b",
+      "outputTokenChecksum": "dbb37e28cc1b21aa8ab4145c6d52d6ca1d9d708d5497e9141bdff62e3744cb4b",
+      "correctionProjectionIds": [
+        "CC-25"
+      ],
       "matches": true
     }
   },

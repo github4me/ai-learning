@@ -1,6 +1,6 @@
 # PDF content conversion report
 
-Generated from the pinned source on 2026-09-03. This report is backed by the machine-readable conversion report in `src/content/conversion-report.generated.json`.
+Generated from the pinned source on 2026-09-04. This report is backed by the machine-readable conversion report in `src/content/conversion-report.generated.json`.
 
 ## Source and coverage
 
@@ -22,12 +22,14 @@ Generated from the pinned source on 2026-09-03. This report is backed by the mac
 
 Every independently detected candidate is joined to the immutable checked review ledger, which records its source fingerprint, physical page, reviewer, rationale, disposition, and structured target where applicable. Normalization does not create or overwrite review decisions. The validator also checks the 13 ledger-linked contact sheets and their 148-page cell/checksum index.
 
+The reviewed rendering authority contains exactly 371 structured formulas and 17 inline-math nodes. The correction ledger contains 16 body/inline records plus 25 correctness records: 41 correction-audit entries with 46 `pageLines` evidence objects and one `crossPageSelector`, split into 34 applied and 7 non-mutating records. Three assertion-only audit records target five formula blocks: four corrected formula-ledger entries plus the unchanged MSE context guard `formula-p032-l0017`; the guard is not itself a correction.
+
 ## Prose preservation
 
-- Week 2: 3956 normalized tokens; source/output checksum `2aa668a91a5538319d52ba39a747d9a530dd433e84d9de9b54e3397c894768ea`; match: true
-- Week 3: 7775 normalized tokens; source/output checksum `21fdd80f8a074ba7594d7531a0af5378e0173dac0749e2362226c70b25385097`; match: true
+- All 14 roots have exact correction-aware source/output token parity.
+- Root token evidence: overview=449, week1=4593, week2=4110, week3=7861, week4=4737, week5=4174, week6=4251, week7=4096, week8=4106, week9=3804, week10=4114, week11=4706, week12=4165, appendixA=4144
 
-The comparison projection applies Unicode NFC, whitespace tokenization, proven visual-line dehyphenation, removal of extraction NUL artifacts, and only U+2010/U+2011/U+2013/U+2212 to ASCII-hyphen compatibility. The source-side stream is independently rebuilt from every body line on physical pages 21-73; it does not use generated span assignments. Raw text and source span text remain unchanged in the checked-in compressed source audit.
+The comparison projection applies Unicode NFC, whitespace tokenization, proven visual-line dehyphenation, removal of extraction NUL artifacts, and only U+2010/U+2011/U+2013/U+2212 to ASCII-hyphen compatibility. The source-side stream is rebuilt from every body line on physical pages 10-170 and applies only the trust-pinned formula and course-correction projection owners; it does not use generated span assignments. Raw text and source span text remain unchanged in the checked-in compressed source audit.
 
 ## Appendix A
 
