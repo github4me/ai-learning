@@ -95,13 +95,14 @@ export const week06Revision: CuratedWeekRevision = {
   weekSlug: 'week-06',
   title: 'Week 6 - 从 Token 到最小语言模型：用一个例子理解预测',
   keyQuestion:
-    '模型怎样把“我 喜欢 AI”变成可训练的 next-token prediction，并逐个 token 生成？',
+    '模型怎样把“我 喜欢 AI”变成数字、根据上下文为每个候选打分，再通过训练提高正确 Token 的概率？',
   objectives: [
-    '区分 token、tokenizer、vocabulary、ID、embedding、logit 与 probability。',
-    '沿同一批数据追踪 [3,3] → [3,2] → [3,2,4] → [3,2,5] → [6,5]。',
-    '用 Bigram 看清交叉熵训练、最后位置生成，以及它为何需要 Attention。',
+    '区分 Token、Tokenizer、Vocabulary、Token ID、Embedding、Context Representation、Logit 与 Probability。',
+    '解释 Output Head 怎样通过 Dot Product 和 Bias 产生原始 Logits，并手算 Softmax 与 Cross Entropy。',
+    '沿同一批数据追踪 [3,3] → [3,2] → [3,2,4] → [3,2,5] → [6,5] → Scalar Loss。',
+    '用 Bigram 跑通训练与生成，再说明它为什么需要 Attention 才能读取更早的上下文。',
   ],
-  estimatedReadingMinutes: 65,
+  estimatedReadingMinutes: 100,
   sections: [
     section(
       'o0222-week-6',
@@ -114,6 +115,15 @@ export const week06Revision: CuratedWeekRevision = {
       [
         paragraph(
           '本周始终使用同一个 tokenizer 规则：按空格切分。固定词表、语料和维度不随章节改变。训练时模型同时学习六个“当前 token → 真实下一 token”问题；生成时则一次只追加一个 token。',
+        ),
+        callout(
+          '本周阅读方法',
+          [
+            paragraph(
+              '不要先背公式。每遇到一个概念，依次问：没有它会遇到什么问题、它接收什么输入并产生什么输出、它在整条训练链的哪个位置。Softmax 数值稳定性与 Perplexity 属于进阶补充；第一次阅读可以先掌握主线。',
+            ),
+          ],
+          'principle',
         ),
         table(['ID', 'Token'], vocabularyRows, '固定 Vocabulary（V=5）'),
         code(
@@ -169,6 +179,9 @@ targets = [[1,2],   [1,0],   [3,2]]`,
         paragraph(
           'Token 是 Tokenizer 交给模型处理的基本单位，不一定是完整单词，也可能是字符、subword 或 byte。本周为了能手算，Tokenizer 按空格切分。Vocabulary 是它允许使用的有限 token 清单；Token ID 是某个 token 在这份清单中的整数地址。',
         ),
+        paragraph(
+          '同一段文字在不同 Tokenizer 下可能产生不同数量的 Token。例如 learning 可能是一个 Token，也可能拆成 learn 与 ing。模型一次读取和生成的是 Token；切分方式会影响 sequence length、context 能容纳多少文字，以及训练和推理需要多少计算。真实 GPT 常用 subword 或 byte-level 方法，Week 9 再详细展开。',
+        ),
         table(
           ['原文', 'Tokens', 'IDs'],
           [
@@ -214,6 +227,9 @@ targets = [[1,2],   [1,0],   [3,2]]`,
         paragraph(
           'Embedding 把离散 ID 查成一个可学习的连续向量。这里的输入表是 nn.Embedding(V,C) = nn.Embedding(5,4)：五个 Vocabulary rows，每行四个 learned features。下面是明确标注的教学初始值，不是人工写好的词义。',
         ),
+        paragraph(
+          '如果直接把 ID 当普通数字，模型会被迫接受“猫=4 比 AI=2 大两倍”之类不存在的关系。ID 只回答去哪里查；Embedding 才提供后续神经网络可以组合、比较并通过 Gradient 微调的浮点特征。',
+        ),
         table(
           ['ID / Token', 'c₀', 'c₁', 'c₂', 'c₃'],
           embeddingRows,
@@ -226,6 +242,11 @@ targets = [[1,2],   [1,0],   [3,2]]`,
         paragraph(
           '例如 我 选择 E[0]=[0.20,-0.10,0.70,0.30]；猫 选择 E[4]=[-0.70,0.40,0.30,0.60]。训练会经由 Loss、Backpropagation 和 Optimizer 修改这些坐标。',
         ),
+        callout('地址与内容', [
+          paragraph(
+            'Token ID 像书架上的编号，Embedding 像从该位置取出的可修改资料卡。更换编号顺序不会改变词义；训练修改的是资料卡上的连续数值，而不是让 ID 3.2 之类的小数出现。',
+          ),
+        ]),
       ],
       [
         'Embedding 不是人工撰写的词义字典。',
@@ -289,6 +310,9 @@ nn.Embedding(5,4).weight.shape == [5,4]`,
         paragraph(
           'rank 是 axis 的数量；[3,2] 有两个 axis，axis size 分别是 3 和 2。N=3 是原句长度，右移后 T=N−1=2。Embedding 只接收 inputs，targets 仍是整数 ID。',
         ),
+        paragraph(
+          '看到 Shape 时不要只念字母。[3,2] 要读成“3 句话，每句话 2 个输入位置”；[3,2,4] 要读成“3 句话 × 每句话 2 个位置 × 每个位置 4 个连续特征”。',
+        ),
         code(
           'text',
           `raw IDs [B,N] = [[0,1,2], [4,1,0], [0,3,2]]  # [3,3]
@@ -336,75 +360,96 @@ targets [B,T] = [[1,2],   [1,0],   [3,2]]    # [3,2]
     ),
     section(
       'o0230-5-embedding',
-      '5. 一个 Embedding Row 怎样更新',
-      '初始 Embedding 是任意数值；需要把 batch、loss、backprop、lookup gradient 和 optimizer update 连成一条可见链路。',
+      '5. 先看完整路线：六个位置怎样走到一个 Loss',
+      '如果在理解模型输出和 Loss 之前就讨论 Embedding 更新，Gradient 会像凭空出现；先建立整条数据路线，后面再逐段计算。',
       [
-        '看见重复 token 的 gradient 如何汇总到同一参数 row。',
-        '区分这条 input-lookup gradient 路径与其他可能的参数更新路径。',
+        '知道每一阶段解决什么问题，以及主要 Shape 怎样变化。',
+        '暂时只追踪数据流，不要求提前掌握 Softmax、Cross Entropy 或 Backpropagation 的细节。',
       ],
       [
-        code(
-          'text',
-          `flatten(inputs) = [0,1,4,1,0,3]
-
-row 0（我）被选择两次：我→喜欢、我→学习
-row 1（喜欢）被选择两次
-row 3（学习）被选择一次
-row 4（猫）被选择一次
-row 2（AI）在 inputs 中被选择零次`,
+        paragraph(
+          '当前 batch 包含三句话，每句话提供两个 next-token 位置，因此模型一次要完成六道题。下面先像看地图一样看完整路线；后续章节会逐项解释每一条箭头。',
         ),
+        chain([
+          '文字按 Tokenizer 编码为 raw IDs [3,3]',
+          '右移得到 inputs [3,2] 与 targets [3,2]',
+          'inputs lookup 得到 Embeddings [3,2,4]',
+          'Context Model 整理每个位置的上下文特征 [3,2,4]',
+          'Output Head 为五个候选打分，得到 Logits [3,2,5]',
+          '把六道题排成 Logits [6,5] 与 Targets [6]',
+          'Cross Entropy 得到一个 Scalar Mean Loss',
+          'Backward 计算 Gradients，Optimizer 更新 Parameters',
+        ]),
         table(
-          ['ID / Token', 'c₀', 'c₁', 'c₂', 'c₃'],
-          embeddingRows,
-          '更新前仍使用同一 didactic initial [5,4] matrix',
+          ['阶段', 'Shape', '此时回答的问题'],
+          [
+            ['Token IDs', '[3,2]', '每个输入位置是哪一个 Token？'],
+            ['Embeddings', '[3,2,4]', '每个 Token 用哪些连续特征表示？'],
+            [
+              'Context Representation',
+              '[3,2,4]',
+              '结合当前可见上下文后，每个位置包含哪些内部证据？',
+            ],
+            ['Logits', '[3,2,5]', '每个位置怎样给五个候选打原始分？'],
+            [
+              'Flattened Questions',
+              '[6,5] 与 [6]',
+              '六道题各有哪些分数和正确 ID？',
+            ],
+            ['Mean Loss', 'scalar', '整个 batch 的预测平均有多差？'],
+          ],
         ),
         code(
           'text',
-          `E_before[0] = [ 0.20, -0.10, 0.70, 0.30]
-gradient    = [ 0.40, -0.20, 0.10, 0.00]
-η           = 0.10
+          `这一节只先记住：
 
-E_after[0]
-= E_before[0] - η × gradient
-= [0.16, -0.08, 0.69, 0.30]`,
+ID 是地址
+Embedding 是输入特征
+Context Representation 是整理后的上下文证据
+Logit 是每个候选的原始分数
+Softmax 把相对分数变成概率
+Cross Entropy 把正确答案的概率变成 Loss`,
         ),
-        callout('高级边界：这不是“没 lookup 就一定不更新”', [
+        callout('先不要提前背公式', [
           paragraph(
-            '上面的 gradient 是对六任务平均 loss backprop 后的教学示例，不能只由 corpus 推导。这里讨论独立、未与输出 head 绑权的 nn.Embedding(5,4) 的 input-lookup 路径：AI 虽出现在 targets，却未出现在 inputs，所以 E[2] 没有这一路的 lookup gradient。若权重绑定，输出路径可给出 dense gradients；decoupled weight decay 或已有 optimizer moments 也可能改变零 lookup-gradient 参数。',
+            '此时只需知道 Loss 最终会提供学习信号。等第 9 至 14 节解释 Logit、Softmax、Cross Entropy 和 Backward 后，再回看 Parameter Update，就能知道 Gradient 从哪里来，而不是只记一条更新公式。',
           ),
         ]),
       ],
       [
-        'rows 不按人类语义标签手工调整。',
-        '重复 token 不会新建第二 row；所有出现都贡献给同一 row。',
-        '“没有 lookup gradient”只描述这一路径，不能泛化为参数绝不会改变。',
+        '不要把 [3,2,4] 中的 C=4 与 [3,2,5] 中的 V=5 混为一谈。',
+        'Logit 还不是 Probability；Softmax 之后才得到总和为 1 的分布。',
+        'Loss 是整个 batch 的一个训练目标，不是模型生成的新 Token。',
       ],
-      check('哪些 rows 收到 input-lookup gradient？AI row 为什么没有？', [
+      check('为什么现在先不讨论 Embedding Row 怎样更新？', [
         paragraph(
-          '{0,1,3,4} 收到；ID 2 未出现在 inputs，只出现在 targets，因此 input lookup 没有选择 E[2]。',
+          '因为更新需要先知道 Loss 怎样产生以及 Gradient 怎样从 Loss 传回参数。先理解完整数据路线，之后的更新过程才有因果来源。',
         ),
       ]),
     ),
     section(
       'o0232-6-language-model',
-      '6. Language Model：根据上下文为所有候选分配概率',
-      '有了连续表示后，模型仍需回答：在当前上下文之后，词表中的哪一个 token 可能出现？',
+      '6. Language Model：先表示上下文，再给所有候选打分',
+      '有了 Token Embedding 仍不能直接得到下一词概率；模型需要先整理当前上下文，再说明每个候选依据什么获得原始分数。',
       [
-        '先用条件概率的直觉说明“已知左侧内容后预测下一个 token”。',
-        '明确模型输出的是整个 Vocabulary distribution，不是一个保证为真的答案。',
+        '把“理解当前上下文”和“给 Vocabulary candidates 打分”分成两个可追踪步骤。',
+        '理解 Context Representation h、每个候选的 Output Weight、Bias 与 Logit 各自负责什么。',
       ],
       [
         paragraph(
-          '条件概率先用一句话理解：在已经看到上下文后，某候选成为下一个 token 的相对可能性。Language Model 为每个 Vocabulary candidate 给出这一整张分布；高概率表示更符合训练中学到的模式，不保证内容真实。',
+          'Language Model 最终回答：在已经看到左侧内容后，Vocabulary 中每个候选成为下一个 Token 的可能性有多大。它不会从字符串一步跳到概率，而是先整理上下文特征，再为每个候选计算原始分数。',
         ),
         formula(
           String.raw`P(x_{t+1}\mid x_{\le t})`,
           '给定到位置 t 为止的左侧 token，预测下一 token 的条件概率。',
         ),
-        formula(
-          String.raw`\sum_{v=0}^{V-1}P(x_{t+1}=v\mid x_{\le t})=1`,
-          '五个 candidate 的条件概率必须加总为 1。',
-        ),
+        chain([
+          'Token IDs 查成 Input Embeddings',
+          'Context Model 整理允许看到的上下文',
+          '得到当前位置的 Context Representation h',
+          'Output Head 分别给五个候选计算 Logits',
+          'Softmax 把五个相对分数转换成 Probability Distribution',
+        ]),
         table(
           ['输入位置', '当前可见上下文（一般语言模型）', 'Target'],
           [
@@ -418,17 +463,43 @@ E_after[0]
           'B×T=3×2 的六道 next-token 分类题',
         ),
         paragraph(
-          '一般语言模型可使用可见的全部左侧上下文；第 13 节的 Bigram 是刻意简化的特殊模型，只使用当前 token。',
+          'Context Model 在每个位置产生一个内部向量 h。可以把 h 理解成模型从当前可见上下文整理出的证据。例如 h 的 Shape 是 [C]=[4]，表示这个位置当前有四个内部特征；它不是 Probability，也不是 Token ID。',
+        ),
+        paragraph(
+          'Vocabulary 中的每个候选都有自己的一组 Output Weights 和一个 Bias。候选 i 的评分规则是 z_i = w_i · h + b_i：h 描述当前上下文包含的证据，w_i 描述该候选怎样重视这些证据，b_i 提供该候选的基础偏移，结果 z_i 就是该候选的 Logit。',
+        ),
+        formula(
+          String.raw`z_i=w_i\cdot h+b_i=\sum_{c=0}^{C-1}w_{i,c}h_c+b_i`,
+          '候选 i 的四个 learned weights 与上下文的四个 features 对应相乘、求和，再加该候选的 bias。',
+        ),
+        table(
+          ['quantity', '本例 Shape', '负责回答'],
+          [
+            ['h', '[C]=[4]', '当前上下文整理出了哪些内部证据？'],
+            ['wᵢ', '[C]=[4]', '候选 i 怎样给每项证据加权？'],
+            ['bᵢ', 'scalar', '候选 i 的基础评分偏移是多少？'],
+            ['zᵢ', 'scalar', '候选 i 最终得到多少原始分？'],
+            ['z', '[V]=[5]', '五个候选的 Logits 按 Vocabulary 顺序排成什么？'],
+          ],
+        ),
+        callout('这些评分参数来自训练', [
+          paragraph(
+            'Output Weights 和 Biases 不是程序员写好的语言规则。模型刚创建时通常接近随机；Cross Entropy、Backward 与 Optimizer 会逐步调整它们，也会继续调整负责产生 h 的前面参数。',
+          ),
+        ]),
+        paragraph(
+          '一般语言模型可以让 h 使用全部可见左侧上下文；第 13 节的 Bigram 是刻意简化的 shortcut，它不显式构造这样的 h，而是只根据当前 Token ID 直接查出一行下一词 Logits。',
         ),
       ],
       [
-        'Language Model 输出的是完整分布，不只是 argmax token。',
-        'P(AI | 我 喜欢) 可以与 P(AI | 我) 完全不同。',
-        '概率描述模型分布，不是事实核验。',
+        'Context Representation、Logit 和 Probability 是三个不同阶段的量。',
+        '每个候选使用自己的评分 Weight；不是所有候选共享同一个 scalar score。',
+        'Logit 只表示相对原始分数，Softmax 之后才得到总和为 1 的分布。',
+        '高 Probability 表示更符合模型学到的模式，不保证内容真实。',
       ],
-      check('为什么“我→喜欢”和“我→学习”可以同时出现在训练集中？', [
+      check('候选“喜欢”的 Logit 是由哪些量计算出来的？', [
         paragraph(
-          '同一当前 token 可以在不同上下文或样本中有不同后续；模型学习的是分布而非为每个输入地址写一个永远唯一的答案。',
+          '由当前 Context Representation h、“喜欢”自己的 Output Weight w_喜欢 和 Bias b_喜欢 计算：z_喜欢 = w_喜欢 · h + b_喜欢。',
         ),
       ]),
     ),
@@ -541,48 +612,126 @@ T = N - 1 = 2`,
     ),
     section(
       'o0237-9-model-probability',
-      '9. Logits：模型先给五个候选打分',
-      '神经网络不能直接输出汉字；它先需要为同一份 Vocabulary 中每个候选给出可比较的原始分数。',
+      '9. Logits：完整手算五个候选的原始分数',
+      '直接给出 [0,2,1,-1,0] 会让 Logit 像人工填写的答案；必须从 Context Representation、Output Weights 与 Biases 逐项算出它。',
       [
-        '定义 logit 与输出轴 V，并把 embedding/context representation 映射到每个 token candidate。',
-        '理解 logit 不是 probability：可为负，且不要求和为 1。',
+        '手算 z_i = w_i · h + b_i，并把五次候选评分合并成一次 Matrix Multiplication。',
+        '理解参数从训练中获得，以及 Logit 的相对差距为什么会决定后续 Softmax Probability。',
       ],
       [
         paragraph(
-          '对一个预测位置，logit 向量的索引必须与固定词表顺序 [我, 喜欢, AI, 学习, 猫] 对齐。若上下文表示 h 有 C=4 个 features，常见 output head 把 [C] 映射为 [V]。',
-        ),
-        formula(
-          String.raw`z=Wh+b,\quad W\in\mathbb{R}^{V\times C},\quad [C]=[4]\to[V]=[5]`,
-          '输出层对四维 hidden vector 产生五个未经归一化的候选分数。',
+          '现在预测上下文“我”之后的 Token。假设经过 Input Embedding 和 Context Model 后，当前位置得到 h=[0.20,-0.10,0.70,0.30]。为了保持手算简单，本教学步骤暂时让 h 与“我”的输入 Embedding 相同；真实 Transformer 中的 h 通常已经融合上下文并被多层网络改变。',
         ),
         table(
-          ['Token ID', 'Token', 'logit z'],
+          ['Context feature', 'h value', '怎样理解'],
           [
-            ['0', '我', '0'],
-            ['1', '喜欢', '2'],
-            ['2', 'AI', '1'],
-            ['3', '学习', '-1'],
-            ['4', '猫', '0'],
+            ['h₀', '0.20', '第 0 个 learned context feature'],
+            ['h₁', '-0.10', '第 1 个 learned context feature'],
+            ['h₂', '0.70', '第 2 个 learned context feature'],
+            ['h₃', '0.30', '第 3 个 learned context feature'],
           ],
-          '上下文“我”的固定 labelled logits example；候选顺序不可改变',
+          '这些 feature 没有预先指定的人类语义名称',
+        ),
+        paragraph(
+          '输出层为 Vocabulary 中的每个候选保存一行 Output Weights 和一个 Bias。每一行都像一条可学习的评分规则：把同一个 h 的四项证据按该候选自己的方式加权，然后求和。',
         ),
         formula(
-          String.raw`z=[0,2,1,-1,0]`,
-          '喜欢得分最高，但 2 是 score，不是 200% probability。',
+          String.raw`z_i=w_i\cdot h+b_i=h_0w_{i,0}+h_1w_{i,1}+h_2w_{i,2}+h_3w_{i,3}+b_i`,
+          '候选 i 的四项 context features 与它自己的四项 weights 对应相乘、求和，再加 bias。',
+        ),
+        table(
+          ['候选', 'Output Weight wᵢ', 'Bias bᵢ', '代入计算', 'Logit'],
+          [
+            ['我', '[1,0,0,0]', '-0.2', '1(0.2)−0.2', '0'],
+            ['喜欢', '[0,1,2,2]', '0.1', '−0.1+2(0.7)+2(0.3)+0.1', '2'],
+            ['AI', '[0,0,1,1]', '0', '0.7+0.3', '1'],
+            ['学习', '[0,3,−1,0]', '0', '3(−0.1)−0.7', '−1'],
+            ['猫', '[1,2,0,0]', '0', '0.2+2(−0.1)', '0'],
+          ],
+          '教学用 Output Head 参数；真实参数由训练得到',
+        ),
+        paragraph(
+          '例如“喜欢”的评分完整展开为 0×0.20 + 1×(−0.10) + 2×0.70 + 2×0.30 + 0.10 = 2。这里没有任何一步在直接查“正确答案”；只是当前 h 与“喜欢”的 learned scoring weights 组合后得到较高总分。',
         ),
         formula(
-          String.raw`[B,T,C]=[3,2,4]\to[B,T,V]=[3,2,5]`,
-          '每个 batch、时间位置都有一个五-token logit vector。',
+          String.raw`z=[z_{\text{我}},z_{\text{喜欢}},z_{\text{AI}},z_{\text{学习}},z_{\text{猫}}]=[0,2,1,-1,0]`,
+          '按固定 Vocabulary 顺序组合五次评分，得到长度 V=5 的 Logit Vector。',
+        ),
+        code(
+          'python',
+          `import torch
+
+# 当前上下文的四个内部特征
+h = torch.tensor([
+    0.20,
+    -0.10,
+    0.70,
+    0.30,
+])  # [C] = [4]
+
+# 每一行是一个候选 Token 的 scoring weights
+W_out = torch.tensor([
+    [1.0, 0.0,  0.0, 0.0],  # 我
+    [0.0, 1.0,  2.0, 2.0],  # 喜欢
+    [0.0, 0.0,  1.0, 1.0],  # AI
+    [0.0, 3.0, -1.0, 0.0],  # 学习
+    [1.0, 2.0,  0.0, 0.0],  # 猫
+])  # [V,C] = [5,4]
+
+bias = torch.tensor([
+    -0.2,
+     0.1,
+     0.0,
+     0.0,
+     0.0,
+])  # [V] = [5]
+
+logits = W_out @ h + bias
+print(logits)
+# tensor([0., 2., 1., -1., 0.])`,
+        ),
+        paragraph(
+          '手算时分别完成五个 Dot Products；矩阵 W_out 把五行评分规则排在一起，所以 W_out @ h + bias 可以一次产生五个候选分数。Bias [5] 为每个候选提供一个与当前 h 无关的可学习基础偏移。',
+        ),
+        formula(
+          String.raw`W_{\mathrm{out}}\in\mathbb{R}^{V\times C},\quad h\in\mathbb{R}^{C},\quad z=W_{\mathrm{out}}h+b\in\mathbb{R}^{V}`,
+          '[5,4] matrix 乘 [4] context vector，再加 [5] bias，产生 [5] logits。',
+        ),
+        formula(
+          String.raw`H:[B,T,C]\quad\to\quad H W_{\mathrm{out}}^{\mathsf T}+b:[B,T,V]`,
+          '对整个 batch 的每一个时间位置应用同一 Output Head：[3,2,4] 变成 [3,2,5]。',
+        ),
+        code(
+          'python',
+          `# H: [B,T,C] = [3,2,4]
+# W_out.T: [C,V] = [4,5]
+logits = H @ W_out.T + bias
+# logits: [B,T,V] = [3,2,5]`,
+        ),
+        callout('分数来自训练，不是人工语言规则', [
+          paragraph(
+            '上表参数只用于精确复现本周固定数字。真实模型初始化时 W_out、bias 和产生 H 的参数通常接近随机；Cross Entropy 产生 Gradient，Optimizer 再调整这些参数。训练久了，模型才逐渐学会什么样的上下文证据应让某个候选获得更高相对分数。',
+          ),
+        ]),
+        paragraph(
+          'Logit 对 Softmax 重要，是因为 Softmax 使用候选之间的差距。若两个 Logits 相差 1，它们在 Softmax 后的概率比是 e¹≈2.718；如果只把“喜欢”的 Logit 提高，它相对其他候选的概率会增加。若给全部 Logits 同时加 100，差距不变，Probability 也不变。',
+        ),
+        formula(
+          String.raw`\frac{p_i}{p_j}=e^{z_i-z_j}`,
+          '两个候选的 Softmax probability ratio 只由它们的 Logit difference 决定。',
         ),
       ],
       [
-        'logit 不是 probability；负 logit 合法。',
+        'h 不一定等于原始 Token Embedding；完整模型通常先用上下文网络改变它。',
+        'W_out 是 Output Head 的评分参数，不要默认它就是输入 Embedding Matrix E；部分模型会 weight tying，但本例不依赖该设计。',
+        'Logit 参数不是人为标注的语言含义，而是训练得到的数值。',
+        'Logit 不是 Probability；负 Logit 合法，也不表示负概率。',
         '[B,T,V] 的最后一维 V 才是候选类别。',
-        '所有 logits 同时加一个常数不改变 Softmax，因为相对差距不变。',
+        'Softmax 看相对差距；所有 Logits 同时加同一常数不会改变分布。',
       ],
-      check('本例 z[3]=-1 代表什么？', [
+      check('本例“喜欢”的 Logit=2 是怎样产生的？它是不是 200%？', [
         paragraph(
-          '它表示候选 学习 的原始相对分数较低，不是 -1% 概率；Softmax 后它仍有正概率。',
+          '将 h=[0.20,-0.10,0.70,0.30] 与 w_喜欢=[0,1,2,2] 点积，再加 b_喜欢=0.1，得到 2。它只是原始相对分数；Softmax 后对应 Probability 才约为 0.592。',
         ),
       ]),
     ),
@@ -591,13 +740,25 @@ T = N - 1 = 2`,
       '10. Softmax：把 Logits 变成 Probability',
       'logits 能比较高低，但不能直接说明某 token 的概率，也不保证候选数加总为 1。',
       [
-        '把任意五个 logits 转为合法、可用于解释和 sampling 的 Vocabulary distribution。',
-        '完整计算固定的 labelled example，保留所有约定数值。',
+        '理解 Softmax 的两步：指数化保证为正，除以总和完成归一化。',
+        '说明为什么不能直接除以 Logit 总和，以及 Logit difference 怎样决定 probability ratio。',
+        '完整手算固定示例，并对应到 PyTorch 的 dim=-1。',
       ],
       [
+        paragraph(
+          '上一节已经从 h、W_out 和 bias 真正算出 logits=[0,2,1,-1,0]。这些数可以比较高低，却不是 Probability：2 不代表 200%，−1 也不代表负概率。Sampling 和 Cross Entropy 需要一组全部非负、总和等于 1 的合法分布。',
+        ),
         formula(
           String.raw`p_i=\frac{e^{z_i}}{\sum_{j=0}^{V-1}e^{z_j}}`,
           '先把每个 logit 变正，再除以所有五个 exponentials 的总和。',
+        ),
+        callout('为什么不能直接除以 Logit 总和', [
+          paragraph(
+            'Logits 可以包含负数，而且总和可能为 0。本例的总和正好是 2，若直接相除，“学习”会得到 −0.5，显然不是合法概率。指数函数让每个候选先变成正权重，并保留原来的高低顺序。',
+          ),
+        ]),
+        paragraph(
+          '第一步是指数化。e⁰=1、e²≈7.389、e¹≈2.718、e⁻¹≈0.368。负 Logit 经过指数后仍是正数，因此对应候选仍有机会，只是相对权重较小。',
         ),
         table(
           ['candidate order', 'logit', 'exponential', 'probability'],
@@ -610,12 +771,45 @@ T = N - 1 = 2`,
           ],
           '固定顺序 [我, 喜欢, AI, 学习, 猫]；logits [0,2,1,-1,0]',
         ),
+        paragraph(
+          '第二步是归一化。五个指数权重之和为 12.475；每个候选除以同一个总和后，得到 [0.080,0.592,0.218,0.029,0.080]，全部相加约等于 1。',
+        ),
         code(
           'text',
           `exponentials = [1.000,7.389,2.718,0.368,1.000]
 sum = 12.475
 probabilities = [0.080,0.592,0.218,0.029,0.080]
 0.080 + 0.592 + 0.218 + 0.029 + 0.080 ≈ 1`,
+        ),
+        list(
+          [
+            '指数化：所有结果都大于 0，所以负 Logit 也能成为合法正权重。',
+            '保持顺序：若 zᵢ > zⱼ，则 eᶻⁱ > eᶻʲ，原本更高的候选仍然更高。',
+            '转成相对比：pᵢ/pⱼ = e^(zᵢ−zⱼ)，Logit 差距直接控制候选之间的概率比。',
+            '归一化：除以全部候选权重的总和，使结果相加为 1。',
+          ],
+          true,
+        ),
+        formula(
+          String.raw`z_i-z_j=1\quad\Rightarrow\quad\frac{p_i}{p_j}=e^1\approx2.718`,
+          '两个 Logits 相差 1 时，较高候选的相对 probability 约是另一个的 2.718 倍。',
+        ),
+        code(
+          'python',
+          `import torch
+import torch.nn.functional as F
+
+logits = torch.tensor([0.0, 2.0, 1.0, -1.0, 0.0])
+probabilities = F.softmax(logits, dim=-1)
+
+print(probabilities)
+# tensor([0.0802, 0.5923, 0.2179, 0.0295, 0.0802])
+
+print(probabilities.sum())
+# tensor(1.)`,
+        ),
+        paragraph(
+          '若 logits 的 Shape 是 [B,T,V]=[3,2,5]，dim=-1 表示对每一个 [b,t] 位置自己的五个 Vocabulary candidates 做 Softmax。它不会把不同句子或不同时间位置混在同一个分母中。',
         ),
         callout('数值稳定性（高级）', [
           paragraph(
@@ -626,12 +820,13 @@ probabilities = [0.080,0.592,0.218,0.029,0.080]
       [
         'Softmax 产生分布，不负责决定最终 token。',
         '某 token 的概率取决于全部 logits，不只取决于自己的分数。',
+        '不要直接用 Logit 除以 Logit 总和；负数和零总和会产生无效结果。',
         '训练时不要先手动 Softmax 再交给 F.cross_entropy；展示或 sampling 时才显式计算。',
         '对 [B,T,V] 应沿 vocabulary 维 dim=-1 做 Softmax。',
       ],
-      check('为何 喜欢 的 logit 最高，但它不是“唯一答案”？', [
+      check('Softmax 为什么先使用指数函数，再除以全部指数之和？', [
         paragraph(
-          'Softmax 给它 0.592，不是 1；其余候选仍保留概率，sampling 也可能选择它们。',
+          '指数函数把任意 Logit 转成正权重、保持候选顺序，并把差距转为相对比；除以总和再让所有候选组成总和为 1 的合法概率分布。',
         ),
       ]),
     ),
@@ -640,14 +835,38 @@ probabilities = [0.080,0.592,0.218,0.029,0.080]
       '11. Cross Entropy：把正确答案的概率变成 Loss',
       '一张概率表不能直接让 optimizer 判断更新方向；训练需要一个可最小化的标量错误分数。',
       [
-        '读取正确 target 的 probability，把预测质量转为 loss 并反传给全部竞争 logits。',
-        '用固定 Softmax distribution 精确计算 target=喜欢 时的 0.524。',
+        '从“正确答案概率越高，Loss 应越低”推导单题 L=−ln(p_correct)。',
+        '解释负号和对数各自解决什么问题，再连接完整 One-hot Cross Entropy。',
+        '用一次数值更新看到正确 Logit、Probability 与 Loss 怎样改变。',
       ],
       [
+        paragraph(
+          'Softmax 已得到五个候选概率。假设这道题的真实下一 Token 是“喜欢”，训练首先读取模型分给正确答案的概率 p_correct=0.592。我们希望：正确答案概率越接近 1，Loss 越接近 0；概率越接近 0，惩罚越大。',
+        ),
         formula(
           String.raw`L=-\ln(p_y)`,
           '单个位置的 Cross Entropy：y 是正确 token ID，p_y 是该位置给正确 token 的概率。',
         ),
+        table(
+          ['p(correct)', '−ln(p)', '训练直觉'],
+          [
+            ['0.99', '0.010', '几乎确信正确，惩罚接近 0'],
+            ['0.90', '0.105', '正确且有把握'],
+            ['0.60', '0.511', '倾向正确，但仍有明显不确定性'],
+            ['0.50', '0.693', '只有一半概率给正确答案'],
+            ['0.10', '2.303', '正确答案概率很低'],
+            ['0.01', '4.605', '非常自信地偏离正确答案，惩罚很大'],
+          ],
+          '正确答案 Probability 与 single-position Cross Entropy',
+        ),
+        callout('为什么有负号，为什么使用 Log', [
+          paragraph(
+            '当 0<p≤1 时 ln(p)≤0，所以前面的负号把它变成非负 Loss。Log 还会明显惩罚“非常自信地预测错误”：p 从 0.10 降到 0.01 时，−ln(p) 从 2.303 增到 4.605。若只用 1−p，二者只有 0.90 与 0.99，差距很小。',
+          ),
+          paragraph(
+            '一段序列的条件概率需要连乘；Log 会把概率乘法变成 Loss 加法。这样多个 Token 的 Negative Log Likelihood 可以稳定地求和或求平均。',
+          ),
+        ]),
         table(
           ['上下文', 'target', 'p(correct)', 'loss'],
           [
@@ -658,6 +877,22 @@ probabilities = [0.080,0.592,0.218,0.029,0.080]
         ),
         paragraph(
           'Cross Entropy 不只检查 argmax 是否正确：若正确答案同样是喜欢，概率从 0.51 升到 0.90，loss 仍会下降。对多个位置，平均 loss 是每个正确 target 负对数概率的平均。',
+        ),
+        code(
+          'text',
+          `Vocabulary order        = [我,    喜欢,  AI,    学习,  猫]
+predicted probabilities = [0.080, 0.592, 0.218, 0.029, 0.080]
+one_hot(target=喜欢)     = [0,     1,     0,     0,     0]
+
+L = -Σ yᵢ ln(pᵢ)
+  = -(0 ln 0.080 + 1 ln 0.592 + 0 ln 0.218
+      + 0 ln 0.029 + 0 ln 0.080)
+  = -ln(0.592)
+  ≈ 0.524`,
+        ),
+        formula(
+          String.raw`L=-\sum_{i=0}^{V-1}y_i\ln(p_i)=-\ln(p_{\mathrm{correct}})`,
+          'One-hot label 只有正确 Token 的位置为 1，所以完整求和会简化为正确答案的 Negative Log Probability。',
         ),
         formula(
           String.raw`\frac{\partial L}{\partial z_i}=p_i-\mathrm{one\_hot}(y)_i`,
@@ -673,15 +908,42 @@ Gradient Descent subtracts this gradient:
 喜欢 has a negative gradient, so its relative logit is pushed up;
 the other candidates have positive gradients, so their relative logits are pushed down.`,
         ),
+        callout('手算一次教学更新', [
+          paragraph(
+            '为了先看清方向，暂时把五个 Logits 当成直接可更新变量，并使用 learning rate η=0.1。真实网络会更新产生 Logits 的 Output Head、Context Model 和 Embedding Parameters。',
+          ),
+          code(
+            'text',
+            `old logits = [ 0.000,  2.000, 1.000, -1.000,  0.000]
+gradient   = [ 0.080, -0.408, 0.218,  0.029,  0.080]
+
+new logits = old logits - 0.1 × gradient
+           = [-0.008,  2.041, 0.978, -1.003, -0.008]
+
+重新计算 Softmax：
+P(喜欢)  0.592 → 0.606
+Loss     0.524 → 0.501`,
+          ),
+          paragraph(
+            '这一步闭合了学习因果链：正确答案的相对 Logit 上升 → Softmax Probability 提高 → Cross Entropy Loss 降低。',
+          ),
+        ]),
       ],
       [
         'loss 不是 accuracy 或百分比；越低越好，理论下界为 0。',
         'loss 直接读正确 token 的 probability，但 Softmax 让全部 logits 相互竞争，所以全部都会收到梯度。',
+        'Cross Entropy 不是只判断 Argmax 对错；即使最大候选已正确，提高其 Probability 仍会降低 Loss。',
+        '直接更新 Logits 只是教学演示；真实训练更新产生 Logits 的 Parameters。',
         '训练通常平均全部位置，不只看最后一个 token。',
       ],
-      check('target 是 喜欢 且 p=0.592 时 loss 为何约 0.524？', [
-        paragraph('按自然对数计算：L=−ln(p_y)=−ln(0.592)≈0.524。'),
-      ]),
+      check(
+        '为什么正确答案概率从 0.10 降到 0.01 时，Cross Entropy 会明显增大？',
+        [
+          paragraph(
+            'L=−ln(p_correct)。概率 0.10 对应约 2.303，0.01 对应约 4.605；Negative Log 会强烈惩罚模型非常自信地把概率放在错误候选上。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0243-12-pytorch-crossentropyloss-logits',
@@ -689,11 +951,38 @@ the other candidates have positive gradients, so their relative logits are pushe
       '数学说明中先谈 probability，但训练 API 若再接收已 Softmax 的 probability，会重复内部变换并降低数值稳定性。',
       [
         '直接把 raw logits 与整数 target IDs 传入 F.cross_entropy。',
+        '先验证一题的 [1,5] logits 与 [1] target，再扩展到六题。',
         '把六个 [B,T] 位置明确展平为六行 V=5 的分类题。',
       ],
       [
         paragraph(
           'F.cross_entropy 在内部稳定地结合 LogSoftmax 与 negative log likelihood。因此它的输入是 raw logits；targets 是范围 0 到 V−1 的 torch.long IDs，而不是 one-hot vectors。',
+        ),
+        code(
+          'python',
+          `import torch
+import torch.nn.functional as F
+
+# 一道题，五个候选 raw logits
+logits_one = torch.tensor(
+    [[0.0, 2.0, 1.0, -1.0, 0.0]],
+    requires_grad=True,
+)  # [1,5]
+
+# 正确答案是“喜欢”，ID=1
+target_one = torch.tensor([1], dtype=torch.long)  # [1]
+
+loss_one = F.cross_entropy(logits_one, target_one)
+loss_one.backward()
+
+print(loss_one.item())
+# approximately 0.524
+
+print(logits_one.grad)
+# approximately [[0.080, -0.408, 0.218, 0.029, 0.080]]`,
+        ),
+        paragraph(
+          '这段代码与上一节手算完全对应：[1,5] 表示一题有五个候选分数，[1] 表示这一题只需一个正确类别 ID。确认单题后，再把 batch 中的六个位置排成六题。',
         ),
         table(
           [
@@ -864,7 +1153,7 @@ for step in range(500):
     optimizer.step()
 
     if step % 100 == 0:
-        print(step, float(loss))`,
+        print(step, loss.item())`,
         ),
         formula(
           String.raw`L=-\frac{1}{B\times T}\sum_b\sum_t\log\operatorname{softmax}(\mathrm{logits}[b,t,:])[\mathrm{targets}[b,t]]`,
@@ -879,6 +1168,26 @@ for step in range(500):
             ['step', 'optimizer 用 gradient 更新 [5,5] table'],
           ],
         ),
+        callout('现在再回看 Embedding Row 怎样更新', [
+          paragraph(
+            '在一般、未绑权的语言模型中，flatten(inputs)=[0,1,4,1,0,3]。Input Embedding 的 row 0（我）被 lookup 两次，row 1（喜欢）两次，row 3（学习）一次，row 4（猫）一次；这些使用路径产生的 Gradients 会分别累加回同一参数 row。',
+          ),
+          code(
+            'text',
+            `教学示例：假设 Backward 已算出 E[0] 的 gradient
+
+E_before[0] = [ 0.20, -0.10, 0.70, 0.30]
+gradient    = [ 0.40, -0.20, 0.10, 0.00]
+η           = 0.10
+
+E_after[0]
+= E_before[0] - η × gradient
+= [0.16, -0.08, 0.69, 0.30]`,
+          ),
+          paragraph(
+            '这组 Gradient 是教学假设值，不能只看语料直接推导。Bigram 本身使用 [V,V]=[5,5] Logit Table，没有独立的 [V,C] Input Embedding；但它的 row update 仍遵循相同的 Parameter − Learning Rate × Gradient 原则。',
+          ),
+        ]),
       ],
       [
         '训练前不应对 logits 手动 Softmax。',
