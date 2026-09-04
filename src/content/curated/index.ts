@@ -1,7 +1,10 @@
 import type { CuratedWeekRevision } from './types';
+import { week06Revision } from './week-06';
 
 // Authored week modules append their checked-in revisions here.
-export const CURATED_WEEK_REVISIONS: readonly CuratedWeekRevision[] = [];
+export const CURATED_WEEK_REVISIONS: readonly CuratedWeekRevision[] = [
+  week06Revision,
+];
 
 export { applyCuratedContent } from './apply-curated-content';
 export { materializeTeachingSection } from './builders';
