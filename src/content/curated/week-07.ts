@@ -76,547 +76,687 @@ function section(
 }
 
 const positionRows = [
-  ['b=0, t=0', 'x[0,0,:]', '我', 'prompt A 的第一个 token'],
-  ['b=0, t=1', 'x[0,1,:]', '喜欢', 'prompt A 的第二个 token'],
-  ['b=1, t=0', 'x[1,0,:]', '猫', 'prompt B 的第一个 token'],
-  ['b=1, t=1', 'x[1,1,:]', '喜欢', 'prompt B 的第二个 token'],
+  ['b=0, t=0', 'x[0,0,:]', '我', 'Prompt A 的第一个 Token'],
+  ['b=0, t=1', 'x[0,1,:]', '喜欢', 'Prompt A 的第二个 Token'],
+  ['b=1, t=0', 'x[1,0,:]', '猫', 'Prompt B 的第一个 Token'],
+  ['b=1, t=1', 'x[1,1,:]', '喜欢', 'Prompt B 的第二个 Token'],
 ];
 
 const matrixAxes =
-  '每张 [T,T]=[2,2] 表：行是 query position t（t=0 第一个 token；t=1 第二个 token），列是 key/value position j（j=0 第一个 token；j=1 第二个 token），不是 feature 轴。';
+  '每张 [T,T]=[2,2] 表中，行 t 是发起读取的 Query Position，列 j 是被比较的 Key Position，也是稍后对应的 Value Position。它们都不是 Feature Axis。';
 
 export const week07Revision: CuratedWeekRevision = {
   weekSlug: 'week-07',
   title: 'Week 7 - Attention：让当前位置按需读取左侧上下文',
   keyQuestion:
-    '当“喜欢”既出现在[我,喜欢]又出现在[猫,喜欢]时，模型如何读取不同的前缀并给出可能不同的下一词 logits？',
+    '当“喜欢”既出现在 [我,喜欢] 又出现在 [猫,喜欢] 时，模型如何从输入向量计算 Q、K、V，给可见位置打分，并产生不同的上下文表示与下一词 Logits？',
   objectives: [
-    '沿 x → Q/K/V → scores → causal mask → weights → weighted Values → output 追踪一次因果 Attention。',
-    '准确读取每张 [T,T] 矩阵的 query 行与 key/value 列。',
-    '用 B=2、T=2、C=4、n_head=2、head_size=2 实现并审计 causal multi-head attention。',
-    '说明 Attention 的限制、T² 成本，以及它为什么需要 Week 8 的 Transformer block。',
+    '用同一个可复现数值例子完整计算 X → Q/K/V → Raw Scores → Scale → Causal Mask → Attention Weights → Weighted Values。',
+    '解释 Attention 如何打分、分数如何通过训练学会，以及 Attention Softmax 与 Vocabulary Softmax 的区别。',
+    '准确读取 [B,T,C]、[B,T,d_head]、[B,T,T] 和 [B,n_head,T,T] 中每个轴的语义。',
+    '实现并审计可复现的单 Head、可复用的 Causal Attention Head 与 Multi-Head Attention。',
+    '说明 Attention Output 如何继续影响 Logits、Attention 的边界、T² 成本，以及它为什么需要 Week 8 的 Transformer Block。',
   ],
-  estimatedReadingMinutes: 70,
+  estimatedReadingMinutes: 110,
   sections: [
     section(
       'o0255-week-7',
-      'Week 7 核心目标：让“喜欢”按需读取前缀',
-      'Week 6 的 Bigram 对相同最后 token 只查同一行。因此 [我,喜欢] 和 [猫,喜欢] 的最后 喜欢 必然得到同一组 next-token logits。',
+      'Week 7 核心目标：让相同 Token 读取不同前缀',
+      'Week 6 的 Bigram 对相同当前 Token 只查询同一行参数，所以 [我,喜欢] 与 [猫,喜欢] 的最后“喜欢”会产生相同 Logits。',
       [
-        '把固定的一 token lookup 换成每个位置都能按内容读取允许前缀的机制。',
-        '保留 Week 6 的 [B,T,V_vocab] logits、right-shift loss 与 logits[:, -1, :] 生成接口。',
+        '建立 Attention 要解决的具体问题，而不是先背诵一条密集公式。',
+        '固定一组 Prompt、Shape 和教学参数，让后续每个数字都能追溯来源。',
       ],
       [
         paragraph(
-          'Attention 是动态路由：当前位置先决定哪些可见位置重要，再混合那些位置携带的信息。固定窗口、循环状态和卷积也能聚合上下文；Attention 的特点是每个 query 都能直接、按内容比较所有允许位置。它不是更大的永久记忆，也不证明模型理解了文本。',
+          '本周只围绕两个 Prompt 展开：Prompt A=[我,喜欢]，Prompt B=[猫,喜欢]。两者最后一个 Token 相同，但合理的模型应该能让最后的“喜欢”读取不同的左侧信息。Attention 增加的就是这条动态信息通路。',
         ),
         table(
-          ['batch / position', 'tensor slot', 'token', '它属于哪条 prompt'],
+          ['Batch / Position', 'Tensor Slot', 'Token', '语义'],
           positionRows,
-          '本周固定 batch：B=2，T=2，C=4',
+          '固定 B=2、T=2、C=4；后续所有矩阵都来自这两个 Prompt。',
         ),
         chain([
-          'x [B,T,C] = [2,2,4]',
-          '每个 head 的 Q / K / V [2,2,2]',
-          'scores [B,T,T] = [2,2,2]',
-          'causal mask → weights [2,2,2]',
-          'weighted Values / head output [2,2,2]',
-          '两个 heads concat [2,2,4]',
-          'output projection [2,2,4]',
-          'later language-model head → logits [2,2,V_vocab]',
+          '输入表示 X [B,T,C] = [2,2,4]',
+          '每个 Head 投影出 Q / K / V [2,2,2]',
+          'QKᵀ 产生 Raw Scores [B,T,T] = [2,2,2]',
+          '除以 √d_k，应用 Causal Mask',
+          '沿 Key Position Axis 做 Softmax 得 Weights [2,2,2]',
+          'Weights @ Values 得 Head Output [2,2,2]',
+          '两个 Heads Concat + W_O 恢复 [2,2,4]',
+          '后续 Transformer 与 LM Head 产生 Logits [2,2,V_vocab]',
         ]),
-        paragraph(
-          '下面的 t 表示 query 所在的行，j 表示它要读取的 key/value 所在的列。第二个 喜欢 能读取不同的 j=0：A 中是 我，B 中是 猫；这给后续表示和 logits 不同的通路，但未经训练不保证某个具体结果。',
-        ),
         formula(
-          String.raw`\mathrm{context}_t=\sum_{j\le t}\alpha_{t,j}v_j`,
-          '位置 t 的 context 是它对所有允许 key/value 位置 j 的 attention weight 与 Value 的加权和。',
+          String.raw`\operatorname{context}_t=\sum_{j\le t}\alpha_{t,j}v_j`,
+          '位置 t 为所有允许位置 j 分配读取比例 alpha，并把对应 Value 加权汇总。',
+        ),
+        callout(
+          '先记住边界',
+          [
+            paragraph(
+              'Attention 输出的是 Contextual Features，不是 Vocabulary Probability；它让后续 Logits 可以不同，但不保证未经训练的模型一定得到有意义的结果。',
+            ),
+          ],
+          'principle',
         ),
       ],
       [
-        'Attention 自己输出的是 contextual features，不是 vocabulary probabilities；稍后的 output head 才映射为 logits。',
-        'GPT 的 causal Attention 不能读取右侧未来 token。',
+        'Attention 不是更大的永久记忆，也不是对模型理解能力的证明。',
+        'GPT 的 Causal Attention 只能读取当前位置和左侧历史，不能读取右侧未来 Token。',
       ],
-      check(
-        '为什么 Attention 能让两个最后都是“喜欢”的 prompt 可能不同，而 Bigram 不能？',
-        [
-          paragraph(
-            'Bigram 只查 喜欢 的固定 row；Attention 的最后 query 可在 causal mask 下读取不同的 position-0 Key 与 Value（我 或 猫）。',
-          ),
-        ],
-      ),
+      check('为什么两个最后都是“喜欢”的 Prompt 在 Bigram 中相同，在 Attention 中却可能不同？', [
+        paragraph(
+          'Bigram 只查询“喜欢”的固定参数行；Attention 的最后 Query 可以读取不同的第一个位置，也就是 Prompt A 的“我”或 Prompt B 的“猫”。',
+        ),
+      ]),
     ),
     section(
       'o0257-1-context-aggregation',
-      '1. 最简单的 Context Aggregation',
-      '若把可见 token 一律平均，任何 query 都得到同一种静态摘要，无法选择不同的前缀信息。',
+      '1. 从输入 X 到最简单的 Context Aggregation',
+      '初学者容易把 Token ID、Embedding 和 Attention 输入混为一谈，也容易误以为只要把上下文平均就已经等于 Attention。',
       [
-        '先以 uniform mean 作为清楚的 baseline，再看为何需要每个 query 自己的 weights。',
-        '区分“能够汇总”与“能按当前需求选择”。',
+        '明确 X 是向量表示而不是 Token ID。',
+        '用可手算的 Uniform Mean 建立基线，并准确说明它缺少什么。',
       ],
       [
         paragraph(
-          '对两条长度为 T=2 的序列，平均把 x₀ 和 x₁ 压成一个长度 C=4 的向量。它不是错误方法，只是对于最终 喜欢，它不能按 query 改变给 我 或 猫 的影响量。',
+          'Attention 不直接接收 Token ID。Token ID 只是用于查表的整数；进入 Attention 的 X 是 Embedding 或上一层输出的向量。本课使用简化表示，使每一步矩阵乘法都能手算。真实模型中的向量通常是训练得到的稠密小数。',
         ),
         formula(
-          String.raw`\bar{x}=\frac{1}{T}\sum_{j=0}^{T-1}x_j\in\mathbb{R}^{C},\qquad T=2,\ C=4,\ \bar{x}\in\mathbb{R}^{4}`,
-          '把两个位置的四维向量均匀平均，得到一个四维向量。',
+          String.raw`X_A=\begin{bmatrix}1&0&0&0\\0&1&0&0\end{bmatrix},\qquad X_B=\begin{bmatrix}0&0&1&0\\0&1&0&0\end{bmatrix}`,
+          'Prompt A 的两行分别表示“我、喜欢”；Prompt B 的两行分别表示“猫、喜欢”。',
+        ),
+        formula(
+          String.raw`X\in\mathbb{R}^{[B,T,C]}=\mathbb{R}^{[2,2,4]}`,
+          '两个 Prompt 组成 Batch，每个 Prompt 有两个位置，每个位置有四个 Features。',
+        ),
+        paragraph(
+          '一个简单基线是对当前位置允许读取的前缀做均匀平均。最终位置 t=1 的固定读取比例是 [0.5,0.5]；它能让 A 与 B 因输入不同而产生不同平均值，但不能根据当前 Query 动态改变读取比例。',
+        ),
+        formula(
+          String.raw`\bar{x}_{A,1}=\frac{[1,0,0,0]+[0,1,0,0]}{2}=[0.5,0.5,0,0]`,
+          'Prompt A 最终位置的均匀上下文平均。',
+        ),
+        formula(
+          String.raw`\bar{x}_{B,1}=\frac{[0,0,1,0]+[0,1,0,0]}{2}=[0,0.5,0.5,0]`,
+          'Prompt B 最终位置的均匀上下文平均。',
         ),
         table(
+          ['机制', '最终位置对 j=0 / j=1 的读取', '能否按 Query 动态选择'],
           [
-            'mechanism',
-            '最终 喜欢 对 position 0 / 1 的读取',
-            '是否为每个 query 单独选择',
+            ['Causal Uniform Mean', '[0.5, 0.5]', '不能，比例固定'],
+            ['Prompt A 的教学 Attention Head', '[0.599, 0.401]', '可以'],
+            ['Prompt B 的教学 Attention Head', '[0.426, 0.574]', '可以'],
           ],
-          [
-            ['uniform mean', '[0.5, 0.5]', '否'],
-            ['head 1 illustrative trained outcome, A', '[0.599, 0.401]', '是'],
-            ['head 1 illustrative trained outcome, B', '[0.426, 0.574]', '是'],
-          ],
-          '注意：mean baseline 没有 [T,T] 矩阵；Attention 的 [T,T] 才为每个 query 提供一行。',
+          'Attention 的优势不是“第一次能汇总”，而是每个 Query 都能计算自己的读取比例。',
         ),
       ],
       [
-        '两条 batch sequence 彼此独立，不能把 A 和 B 当成一条四 token 序列平均。',
-        'mean 不是“错误”，它只是所有位置使用固定相等 weights。',
+        '不能把 Prompt A 与 Prompt B 当成一条四 Token 序列平均；Batch Examples 彼此独立。',
+        'Uniform Mean 不是完全相同的输出：不同输入仍会给出不同平均向量；它缺少的是按 Query 学习选择。',
       ],
-      check('uniform mean 的哪一点使最终“喜欢”无法适配 我 与 猫 的差异？', [
+      check('Uniform Mean 与 Attention 的核心区别是什么？', [
         paragraph(
-          '它对每个位置固定给相等 weight，不能针对当前 query 改变读取比例。',
+          'Uniform Mean 使用预先固定的相等比例；Attention 根据当前位置的 Query 与各位置的 Key 动态计算比例。',
         ),
       ]),
     ),
     section(
       'o0258-2-q-k-v',
-      '2. 用搜索系统理解 Q、K、V',
-      '“回看上下文”没有说明当前位置要找什么、候选怎样匹配、又要带回什么内容。',
+      '2. 用搜索系统理解 Query、Key、Value',
+      '“回看上下文”没有说明当前位置要找什么、候选位置怎样被匹配，以及找到以后真正带回什么。',
       [
-        '先回答三个任务问题，再把答案命名为 Query、Key 和 Value。',
-        '说明三者都是同一输入 x 的 learned views，而不是三份外部 token list。',
+        '用三个任务问题分别定义 Q、K、V。',
+        '强调它们是同一输入的 Learned Views，而不是三份外部文本。',
       ],
       [
         table(
-          ['层必须回答的问题', '随后名称', '在最终 喜欢 的例子中'],
+          ['Attention 必须回答的问题', '名称', '在最终“喜欢”的例子中'],
           [
-            [
-              '当前位置需要什么？',
-              'Query (Q)',
-              '可学习为寻找较早位置的某种线索',
-            ],
-            [
-              '每个可见位置靠什么被找到？',
-              'Key (K)',
-              'j=0 提供来自 我 或 猫 的匹配线索',
-            ],
-            [
-              '找到后应带回什么？',
-              'Value (V)',
-              'j=0 的内容参与最终 representation',
-            ],
+            ['当前位置正在寻找什么？', 'Query (Q)', '“喜欢”形成当前读取请求'],
+            ['每个位置凭什么被找到？', 'Key (K)', '“我”或“猫”提供可匹配线索'],
+            ['找到位置后带回什么？', 'Value (V)', '对应位置的内容参与新表示'],
           ],
         ),
         paragraph(
-          '只有在明确三件不同工作之后才叫 Q、K、V。分开的 learned projection 让训练可让“用于匹配的 clue”不同于“需要传回的 payload”；初始参数随机，角色来自 loss gradient，而非人工指定语法标签。',
+          '可以把 Query 想成搜索请求、Key 想成索引线索、Value 想成记录正文。这个比喻只解释职责；模型中没有真正的字符串搜索，也没有人为指定“某一维等于主语”。',
         ),
         formula(
-          String.raw`Q^{(h)}=XW_Q^{(h)},\qquad K^{(h)}=XW_K^{(h)},\qquad V^{(h)}=XW_V^{(h)}`,
-          '第 h 个 head 对同一个输入 X 使用三套可学习投影，产生 Query、Key 和 Value。',
+          String.raw`Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V`,
+          '同一个输入 X 经过三套独立的可学习投影，产生 Query、Key 和 Value。',
         ),
         formula(
-          String.raw`X:[B,T,C]=[2,2,4],\qquad W_{Q,K,V}^{(h)}:[C,\mathrm{head\_size}]=[4,2]\quad\Longrightarrow\quad Q,K,V:[2,2,2]`,
-          '批次和位置轴保持不变，四个输入 features 投影为每个 head 的两个 features。',
+          String.raw`X:[2,2,4],\qquad W_Q,W_K,W_V:[4,2]\quad\Longrightarrow\quad Q,K,V:[2,2,2]`,
+          'Batch 与 Token Position 轴不变，四个输入 Features 投影为一个 Head 的两个 Features。',
         ),
       ],
       [
         'Q、K、V 不是固定的人类语言标签，也不是额外输入的三句话。',
-        'Key 用于匹配，Value 才是加权汇总时被带回的内容。',
+        'Key 用来形成读取比例；Value 才是最后被加权带回的内容。',
       ],
-      check('weights 形成后，Q、K、V 中哪一种会被加权相加？', [
-        paragraph(
-          'Value。Q 与 K 决定读取地址（weights），V 提供被汇总的内容。',
-        ),
+      check('Attention Weights 形成以后，Q、K、V 中哪一种会被加权相加？', [
+        paragraph('Value。Q 与 K 决定读取地址和比例，Value 提供被取回的 Payload。'),
       ]),
     ),
     section(
       'o0260-3',
-      '3. 为什么要有三份表示',
-      '若只共享一个表示，匹配条件与要传回的内容会被迫使用完全相同的 features。',
+      '3. 为什么需要三份表示',
+      '如果匹配线索与被传回内容必须使用完全相同的 Features，模型会失去分别优化“怎样找到我”和“找到后带走什么”的自由度。',
       [
-        '把 Query、Key、Value 的职责分离为可独立学习的线索和 payload。',
-        '用 row-vector shape 说明每个位置如何获得 head_size=2 的表示。',
+        '区分匹配地址与信息 Payload。',
+        '说明三套投影怎样通过最终 Loss 一起学习。',
       ],
       [
         paragraph(
-          '位置可以用 Key 宣传“怎样找到我”，用 Value 保存“找到我后带走什么”，并在自己的轮次用 Query 表达“我现在需要什么”。在 A 中，j=0 的 Key 可匹配最终 喜欢 的 Query，且 Value 可为 [1,0]；B 的 j=0 则由 猫 产生另一组 Key 与 Value。',
+          '一个位置可以用 Key 宣传“怎样找到我”，用 Value 保存“找到我后应带走什么”，并在自己的读取轮次用 Query 表达“我现在需要什么”。三者来自同一个 x_t，但使用不同参数。',
         ),
         formula(
-          String.raw`W_Q^{(h)},W_K^{(h)},W_V^{(h)}\in\mathbb{R}^{4\times2},\qquad q_t^{(h)},k_t^{(h)},v_t^{(h)}\in\mathbb{R}^{2}`,
-          '本周每个 head 的三种投影矩阵均把四维输入投影为两维。',
+          String.raw`W_Q,W_K,W_V\in\mathbb{R}^{4\times2},\qquad q_t,k_t,v_t\in\mathbb{R}^{2}`,
+          '本周一个 Head 内的三套矩阵都将四维输入投影为两维。',
         ),
         formula(
-          String.raw`x_t\in\mathbb{R}^{1\times4},\qquad x_tW\in\mathbb{R}^{1\times2}\quad\text{when}\quad W\in\mathbb{R}^{4\times2}`,
-          '采用 row-vector 写法时，一个位置的四维输入乘以四乘二矩阵得到两维 head representation。',
+          String.raw`x_t\in\mathbb{R}^{1\times4},\qquad x_tW\in\mathbb{R}^{1\times2}`,
+          '采用 Row-Vector 写法，一个位置的四维输入乘四乘二矩阵得到两维表示。',
+        ),
+        callout(
+          '角色来自训练，不是人工指定',
+          [
+            paragraph(
+              '训练数据不会附带“这里应该关注主语”的 Attention 标签。Next-Token Loss 通过后续 Logits 反向传播，逐步更新 W_Q、W_K 与 W_V，使有助于降低 Loss 的匹配和 Payload 更容易被使用。',
+            ),
+          ],
+          'concept',
         ),
       ],
       [
-        '三份表示不表示复制三份文本，也不表示多了三个 token 输入。',
-        '一个 head 的 Key 或 Value 不能自动解释为“主语”或其他固定语法角色。',
+        '三份表示不表示复制三份文本，也不表示增加三个 Token。',
+        '一个 Head 的 Key 或 Value 不能自动解释为固定语法角色。',
       ],
-      check('为什么理想的 matching Key 可以省去 Value 仍保留的信息？', [
+      check('为什么 Key 不需要保存 Value 中的全部信息？', [
         paragraph(
-          '找到记录和传回有用内容是两件不同工作；匹配线索不必包含完整 payload。',
+          '找到记录与读取记录是两件不同工作；用于匹配的简短线索不必等于找到后真正传回的内容。',
         ),
       ]),
     ),
     section(
       'o0261-4-query-key-dot-product',
-      '4. Query 与 Key 的 Dot Product',
-      '每个 Query 需要为每个候选 Key position 产生一个可比较的分数。',
+      '4. 从 XW 得到 Q、K、V，再计算 Raw Scores',
+      '只写 Q=XW_Q 并直接展示 Score，会让 Q、K、V 和分数看起来凭空出现。',
       [
-        '把 dot product 解释为 learned compatibility score，而不是人类认证的语义相似度。',
-        '以 head 1 的最终 喜欢 为例，标出 dot-product 产生一整行 scores。',
+        '给出可核对的 X、W_Q、W_K、W_V，并计算两条 Prompt 的全部 Q、K、V。',
+        '让最终“喜欢”的每个 Dot Product 都能手算复现。',
       ],
       [
         paragraph(
-          '固定 query row t 后，它与每个 key column j 做一次 dot product。对应 learned dimensions 越对齐，分数可越高；这个“可”由训练决定，不是任何绝对语义结论。',
+          '下面的参数专门为教学设计，目的是让所有数字可以手算。真实模型通常从随机参数开始，通过训练得到稠密小数。这里的 W 仍是全局共享矩阵，并不是为每个 Token 单独写一套规则。',
         ),
         formula(
-          String.raw`s_{t,j}^{(h)}=q_t^{(h)}\cdot k_j^{(h)},\qquad S^{(h)}=Q^{(h)}(K^{(h)})^\top`,
-          '第 h 个 head 的 score 元素是 query position t 与 key position j 的 dot product。',
+          String.raw`W_Q=\begin{bmatrix}0.5&0.5\\1&1\\-0.5&0.5\\0&0\end{bmatrix},\quad W_K=\begin{bmatrix}0.8\sqrt2&0\\0.2\sqrt2&0.2\sqrt2\\0&0.1\sqrt2\\0&0\end{bmatrix},\quad W_V=\begin{bmatrix}1&0\\0&1\\-1&0\\0&0\end{bmatrix}`,
+          '三套教学投影均为 [C,d_head]=[4,2]。',
         ),
-        table(
-          ['head 1, final query row t=1', 'j=0: first token', 'j=1: 喜欢'],
-          [
-            ['A = [我,喜欢], raw dot-product scores', '1.131', '0.566'],
-            ['B = [猫,喜欢], raw dot-product scores', '0.141', '0.566'],
-          ],
-          '这是 illustrative trained-head outcome；行是最终 喜欢 的 query，列是它可比较的 Key positions。',
+        paragraph(
+          '例如 x_喜欢=[0,1,0,0]，所以它乘任一 W 时会取出对应矩阵的第二行：q_喜欢=[1,1]，k_喜欢=[0.2√2,0.2√2]≈[0.283,0.283]，v_喜欢=[0,1]。',
         ),
         formula(
-          String.raw`Q:[B,T,\mathrm{head\_size}]=[2,2,2],\qquad K.\operatorname{transpose}(-2,-1):[B,\mathrm{head\_size},T]=[2,2,2],\qquad S:[B,T,T]=[2,2,2]`,
-          'transpose 只交换 Key 的最后两个轴，保留 batch B=2；T=2 与 head_size=2 的相同数值不能掩盖从 [B,T,head_size] 到 [B,head_size,T] 的轴顺序变化。',
+          String.raw`Q_A=\begin{bmatrix}0.5&0.5\\1&1\end{bmatrix},\quad K_A=\begin{bmatrix}1.131&0\\0.283&0.283\end{bmatrix},\quad V_A=\begin{bmatrix}1&0\\0&1\end{bmatrix}`,
+          'Prompt A=[我,喜欢] 的 Query、Key 与 Value。',
         ),
-        paragraph(matrixAxes),
+        formula(
+          String.raw`Q_B=\begin{bmatrix}-0.5&0.5\\1&1\end{bmatrix},\quad K_B=\begin{bmatrix}0&0.141\\0.283&0.283\end{bmatrix},\quad V_B=\begin{bmatrix}-1&0\\0&1\end{bmatrix}`,
+          'Prompt B=[猫,喜欢] 的 Query、Key 与 Value。',
+        ),
+        paragraph(
+          '最终“喜欢”的 Query 是 [1,1]。它与“我”的 Key 做 Dot Product：1×1.131+1×0=1.131；与“喜欢”自己的 Key 计算：1×0.283+1×0.283=0.566。',
+        ),
+        paragraph(
+          '在 Prompt B 中，它与“猫”的 Key 计算：1×0+1×0.141=0.141；与“喜欢”自己的 Key 仍得到 0.566。',
+        ),
+        formula(
+          String.raw`S_A=Q_AK_A^\top=\begin{bmatrix}0.566&0.283\\1.131&0.566\end{bmatrix},\qquad S_B=Q_BK_B^\top=\begin{bmatrix}0.071&0\\0.141&0.566\end{bmatrix}`,
+          '两条 Prompt 的完整 Raw Score Matrices；每个元素都是一组 Query 与 Key 的 Dot Product。',
+        ),
       ],
       [
-        '不要 transpose batch axis；PyTorch 的 transpose(-2,-1) 只交换时间与 head-feature 两个最后轴。',
-        'score 可以为任意实数，尚不是 probability。',
+        'Raw Score 可以是任意实数，还不是 Probability。',
+        'Dot Product 是 Learned Compatibility，不是经过人类认证的语义相似度，也不是 Cosine Similarity。',
       ],
-      check('在 S[b,t,j] 中，t 与 j 分别索引什么？', [
+      check('Prompt A 中最终“喜欢”对“我”的 Raw Score 1.131 是怎样产生的？', [
         paragraph(
-          't 是 query position 的行；j 是 key position（也就是稍后 Value position）的列。',
+          '最终“喜欢”的 Query [1,1] 与“我”的 Key [1.131,0] 对应相乘并求和：1×1.131+1×0=1.131。',
         ),
       ]),
     ),
     section(
       'o0263-5-softmax-scores-weights',
-      '5. Softmax 把 Scores 变成 Weights',
-      'scores 是不受限制的正负数，不能直接作为稳定的加权比例。',
+      '5. 从 Scores 到 Attention Weights',
+      'Raw Scores 没有范围限制，不能直接解释为稳定的读取比例；同时必须区分 Attention Softmax 与 Vocabulary Softmax。',
       [
-        '让每个允许的 query row 都成为非负且和为一的 weight distribution。',
-        '明确 Softmax 沿 key-position column axis dim=-1 运行。',
+        '完整计算 Scale 与 Row Softmax。',
+        '明确 Softmax 的 Axis 和概率语义。',
       ],
       [
         paragraph(
-          '缩放并 mask 后，Softmax 让同一个 query row 内的 Key positions 竞争。下面是 head 1 的 illustrative trained-head outcome；它们是 attention weights，不是 Week 6 对五个 vocabulary token 的 probabilities。',
+          '先将最终 Query Row 除以 √d_k。本例 d_k=2，所以 Prompt A 从 [1.131,0.566] 得到 [0.8,0.4]，Prompt B 从 [0.141,0.566] 得到 [0.1,0.4]。最终位置可以读取两列，因此这一行没有未来位置需要屏蔽。',
         ),
         formula(
-          String.raw`\tilde{S}=S/\sqrt{d_k},\qquad \hat{S}=\operatorname{mask}(\tilde{S}),\qquad \alpha_{t,j}=\frac{\exp(\hat{s}_{t,j})}{\sum_{r=0}^{T-1}\exp(\hat{s}_{t,r})}`,
-          '先缩放 raw scores，再把 masked scores 记为 hat S；对固定 query row t，只有允许的 key positions r 的 masked-score exponentials 归一化为 attention weights。',
+          String.raw`\alpha_{t,j}=\frac{\exp(\hat{s}_{t,j})}{\sum_{r=0}^{T-1}\exp(\hat{s}_{t,r})}`,
+          '对固定 Query Row t，沿全部 Key Position Columns 做 Softmax。',
+        ),
+        code(
+          'text',
+          `Prompt A, final query row
+scaled scores = [0.8, 0.4]
+exp values    = [2.226, 1.492]
+sum           = 3.718
+weights       = [0.599, 0.401]
+
+Prompt B, final query row
+scaled scores = [0.1, 0.4]
+exp values    = [1.105, 1.492]
+sum           = 2.597
+weights       = [0.426, 0.574]`,
         ),
         table(
+          ['Softmax', '竞争的 Axis', '回答的问题'],
           [
-            'prompt, t=1 final 喜欢',
-            'masked score row after scale → mask [j=0,j=1]',
-            'row Softmax weights [j=0,j=1]',
+            ['Attention Softmax', 'T 个 Key Positions', '当前 Query 应读取哪些位置？'],
+            ['Vocabulary Softmax', 'V 个 Vocabulary Tokens', '下一个 Token 应该是哪一个？'],
           ],
-          [
-            ['A = [我,喜欢]', '[0.8, 0.4]', '[0.599, 0.401]'],
-            ['B = [猫,喜欢]', '[0.1, 0.4]', '[0.426, 0.574]'],
-          ],
-          't=1 的两个 columns 都允许，所以此例的 masked row 与 scaled row 数值相同；每一 row 只在 key/value columns 上归一化。',
+          '数学函数相同，但输入、Axis 与含义不同。Attention Weight 不是下一词概率。',
         ),
         formula(
-          String.raw`A=\operatorname{softmax}(\hat{S},\mathrm{dim}=-1),\qquad \hat{S},A:[B,T,T]=[2,2,2]`,
-          'masked scores 与 weights 的 shape 保持不变；最后一维 j 被转换为每个 query 的 attention weights。',
+          String.raw`P=\operatorname{softmax}(\widehat{S},\mathrm{dim}=-1),\qquad \widehat{S},P:[B,T,T]=[2,2,2]`,
+          '每一行单独归一化，最后一维 j 的 Weights 加总为一。使用 P 表示 Weight Matrix，避免与 Prompt A 的名称混淆。',
         ),
       ],
       [
-        'Softmax 沿 query axis dim=-2 会把语义弄错，即使 tensor shape 能运行。',
-        '较高 attention weight 不是对最终预测的完整解释。',
+        'Softmax 使用 dim=-2 会沿 Query Rows 归一化，即使 Shape 能运行，语义也已经错误。',
+        'Attention Weight 数值较大不等于该 Token 对最终预测具有完整因果解释。',
       ],
-      check('为什么是每个 query row，而不是整个 [T,T] 矩阵，分别加总为 1？', [
+      check('为什么 Attention Softmax 必须让每个 Query Row 分别加总为 1？', [
         paragraph(
-          '每个 query 独立决定怎样分配自己的读取；同一 row 的所有可见 key/value columns 共同竞争。',
+          '每个 Query 都要独立分配自己的读取比例；同一行的 Key/Value Positions 是这一次读取中的竞争候选。',
         ),
       ]),
     ),
     section(
       'o0264-6-values',
-      '6. 加权汇总 Values',
-      '找到相关位置还不够；层还需要以可微方式把这些位置的内容带回 query position。',
+      '6. 用 Weights 加权汇总 Values',
+      '找到匹配位置仍不够；层还必须把相应位置的信息以可微方式带回当前 Query。',
       [
-        '让 Key 负责“去哪里”，让 Value 负责“带回什么”。',
-        '完成一个有标签的 single-head weighted Value calculation。',
+        '完成 Prompt A 与 Prompt B 的完整 Weighted Value Calculation。',
+        '分清 Weights、Values 与 Head Output 的含义。',
       ],
       [
-        paragraph(
-          '对于 prompt A 的 head 1、最终 query t=1，取 position j=0 的 Value v₀=[1,0]（来自 我），以及 j=1 的 Value v₁=[0,1]（来自 喜欢）。这些是一个 head 内两维的 learned values，不是 token IDs 或 vocabulary probabilities。',
-        ),
         formula(
-          String.raw`o_t^{(h)}=\sum_{j=0}^{T-1}\alpha_{t,j}^{(h)}v_j^{(h)}=\sum_{j\le t}\alpha_{t,j}^{(h)}v_j^{(h)}`,
-          'mask 让未来位置的 weight 为零，因此因果情形只实际汇总 j 小于或等于 t 的 Values。',
+          String.raw`o_t=\sum_{j=0}^{T-1}\alpha_{t,j}v_j`,
+          '每个允许位置的 Attention Weight 乘对应 Value，再把所有结果相加。',
         ),
         code(
           'text',
-          `Prompt A, head 1, query row t=1 (final 喜欢)
-columns: j=0 first token 我       j=1 second token 喜欢
-weights: [0.599, 0.401]
-Values:  v_0 = [1, 0]             v_1 = [0, 1]
+          `Prompt A, final 喜欢
+weights = [0.599, 0.401]
+Values  = [[1,0], [0,1]]
 
-o_1 = 0.599 * v_0 + 0.401 * v_1
-    = 0.599 * [1,0] + 0.401 * [0,1]
-    = [0.599, 0.401]              # head_size=2 features`,
-        ),
-        formula(
-          String.raw`A^{(h)}:[2,2,2]\ @\ V^{(h)}:[2,2,2]\ \longrightarrow\ O^{(h)}:[2,2,2]`,
-          'matrix product 沿 scores 的 key column j 与 Values 的 position axis 相乘，保留 query position 和两个 head features。',
+o_A = 0.599 * [1,0] + 0.401 * [0,1]
+    = [0.599, 0.401]
+
+Prompt B, final 喜欢
+weights = [0.426, 0.574]
+Values  = [[-1,0], [0,1]]
+
+o_B = 0.426 * [-1,0] + 0.574 * [0,1]
+    = [-0.426, 0.574]`,
         ),
         paragraph(
-          'B 的 j=0 Value 来自 猫，不是 我；即使两条序列的 weights 偶然相同，Values 仍可使 output 不同。',
+          '两条 Prompt 的最后 Token 都是“喜欢”，但 Head Output 已经不同。差异一部分来自 Key 不同造成的 Weight 不同，另一部分来自“我”和“猫”的 Value 本身不同。',
+        ),
+        formula(
+          String.raw`P:[B,T,T]\ @\ V:[B,T,d_{\mathrm{head}}]\longrightarrow O:[B,T,d_{\mathrm{head}}]`,
+          '矩阵乘法沿 Key/Value Position j 汇总，保留 Batch、Query Position 与 Head Feature。',
+        ),
+        callout(
+          '最重要的职责分工',
+          [
+            list([
+              'Q/K 的比较决定“读取哪里、读取多少”。',
+              'V 决定“从被读取的位置带回什么”。',
+              'O 是新的 Contextual Representation，不是 Token ID，也不是 Vocabulary Probability。',
+            ]),
+          ],
+          'principle',
         ),
       ],
       [
-        'weights 应乘 Values，不是 Keys。',
-        'O 的最后一维是两个 head features，不是两个 token 或两个 probabilities。',
+        'Weights 应乘 Values，不是再乘 Keys。',
+        'O 的最后一维是 Head Features，不是两个 Token，也不是两个概率。',
       ],
-      check('哪一部分改变“读取地址”，哪一部分改变“带回内容”？', [
+      check('Prompt A 与 Prompt B 的最终 Head Output 为什么不同？', [
         paragraph(
-          'Q/K 的比较改变 weights，也就是地址；V 决定被这些 weights 带回的 payload。',
+          '第一个位置的 Key 使两条 Prompt 得到不同 Weights，同时“我”和“猫”的 Value 也不同；两种差异都会进入 Weighted Sum。',
         ),
       ]),
     ),
     section(
       'o0265-7-scaled-dot-product-attention',
-      '7. Scaled Dot-Product Attention',
-      '把整个 Attention 写成一条密集公式会遮住比较、缩放、mask、归一化和取回之间的顺序。',
+      '7. 一条完整的 Scaled Dot-Product Attention 计算链',
+      '把 Attention 压成一条公式很容易背错顺序，也会隐藏分数从哪里来、Mask 放在哪里以及模型如何学会打分。',
       [
-        '把一个 causal head 分解成可逐项检查的中间张量。',
-        '把 causal mask 明确插在 Softmax 之前。',
+        '把每个操作和中间 Tensor 独立命名。',
+        '将教学数值与训练梯度路径连成一条因果链。',
       ],
       [
         formula(
-          String.raw`\operatorname{Attention}(Q,K,V)=\operatorname{softmax}\!\left(\operatorname{mask}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)\right)V,\qquad d_k=\mathrm{head\_size}=2`,
-          '一个 causal attention head 依次比较 Query 和 Key、按根号 d_k 缩放、mask、行 Softmax，并用 weights 汇总 Values。',
+          String.raw`\operatorname{Attention}(Q,K,V)=\operatorname{softmax}\!\left(\operatorname{mask}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)\right)V`,
+          '标准 Causal Scaled Dot-Product Attention。',
         ),
+        chain([
+          'X @ W_Q/W_K/W_V → Q、K、V',
+          'Q @ Kᵀ → Raw Scores S',
+          'S / √d_k → Scaled Scores',
+          'Future Columns → −∞ → Masked Scores',
+          'Row Softmax → Attention Weights P',
+          'P @ V → Head Output O',
+        ]),
         formula(
-          String.raw`Q:[B,T,\mathrm{head\_size}]\ @\ K^\top:[B,\mathrm{head\_size},T]\longrightarrow S:[B,T,T],\qquad \tilde{S}=S/\sqrt{d_k},\qquad \hat{S}=\operatorname{mask}(\tilde{S}),\qquad A=\operatorname{softmax}(\hat{S}),\qquad O=AV`,
-          '分开的中间变量依次是 raw scores、scaled scores、masked scores、attention weights 和 head output；Key transpose 的中间轴是 head_size，输出矩阵的最后两轴是 query position 与 key position。',
+          String.raw`Q:[B,T,d_k]\ @\ K^\top:[B,d_k,T]\rightarrow S:[B,T,T],\qquad P:[B,T,T]\ @\ V:[B,T,d_v]\rightarrow O:[B,T,d_v]`,
+          '第一次矩阵乘法消去 Head Feature Axis，第二次矩阵乘法消去 Key/Value Position Axis。',
         ),
-        table(
-          [
-            'A = [我,喜欢], head 1 after scaling + mask',
-            'key/value j=0: 我',
-            'key/value j=1: 喜欢',
-          ],
-          [
-            ['query t=0: first token 我', 's₀₀', '−∞'],
-            ['query t=1: final 喜欢', '0.8', '0.4'],
-          ],
-          '行=query position，列=key/value position；first row 的 future column 已在 Softmax 前屏蔽。',
-        ),
-        formula(
-          String.raw`S,A:[B,T,T]=[2,2,2],\qquad O:[B,T,\mathrm{head\_size}]=[2,2,2]`,
-          'single head 的 score 与 weight 都有一对 token-position 轴；weighted Values 恢复为每个 query 的两个 head features。',
-        ),
-      ],
-      [
-        'mask 放在 Softmax 后会留下未重新归一化的 weights。',
-        '这里的 Softmax 不是 vocabulary Softmax。',
-      ],
-      check('把一个 causal head 的五个操作按正确顺序排列。', [
         paragraph(
-          'QK transpose 得 scores，除以 √d_k，应用 causal mask，沿 key columns row-Softmax，最后乘 V。',
+          '训练时，O 继续影响 Transformer 的后续表示、Language Model Head、Logits 与 Cross Entropy Loss。梯度再从 Loss 反向经过 O、P、Softmax 和 Scores，更新 W_Q、W_K 与 W_V。模型不是先拥有正确 Attention 表，而是在降低最终预测 Loss 的过程中逐步学会怎样打分和传递内容。',
+        ),
+        formula(
+          String.raw`\mathrm{Loss}\rightarrow\mathrm{Logits}\rightarrow O\rightarrow P\rightarrow S\rightarrow Q,K,V\rightarrow W_Q,W_K,W_V`,
+          '反向传播把最终预测误差传回产生 Query、Key 与 Value 的参数。',
+        ),
+      ],
+      [
+        '不能跳过 Scale、Mask 或 Softmax 中任何一步。',
+        '训练没有直接告诉模型“喜欢应该关注我”；这种路由由最终 Loss 间接学习。',
+      ],
+      check('模型中“什么位置应得高分”是谁决定的？', [
+        paragraph(
+          'W_Q 与 W_K 决定 Query 和 Key 的坐标；最终预测 Loss 通过反向传播更新这些参数，使有用的匹配逐步得到更合适的分数。',
         ),
       ]),
     ),
     section(
       'o0266-8-sqrt-d-k',
-      '8. 为什么除以 √d_k',
-      'Key 的维度变多时，dot product 的大小通常也变大，可能把 Softmax 推得过尖，使梯度更难优化。',
+      '8. 为什么除以 √d_k，而不是 d_k',
+      '只说“维度大时分数会变大”仍没有解释为什么标准公式使用平方根，也无法理解它与 Softmax 梯度的关系。',
       [
-        '说明 scaling 是 score-scale 校准，而不是 mask 或 normalization。',
-        '用 d_k=head_size=2 完整计算 A 的最终 score row。',
+        '给出平方根缩放的统计直觉。',
+        '用同一 Prompt 数值验证缩放结果与不变量。',
       ],
       [
+        paragraph(
+          'Dot Product 是 d_k 个乘积之和。若每个分量大致零均值、单位方差且不过度相关，那么这些乘积之和的方差约随 d_k 增长，标准差则约随 √d_k 增长。除以 √d_k 可以把典型 Score Scale 拉回较稳定的范围。',
+        ),
         formula(
-          String.raw`\tilde{s}_{t,j}=\frac{q_t\cdot k_j}{\sqrt{d_k}},\qquad d_k=2`,
-          '每一个 raw dot-product score 作为标量除以 Query/Key width 的平方根。',
+          String.raw`q\cdot k=\sum_{i=1}^{d_k}q_i k_i,\qquad \operatorname{Var}(q\cdot k)\approx d_k,\qquad \operatorname{Std}(q\cdot k)\approx\sqrt{d_k}`,
+          '这是理解缩放因子的常用近似统计直觉，不是对所有训练状态的严格独立性声明。',
         ),
         code(
           'text',
-          `Prompt A, head 1, final query t=1
-raw score row              = [1.131, 0.566]
-sqrt(d_k) = sqrt(2)       ≈ 1.414
-scaled score row           = [1.131 / 1.414, 0.566 / 1.414]
-                           ≈ [0.800, 0.400]`,
+          `Prompt A, final query
+raw scores       = [1.131, 0.566]
+sqrt(d_k)        = sqrt(2) ≈ 1.414
+scaled scores    = [0.800, 0.400]
+
+Prompt B, final query
+raw scores       = [0.141, 0.566]
+scaled scores    = [0.100, 0.400]`,
         ),
         paragraph(
-          '除以正数不会改变同一 row 内分数的排序；它让 Softmax 接收到更稳定的数值范围。这个两维例子只展示操作，d_k 更大时，许多乘积相加的变化更明显。',
+          '如果分数绝对值过大，Softmax 容易过早接近 One-Hot，较小候选获得接近零的梯度。缩放不会改变同一行的排序，只调整 Softmax 接收到的数值尺度。',
         ),
         formula(
-          String.raw`\tilde{S}:[B,T,T]=[2,2,2]`,
-          '缩放逐元素进行，不改变 score tensor 的任何 axis 或 shape。',
+          String.raw`\widetilde{S}=S/\sqrt{d_k},\qquad S,\widetilde{S}:[B,T,T]`,
+          'Scale 是逐元素除法，不改变任何 Axis 或 Shape。',
         ),
       ],
       [
-        '不要除以 d_k，也不要除以 √C；score vector 宽度是 d_k=head_size=2。',
-        'scaling 既不阻止未来位置，也不让 weights 自动加总为一。',
+        '应除以 √d_k；不是除以 d_k，也不是除以整个 Model Width C。',
+        'Scale 不负责禁止未来位置，也不会让每行自动加总为一。',
       ],
-      check('除以 √d_k 后什么保持不变，什么更稳定？', [
+      check('除以 √d_k 后，什么保持不变，什么变得更稳定？', [
         paragraph(
-          '同一 row 的 score 排序保持不变；Softmax 的数值尺度和梯度通常更好处理。',
+          '同一 Query Row 内的 Score 排序保持不变；Softmax 的输入尺度及其训练梯度通常更容易控制。',
         ),
       ]),
     ),
     section(
       'o0268-9-self-attention-shape',
-      '9. Self-Attention 的 Shape',
-      '初学者容易把 [T,T] 看成 feature 或 batch，因而写出错误的 transpose 或 Softmax axis。',
+      '9. Self-Attention 的 Shape 与每个 Axis',
+      '本例中的 B、T 和 d_head 都等于 2，许多 Tensor 都打印成 [2,2,2]，很容易把不同 Axis 当成同一件事。',
       [
-        '让每个 matrix axis 与矩阵乘法都可审计。',
-        '说明 self 表示 Q、K、V 都来自同一条 sequence X。',
+        '给每个 Axis 固定语义，而不是只背数字。',
+        '解释 K Transpose 与两次 Matrix Multiplication 消去的轴。',
       ],
       [
-        paragraph(
-          'A 与 B 在同一个 batch，但 Attention 从不跨 batch 读取。A 的 Q/K/V 都由 X_A=[我,喜欢] 产生；B 的 Q/K/V 都由 X_B=[猫,喜欢] 产生。',
-        ),
         table(
+          ['Tensor', 'Shape', '三个 Axis 的含义'],
           [
-            'head 1 scaled score slice',
-            'key/value j=0: first token',
-            'key/value j=1: 喜欢',
+            ['X', '[B,T,C] = [2,2,4]', 'Batch, Token Position, Model Feature'],
+            ['Q / K / V', '[B,T,d_head] = [2,2,2]', 'Batch, Token Position, Head Feature'],
+            ['Scores / Weights', '[B,T,T] = [2,2,2]', 'Batch, Query Position, Key/Value Position'],
+            ['Head Output', '[B,T,d_head] = [2,2,2]', 'Batch, Query Position, Head Feature'],
           ],
-          [
-            ['A, query t=0: 我', 's₀₀', 'future → masked'],
-            ['A, query t=1: 喜欢', '0.8', '0.4'],
-            ['B, query t=0: 猫', 's₀₀', 'future → masked'],
-            ['B, query t=1: 喜欢', '0.1', '0.4'],
-          ],
-          '各 prompt 都有自己的 [T,T] slice；例如 S[0,1,0] 是 A 的最终 喜欢 查询 A 的 我。',
+          'Shape 数字相同不表示 Axis 含义相同。',
         ),
         formula(
-          String.raw`Q,K,V:[B,T,\mathrm{head\_size}]=[2,2,2]`,
-          '一个 head 的 Q、K、V 都保留 batch B=2、token positions T=2 与两个 head features。',
+          String.raw`Q:[B,T,d_k]\ @\ K.\operatorname{transpose}(-2,-1):[B,d_k,T]\rightarrow S:[B,T,T]`,
+          'K 只交换最后两个轴；Batch Axis 保持不动。',
         ),
         formula(
-          String.raw`Q:[B,T,\mathrm{head\_size}]\ @\ K.\operatorname{transpose}(-2,-1):[B,\mathrm{head\_size},T]\longrightarrow S:[B,T,T],\qquad A:[B,T,T]\ @\ V:[B,T,\mathrm{head\_size}]\longrightarrow O:[B,T,\mathrm{head\_size}]`,
-          '第一次矩阵乘法把 head-feature axis 相乘，第二次把 key-position axis 与 Value position axis 相乘；本例所有 numeric shapes 都恰为 [2,2,2]，但符号轴顺序不同。',
+          String.raw`P:[B,T,T]\ @\ V:[B,T,d_v]\rightarrow O:[B,T,d_v]`,
+          'Weights 的最后一个 Position Axis 与 Value 的 Position Axis 相乘，留下 Query Position 与 Value Feature。',
         ),
         paragraph(matrixAxes),
+        table(
+          ['索引', '含义'],
+          [
+            ['weights[0,1,0]', 'Prompt A 最终“喜欢”分给“我”的 Weight'],
+            ['weights[1,1,0]', 'Prompt B 最终“喜欢”分给“猫”的 Weight'],
+            ['output[1,1,:]', 'Prompt B 最终“喜欢”的 Head Output Vector'],
+          ],
+        ),
       ],
       [
-        'T 出现两次是两个 token-position axes，从来不是 C feature axis。',
-        '打印 shape 时不能丢失 batch；K.transpose(-2,-1) 把 K 的 [B,T,head_size] 变为 [B,head_size,T]，而 Q 仍是 [B,T,head_size]。',
+        'T 出现两次分别表示 Query Position 与 Key/Value Position，不是 Feature Axis。',
+        '不能 Transpose Batch Axis；应使用 transpose(-2,-1)。',
       ],
-      check('weights[1,1,0] 的含义是什么？', [
+      check('weights[1,1,0] 表示什么？', [
         paragraph(
-          '它是 prompt B（b=1）的最终 喜欢 query（t=1）分给 B 的第一个 token 猫（j=0）的 attention weight。',
+          '它是 Prompt B 的最终“喜欢”Query 分给同一 Prompt 第一个 Token“猫”的 Attention Weight。',
         ),
       ]),
     ),
     section(
       'o0270-10-gpt-causal-mask',
       '10. 为什么 GPT 需要 Causal Mask',
-      'teacher-forced training 一次把完整 [B,T] 输入交给所有位置；未 mask 的 Attention 会偷看生成时不存在的 future input。',
+      'Teacher-Forced Training 会一次提供完整输入；如果较早位置能读取右侧 Token，就会偷看生成时尚不存在的信息。',
       [
-        '让训练与逐 token generation 遵守相同的左到右信息边界。',
-        '以 T=2 的 lower-triangular mask 显示每个 query 允许的 columns。',
+        '用下一词预测任务说明 Future Leakage。',
+        '用 T=2 与 T=4 两个矩阵建立 Lower-Triangular 直觉。',
       ],
       [
         paragraph(
-          '规则是 query position t 只能读取 key position j≤t。最终 喜欢（t=1）可读两列；第一个 token（t=0）只能读自己，不能把后面的 喜欢 当作预测线索。',
-        ),
-        table(
-          [
-            'causal mask M, row=query / column=key',
-            'j=0: first token',
-            'j=1: second token',
-          ],
-          [
-            ['t=0: first token query', '1 allow', '0 forbid'],
-            ['t=1: second token query', '1 allow', '1 allow'],
-          ],
-          'T=2 的 mask 是 [[1,0],[1,1]]；它同时适用于 A 与 B，并 broadcast 到 B=2。',
+          '例如输入 [我,喜欢]、目标 [喜欢,猫]。位置 t=0 应只根据“我”预测“喜欢”；若未使用 Mask，它可以直接读取右侧已经出现的“喜欢”，相当于训练时看见答案。生成时未来 Token 尚不存在，因此这种能力无法使用。',
         ),
         formula(
-          String.raw`M_{t,j}=\begin{cases}1,&j\le t\\0,&j>t\end{cases},\qquad M\in\{0,1\}^{[T,T]}=\{0,1\}^{[2,2]}`,
-          'causal mask 在 row=query、column=key 的约定下是 lower triangular。',
+          String.raw`M_{t,j}=\begin{cases}1,&j\le t\\0,&j>t\end{cases}`,
+          'Query Position t 只允许读取当前位置和所有左侧 Key Positions。',
         ),
         formula(
-          String.raw`M:[2,2]\ \xrightarrow{\text{broadcast over }B}\ \mathrm{scores}:[B,T,T]=[2,2,2]`,
-          '同一二维 mask 被两个 batch examples 共享，并不混合 A 与 B。',
+          String.raw`M_{T=2}=\begin{bmatrix}1&0\\1&1\end{bmatrix},\qquad M_{T=4}=\begin{bmatrix}1&0&0&0\\1&1&0&0\\1&1&1&0\\1&1&1&1\end{bmatrix}`,
+          '在 Row=Query、Column=Key 的约定下，Causal Mask 是 Lower Triangular。',
+        ),
+        paragraph(
+          '位置 t=3 可以读取 0、1、2、3，不是只能读取紧邻的前一个 Token。Mask 只划定信息边界，不决定允许位置之间具体读取多少。',
+        ),
+        formula(
+          String.raw`M:[T,T]\ \xrightarrow{\text{broadcast over Batch and Heads}}\ \mathrm{Scores}:[B,n_{\mathrm{head}},T,T]`,
+          '同一 Mask 可广播到所有 Batch Examples 和 Heads，但不会让不同 Batch 彼此读取。',
         ),
       ],
       [
-        'causal 并不等于只能看紧邻的前一个 token；它可看全部允许历史和当前位置自己。',
-        '在此 row=query、column=key 约定下，mask 是下三角而不是上三角。',
+        '在 Row=Query、Column=Key 的约定下，正确 Mask 是下三角而不是上三角。',
+        'Causal 不等于只读取前一个 Token，而是可读取全部可见历史与当前位置。',
       ],
-      check(
-        '为什么 unmasked teacher forcing 会造成 train/inference mismatch？',
-        [
-          paragraph(
-            '训练中的较早位置可读取未来 input，但生成时未来 token 尚未产生，因此模型依赖了不可用信息。',
-          ),
-        ],
-      ),
+      check('为什么不使用 Mask 会造成训练与生成不一致？', [
+        paragraph(
+          '训练中的较早位置可以依赖右侧未来输入，但逐 Token 生成时那些未来输入还没有产生。',
+        ),
+      ]),
     ),
     section(
       'o0272-11-mask-softmax-infty',
       '11. 为什么 Mask 在 Softmax 前使用 −∞',
-      '若只是把 forbidden score 改为零，Softmax 仍会给它正 weight。',
+      '将 Forbidden Score 改成 0 并不表示删除候选，因为 Softmax 会为 0 分配正数 Weight。',
       [
-        '用负无穷在归一化前把 future positions 从 distribution 中移除。',
-        '对比正确的 pre-Softmax masking 与错误的 post-Softmax zeroing。',
+        '比较正确的 Pre-Softmax Masking 与两个常见错误。',
+        '将本例的完整 Scaled Scores 转换为 Masked Scores 与 Weights。',
       ],
       [
         table(
-          ['first query t=0, columns [j=0,j=1]', 'result'],
+          ['t=0 的 Scaled Row', '结果'],
           [
-            ['raw scaled scores', '[0.2, 0.9]'],
-            ['mask [1,0] before Softmax', '[0.2, −∞]'],
-            ['Softmax(masked row)', '[1, 0]'],
-            [
-              'incorrect: replace forbidden score with 0',
-              'Softmax([0.2, 0]) = [0.550, 0.450]',
-            ],
+            ['原始 [0.2,0.9]', '第二列是 Future'],
+            ['错误：Future 改为 0', 'Softmax([0.2,0]) = [0.550,0.450]'],
+            ['正确：Future 改为 −∞', 'Softmax([0.2,−∞]) = [1,0]'],
           ],
-          '正确流程保留允许分数并把 forbidden column 改为 −∞。',
+          '0 是合法 Score，不等于“移除候选”；−∞ 的指数才是 0。',
         ),
         formula(
-          String.raw`\hat{S}_{t,j}=\begin{cases}\tilde{S}_{t,j},&M_{t,j}=1\\-\infty,&M_{t,j}=0\end{cases},\qquad \exp(-\infty)=0`,
-          'mask 后 forbidden score 的 exponential 为零，因此其 attention weight 恰为零。',
+          String.raw`\widehat{S}_{t,j}=\begin{cases}\widetilde{S}_{t,j},&M_{t,j}=1\\-\infty,&M_{t,j}=0\end{cases},\qquad e^{-\infty}=0`,
+          'Forbidden Position 在 Softmax Distribution 中获得精确的零 Weight。',
         ),
         formula(
-          String.raw`\hat{S},A:[B,T,T]=[2,2,2]`,
-          'mask 和 row Softmax 都不改变 batch、query position 或 key/value position axes。',
+          String.raw`\widehat{S}_A=\begin{bmatrix}0.4&-\infty\\0.8&0.4\end{bmatrix},\qquad \widehat{S}_B=\begin{bmatrix}0.05&-\infty\\0.1&0.4\end{bmatrix}`,
+          '本例 Scale 后再应用 Causal Mask 的结果。',
+        ),
+        formula(
+          String.raw`P_A=\begin{bmatrix}1&0\\0.599&0.401\end{bmatrix},\qquad P_B=\begin{bmatrix}1&0\\0.426&0.574\end{bmatrix}`,
+          '每个 Query Row 分别执行 Softmax；第一行只能读取自己。',
         ),
       ],
       [
-        '不要把 post-Softmax weights 乘零后就结束；那会使允许 weights 不再和为一。',
-        '在 PyTorch 中使用 float("-inf") 再 F.softmax，而不是把某个任意有限大负数说成精确数学的 −∞。',
+        '不能把 Post-Softmax Weights 乘零后直接结束；允许位置的 Weights 将不再加总为一。',
+        '在本例每行至少有对角线位置可见，因此不会出现整行都是 −∞。',
       ],
-      check('为什么把 forbidden score 改成 0 反而可能让它成为最大候选？', [
-        paragraph('允许 scores 可以为负，而 e⁰ 仍为正；0 不是“移除”这个候选。'),
+      check('为什么 Forbidden Score 不能简单改成 0？', [
+        paragraph(
+          '0 在 Softmax 中对应 e⁰=1，仍会获得正 Weight；而且允许 Scores 还可能小于 0，使错误的零分反而更大。',
+        ),
       ]),
     ),
     section(
       'o0273-12-attention-head-pytorch',
-      '12. 一个 Attention Head 的 PyTorch 实现',
-      '公式必须落到能随 runtime T 正确切 mask、且每一步 shape 都可检查的操作序列。',
+      '12. 可复现全部教学数字的 PyTorch 代码',
+      '随机初始化的 nn.Linear 不会自动产生正文示例数字；如果代码与数学示例没有共享参数，读者运行后会以为自己的实现错误。',
       [
-        '给出一个从 [B,T,C] 到 [B,T,head_size] 的最小 causal head。',
-        '把 runtime mask、scale、axis 选择映射为具体 PyTorch lines。',
+        '使用与正文完全相同的 X 和 W，逐步打印所有中间 Tensor。',
+        '让示例输出可以与手算结果逐行核对。',
+      ],
+      [
+        code(
+          'python',
+          `import math
+
+import torch
+
+
+torch.set_printoptions(precision=4, sci_mode=False)
+
+sqrt_2 = math.sqrt(2)
+
+# [B,T,C] = [2,2,4]
+x = torch.tensor([
+    [
+        [1.0, 0.0, 0.0, 0.0],  # 我
+        [0.0, 1.0, 0.0, 0.0],  # 喜欢
+    ],
+    [
+        [0.0, 0.0, 1.0, 0.0],  # 猫
+        [0.0, 1.0, 0.0, 0.0],  # 喜欢
+    ],
+])
+
+# Formula convention: [C,d_head] = [4,2]
+w_q = torch.tensor([
+    [0.5, 0.5],
+    [1.0, 1.0],
+    [-0.5, 0.5],
+    [0.0, 0.0],
+])
+
+w_k = torch.tensor([
+    [0.8 * sqrt_2, 0.0],
+    [0.2 * sqrt_2, 0.2 * sqrt_2],
+    [0.0, 0.1 * sqrt_2],
+    [0.0, 0.0],
+])
+
+w_v = torch.tensor([
+    [1.0, 0.0],
+    [0.0, 1.0],
+    [-1.0, 0.0],
+    [0.0, 0.0],
+])
+
+q = x @ w_q
+k = x @ w_k
+v = x @ w_v
+
+raw_scores = q @ k.transpose(-2, -1)
+scaled_scores = raw_scores / math.sqrt(q.size(-1))
+
+T = x.size(1)
+causal_mask = torch.tril(torch.ones(T, T, dtype=torch.bool))
+masked_scores = scaled_scores.masked_fill(~causal_mask, float("-inf"))
+
+weights = torch.softmax(masked_scores, dim=-1)
+output = weights @ v
+
+print("Q:\n", q)
+print("K:\n", k)
+print("V:\n", v)
+print("Raw scores:\n", raw_scores)
+print("Scaled and masked scores:\n", masked_scores)
+print("Attention weights:\n", weights)
+print("Head output:\n", output)`,
+        ),
+        code(
+          'text',
+          `Expected final rows
+Prompt A weights: [0.5987, 0.4013]
+Prompt B weights: [0.4256, 0.5744]
+
+Prompt A output:  [ 0.5987, 0.4013]
+Prompt B output:  [-0.4256, 0.5744]`,
+        ),
+        paragraph(
+          '这段代码使用 x @ w_q，所以 W 按公式写成 [C,d_head]。nn.Linear(C,d_head) 内部存储的 weight 是 [d_head,C]，运行时框架使用其转置；两种写法的数学含义相同。',
+        ),
+      ],
+      [
+        '教学参数用于复现计算，不代表真实模型会人工设置这些语义。',
+        '不要只打印最终 Output；调试 Attention 时应依次检查 Q、K、V、Raw Scores、Masked Scores、Weights。',
+      ],
+      check('为什么这段代码不使用随机初始化的 nn.Linear？', [
+        paragraph(
+          '它的任务是精确复现正文手算数字，所以必须使用与正文一致的固定教学参数；真实训练代码则使用可学习参数。',
+        ),
+      ]),
+    ),
+    section(
+      'o0274-13',
+      '13. 可复用的 Causal Attention Head',
+      '教学矩阵能解释数学，但真实模型还需要可学习参数、Runtime Mask Slice、Shape Contract 与 Context Length 检查。',
+      [
+        '实现从 [B,T,C] 到 [B,T,d_head] 的最小可复用 Head。',
+        '把每行代码映射回对应公式与 Shape。',
       ],
       [
         code(
@@ -631,350 +771,367 @@ import torch.nn.functional as F
 class AttentionHead(nn.Module):
     def __init__(self, embed_dim: int, head_size: int, context_length: int):
         super().__init__()
+
         self.query = nn.Linear(embed_dim, head_size, bias=False)
         self.key = nn.Linear(embed_dim, head_size, bias=False)
         self.value = nn.Linear(embed_dim, head_size, bias=False)
+
         self.register_buffer(
             "causal_mask",
-            torch.tril(torch.ones(context_length, context_length, dtype=torch.bool)),
+            torch.tril(
+                torch.ones(
+                    context_length,
+                    context_length,
+                    dtype=torch.bool,
+                )
+            ),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: [B,T,C]; in this lesson x is [2,2,4].
+        # x: [B,T,C]
         _, T, _ = x.shape
-        q = self.query(x)                         # [B,T,head_size] = [2,2,2]
-        k = self.key(x)                           # [2,2,2]
-        v = self.value(x)                         # [2,2,2]
 
-        scores = q @ k.transpose(-2, -1)          # [B,T,head_size] @ [B,head_size,T] -> [B,T,T] = [2,2,2]
-        scores = scores / math.sqrt(k.size(-1))   # k.size(-1) == head_size == 2
-        mask = self.causal_mask[:T, :T]            # [T,T] = [2,2]
+        if T > self.causal_mask.size(0):
+            raise ValueError("Sequence length exceeds context_length")
+
+        q = self.query(x)  # [B,T,d_head]
+        k = self.key(x)    # [B,T,d_head]
+        v = self.value(x)  # [B,T,d_head]
+
+        scores = q @ k.transpose(-2, -1)  # [B,T,T]
+        scores = scores / math.sqrt(k.size(-1))
+
+        mask = self.causal_mask[:T, :T]
         scores = scores.masked_fill(~mask, float("-inf"))
-        weights = F.softmax(scores, dim=-1)        # row-softmax over key positions
-        return weights @ v                         # [B,T,head_size] = [2,2,2]`,
-        ),
-        formula(
-          String.raw`O=\operatorname{softmax}\!\left(\operatorname{mask}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)\right)V`,
-          '代码中的 projections、scores、mask、Softmax 和 weights at V 分别实现这一条公式的连续阶段。',
+
+        weights = F.softmax(scores, dim=-1)
+        return weights @ v  # [B,T,d_head]`,
         ),
         table(
-          ['code stage', 'input → output shape for B=2,T=2,C=4'],
+          ['代码阶段', '公式', 'Shape'],
           [
-            ['self.query/key/value(x)', '[2,2,4] → [2,2,2]'],
-            [
-              'q @ k.transpose(-2,-1)',
-              'Q:[B,T,head_size] @ Kᵀ:[B,head_size,T] → scores:[B,T,T] (all are [2,2,2] here)',
-            ],
-            ['mask / F.softmax(..., dim=-1)', '[2,2,2] → [2,2,2]'],
-            ['weights @ v', '[2,2,2] @ [2,2,2] → [2,2,2]'],
+            ['query/key/value(x)', 'Q=XW_Q, K=XW_K, V=XW_V', '[B,T,C] → [B,T,d_head]'],
+            ['q @ k.transpose(-2,-1)', 'S=QKᵀ', '[B,T,d_head] @ [B,d_head,T] → [B,T,T]'],
+            ['scores / sqrt(k.size(-1))', 'S/√d_k', '[B,T,T] → [B,T,T]'],
+            ['masked_fill', 'Future → −∞', '[B,T,T] → [B,T,T]'],
+            ['softmax(dim=-1)', 'Row Softmax', '[B,T,T] → [B,T,T]'],
+            ['weights @ v', 'O=PV', '[B,T,T] @ [B,T,d_head] → [B,T,d_head]'],
           ],
+        ),
+        paragraph(
+          'register_buffer 让 Mask 随模型移动到 CPU 或 GPU，但不会成为 Trainable Parameter。[:T,:T] 让同一个最大 Context Mask 适配当前 Runtime Sequence Length。',
         ),
       ],
       [
-        '一 head 返回 [B,T,head_size]=[2,2,2]，还没有恢复 C=4，也没有生成 vocabulary logits。',
-        '不要硬编码某个 T 的 mask slice；必须按当前 runtime T 取 [:T,:T]。',
-        'register_buffer 的 mask 会随 device 移动，但不是 trainable parameter。',
+        '该 Head 返回 [B,T,d_head]，还没有恢复 Model Width C，也没有产生 Vocabulary Logits。',
+        'Runtime T 不能超过初始化时的 context_length。',
       ],
-      check('这一个 head 返回什么 shape，为什么不是 [B,T,C]？', [
+      check('这个 AttentionHead 为什么不能直接与输入 x 做 Residual Addition？', [
         paragraph(
-          '它返回 [2,2,2]，因为本例每个 head 只有 head_size=2 个 features；multi-head concat/projection 才恢复 C=4。',
+          '单 Head Output 的最后一维是 d_head=2，而输入的最后一维是 C=4；需要 Multi-Head Concat 与 Output Projection 恢复到 C。',
         ),
       ]),
-    ),
-    section(
-      'o0274-13',
-      '13. 代码与公式逐行对应',
-      '学习者可能各自认识公式和 PyTorch 片段，却无法定位哪一步首先产生错误 tensor。',
-      [
-        '建立 formula → code → shape 的 debug map。',
-        '让 mask 明确位于 scaled scores 与 Softmax 之间。',
-      ],
-      [
-        table(
-          ['stage', 'formula', 'PyTorch', 'shape / A final row'],
-          [
-            [
-              '1. projections',
-              'Q=XW_Q, K=XW_K, V=XW_V',
-              'q=self.query(x); k=self.key(x); v=self.value(x)',
-              '[2,2,4] → [2,2,2]',
-            ],
-            [
-              '2. scores + scale',
-              'Q:[B,T,head_size] @ Kᵀ:[B,head_size,T] → S:[B,T,T]; then S/√d_k',
-              'scores=q @ k.transpose(-2,-1); scores /= sqrt(k.size(-1))',
-              'A final row: [0.8,0.4]',
-            ],
-            [
-              '3. causal mask',
-              'Ŝ=mask(Ṡ)',
-              'scores=scores.masked_fill(~mask, -∞)',
-              '[2,2,2] → [2,2,2]',
-            ],
-            [
-              '4. normalize + retrieve',
-              'A=softmax(Ŝ); O=AV',
-              'weights=F.softmax(scores,dim=-1); out=weights @ v',
-              '[0.8,0.4] → [0.599,0.401]; O [2,2,2]',
-            ],
-          ],
-          '每一行都对应同一 single-head forward；文字公式的 lossless LaTex 在下面逐项给出。',
-        ),
-        formula(
-          String.raw`Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V`,
-          'projection stage 把 [2,2,4] 的 X 变为三个 [2,2,2] tensors。',
-        ),
-        formula(
-          String.raw`\tilde{S}=\frac{QK^\top}{\sqrt{d_k}},\qquad Q:[B,T,\mathrm{head\_size}]\ @\ K^\top:[B,\mathrm{head\_size},T]\longrightarrow\tilde{S}:[B,T,T],\qquad \hat{S}=\operatorname{mask}(\tilde{S}),\qquad A=\operatorname{softmax}(\hat{S}),\qquad O=AV`,
-          'scaled scores、mask、row Softmax 和 weighted Value retrieval 的正确顺序，同时保留 Key transpose 的符号轴顺序。',
-        ),
-        paragraph(
-          '调试时先看 q/k/v，再看 scaled scores；若 score 看起来正确但 forbidden future column 仍有正 weight，错误就在 mask insertion 或 Softmax ordering，而不是 Value multiplication。',
-        ),
-      ],
-      [
-        '不要在映射表里隐藏 mask；它必须在 score 与 Softmax 之间。',
-        'weights @ v 是 weighted retrieval，不是又一次 learned projection。',
-      ],
-      check(
-        'scores 正确但 future position 有非零 weight 时，表中的哪一行错了？',
-        [
-          paragraph(
-            '第 3 行的 mask insertion，或第 4 行把 Softmax 放在 mask 前的顺序，出现了错误。',
-          ),
-        ],
-      ),
     ),
     section(
       'o0278-14-self-attention',
       '14. 为什么叫 Self-Attention',
-      '只说 Attention 没有说明 Query 是在同一 sequence 内读，还是从另一数据源读取。',
+      '“Self”常被误解为每个 Token 只能看自己，或者被误解为不同 Batch 中的 Token 可以相互读取。',
       [
-        '给 self-attention 的数据流命名，不把本课扩展成 cross-attention 实现。',
-        '明确 batch 让两个 prompts 并行，而不让它们彼此相互读取。',
+        '区分 Self-Attention 与 Cross-Attention 的数据来源。',
+        '确认 Batch Examples 始终保持隔离。',
       ],
       [
         paragraph(
-          'Self 的含义是 Q、K、V 都源自同一条 X：X_A→Q_A,K_A,V_A，X_B→Q_B,K_B,V_B。它不表示 token 只能看自己；GPT 的 causal self-attention 允许它看自己的可见左侧。Cross-attention 则会让 Q 来自一条 sequence，而 K/V 来自另一条 source。',
+          'Self 的含义是 Q、K、V 都来自同一条输入 X。它不表示 Token 只能看自己；GPT 的 Causal Self-Attention 允许每个位置看自己和全部可见左侧。',
         ),
         formula(
-          String.raw`Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V,\qquad [B,T,C]=[2,2,4]\longrightarrow[B,T,\mathrm{head\_size}]=[2,2,2]`,
-          '同一 X 生成三种 head representations，同时保持两个 batch examples 分离。',
+          String.raw`Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V`,
+          'Self-Attention 中三者来自同一组序列表示。',
+        ),
+        table(
+          ['类型', 'Query 来源', 'Key / Value 来源'],
+          [
+            ['Self-Attention', '序列 X', '同一序列 X'],
+            ['Cross-Attention', '目标序列或当前状态', '另一条 Source Sequence'],
+          ],
         ),
         formula(
-          String.raw`S:[B,T,T]=[2,2,2]\neq[B,T,B,T]`,
-          'score tensor 为每个 batch item 只包含它自己的 query positions 和 key positions，不含跨 batch 轴。',
+          String.raw`S:[B,T,T]\neq[B,T,B,T]`,
+          '每个 Batch Item 只拥有自己的 Query×Key Matrix，没有跨 Batch 的 Attention Axis。',
+        ),
+        paragraph(
+          'Prompt A 的 Scores Slice 只包含“我、喜欢”；Prompt B 的 Slice 只包含“猫、喜欢”。把两条 Prompt 放入同一 Batch 只是并行计算，不是把它们接成一段文本。',
         ),
       ],
       [
-        'self 不等于只 attend to 自己，而是 Q/K/V 来自同一 sequence。',
-        'Attention 的比较本身不提供 absolute order；Week 8 会加入 position embeddings。',
+        'Self 不等于只 Attend to 自己。',
+        'Q/K 的内容比较本身不提供完整 Absolute Position；Week 8 会加入 Position Embedding。',
       ],
-      check('在这个 B=2 batch 中，A 的“喜欢”能 attend 到 B 的“猫”吗？', [
-        paragraph(
-          '不能。A 和 B 是独立 batch examples；A 的 score slice 只包含 A 的两个 token positions。',
-        ),
+      check('Prompt A 的“喜欢”可以读取 Prompt B 的“猫”吗？', [
+        paragraph('不能。两条 Prompt 是独立 Batch Examples，各自拥有独立的 [T,T] Score Slice。'),
       ]),
     ),
     section(
       'o0279-15-multi-head-attention',
-      '15. Multi-Head Attention',
-      '单个两维 head 只有一组 learned matching/payload subspace 与一套 weights，表达容量有限。',
+      '15. Multi-Head Attention 与 Output Projection',
+      '单个 Head 只有一套投影和一套读取分布；同时，单 Head 的 d_head 输出通常小于 Model Width C，不能直接进入 Residual Path。',
       [
-        '并行运行两个独立 head，并把输出恢复到 model width C=4。',
-        '把 head axis 与 [T,T] 的两条 position axes 严格分开。',
+        '解释多个 Heads 为什么并行以及 Head Axis 与 Position Axes 的区别。',
+        '实现 Concat 与 W_O，并说明 W_O 的实际用途。',
       ],
       [
         paragraph(
-          'head 1 与 head 2 各有自己的 W_Q、W_K、W_V:[4,2]。它们可以学习不同的有用读取方式，但不保证会变成可命名的语法专家。',
+          '每个 Head 都有自己的 W_Q、W_K、W_V，可以学习不同的匹配空间和 Payload。不同 Head 可能利用不同线索，但不保证它们自动变成可命名的语法专家。',
+        ),
+        formula(
+          String.raw`C=4,\qquad n_{\mathrm{head}}=2,\qquad d_{\mathrm{head}}=C/n_{\mathrm{head}}=2`,
+          '两个两维 Heads 在 Feature Axis 上连接后恰好恢复四维 Model Width。',
         ),
         chain([
-          'x [B,T,C] = [2,2,4]',
-          'stacked Q/K/V [B,n_head,T,head_size] = [2,2,2,2]',
-          'each head scores / weights [B,T,T] = [2,2,2]',
-          'stacked head outputs [2,2,2,2]',
-          'transpose + concat heads [2,2,4]',
-          'output projection W_O:[4,4] → [2,2,4]',
+          'X [B,T,C] = [2,2,4]',
+          'Head 1 Output [2,2,2]',
+          'Head 2 Output [2,2,2]',
+          'Concat on Feature Axis → [2,2,4]',
+          'Output Projection W_O:[4,4] → [2,2,4]',
         ]),
         formula(
           String.raw`\operatorname{MultiHead}(X)=\operatorname{Concat}(O^{(1)},O^{(2)})W_O`,
-          '两个 head outputs 在 feature axis 上连接，再由 output projection 混合为 model width。',
+          'Concat 只把 Head Features 放在一起；W_O 学习怎样重新混合它们并保持外部 Shape 为 C。',
         ),
-        formula(
-          String.raw`O^{(h)}\in\mathbb{R}^{[B,T,2]},\qquad \operatorname{Concat}(O^{(1)},O^{(2)})\in\mathbb{R}^{[2,2,4]},\qquad W_O\in\mathbb{R}^{4\times4}`,
-          '每个 head 有两个 features；两个 head 拼接为 C=4，并用四乘四投影保持外部 shape。',
+        code(
+          'python',
+          `class MultiHeadAttention(nn.Module):
+    def __init__(self, embed_dim: int, num_heads: int, context_length: int):
+        super().__init__()
+
+        if embed_dim % num_heads != 0:
+            raise ValueError("embed_dim must be divisible by num_heads")
+
+        head_size = embed_dim // num_heads
+
+        self.heads = nn.ModuleList([
+            AttentionHead(embed_dim, head_size, context_length)
+            for _ in range(num_heads)
+        ])
+
+        self.output_projection = nn.Linear(
+            embed_dim,
+            embed_dim,
+            bias=False,
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        head_outputs = [head(x) for head in self.heads]
+        concatenated = torch.cat(head_outputs, dim=-1)
+        return self.output_projection(concatenated)`,
+        ),
+        paragraph(
+          'Output Projection 不只是为了 Shape。Concat 后不同 Head 的 Features 仍只是并排放置；W_O 允许模型学习如何跨 Head 重新组合信息，并为后续 Residual Addition 提供 [B,T,C] 接口。',
         ),
       ],
       [
-        'n_head=2 不会让外部 output 变为 [2,2,8]；两个两维 heads concat 后是 C=4。',
-        'head count 是独立 axis，不是 [T,T] 中的 query 或 key/value axis；每个 head 仍须 causal mask。',
+        'n_head=2 不会让最终外部宽度变为 8；两个 d_head=2 的输出 Concat 后是 C=4。',
+        '每个 Head 都有自己的 [T,T] Weights，也都必须应用 Causal Mask。',
       ],
-      check('为什么这里要求 C=4 能被 n_head=2 整除？', [
+      check('为什么 Multi-Head Concat 后还需要 W_O？', [
         paragraph(
-          '这样每个 head 有整数 head_size=C/n_head=2，两个 outputs 拼接后恰好回到四个 channels。',
+          'Concat 只把各 Head Features 并排放置；W_O 学习跨 Head 混合并保持输出宽度为 C，使结果能继续进入 Residual Path。',
         ),
       ]),
     ),
     section(
       'o0281-16-attention',
-      '16. Attention 不是什么',
-      '搜索的比喻容易让人把一次 forward 的 weights 误读为永久记忆、因果解释或模型的全部推理。',
+      '16. Attention Output 怎样影响最终 Logits',
+      '初学者常把 Attention Weights 当作下一词概率，或者不知道 Head Output 后面还要经过哪些步骤才产生 Logits。',
       [
-        '给 Attention 设准确边界，避免将局部权重扩大为关于模型的结论。',
-        '保持“可能利用前缀”与“保证理解”的区别。',
+        '把 Week 7 的 Contextual Features 接回 Week 6 的 Output Head。',
+        '划清 Attention Weight、Hidden Representation、Logit 与 Probability 的边界。',
       ],
       [
-        paragraph(
-          'Attention 是对当前 forward-pass 可用表示做 learned weighted information exchange。A 中最终 喜欢→我 的 head-1 weight 0.599 只说明：在这个 head、这个 layer 的线性 Value 汇总中，来自 我 的贡献比来自位置 1 更大。它不是外部数据库查询、永久 memory，也不是完整输出解释。',
-        ),
+        chain([
+          'X [B,T,C]',
+          'Multi-Head Attention [B,T,C]',
+          'Transformer 后续 Residual / FFN / Layers [B,T,C]',
+          'Language Model Head W_vocab:[C,V_vocab]',
+          'Logits [B,T,V_vocab]',
+          '需要解释概率时再对 Vocabulary Axis 做 Softmax',
+        ]),
         formula(
-          String.raw`o_t^{(h)}=\sum_j\alpha_{t,j}^{(h)}v_j^{(h)}`,
-          '这只描述一个 head 和一个 layer 的 local weighted Value aggregation；行仍是 query t，列仍是 key/value j。',
+          String.raw`H:[B,T,C]\ @\ W_{\mathrm{vocab}}:[C,V_{\mathrm{vocab}}]\rightarrow\mathrm{Logits}:[B,T,V_{\mathrm{vocab}}]`,
+          'Language Model Head 把每个位置的 Contextual Features 映射为每个 Vocabulary Token 的原始分数。',
+        ),
+        paragraph(
+          '本课的 Prompt A 与 Prompt B 已在最终位置产生不同的 Head Output。经过 Multi-Head、W_O 与后续 Transformer 处理后，它们可以形成不同的 H，因此 Language Model Head 可以产生不同 Logits。Attention 并不直接输出哪个 Token。',
+        ),
+        table(
+          ['对象', '典型 Shape', '意义'],
+          [
+            ['Attention Weights', '[B,n_head,T,T]', '每个 Query 读取哪些 Key/Value Positions'],
+            ['Contextual Features H', '[B,T,C]', '每个位置经过上下文处理后的表示'],
+            ['Vocabulary Logits', '[B,T,V_vocab]', '每个候选 Token 的原始分数'],
+            ['Vocabulary Probabilities', '[B,T,V_vocab]', 'Logits 沿 Vocabulary Axis Softmax 后的分布'],
+          ],
         ),
         callout(
-          '仍会影响最终 logits 的其他路径',
+          'Attention 不是什么',
           [
             list([
-              '另一个 head、concat 与 output projection。',
-              'residual path、per-position FFN、后续 Transformer layers。',
-              '最终 language-model head 将 C=4 contextual features 映射到 vocabulary logits。',
+              '不是外部数据库查询或永久 Memory。',
+              '不是最终 Vocabulary Probability。',
+              '不是模型全部推理过程。',
+              '一张 Attention Heatmap 不是最终预测的完整因果解释。',
             ]),
           ],
           'principle',
         ),
       ],
       [
-        '不要把 attention heatmap 当作 token 对 final prediction 的因果证明。',
-        '一个零 weight 不意味着该 token 没有经其他 head、residual 或 layer 影响结果。',
-        'Attention 不会自动编码 position。',
+        '不要把 Attention Weights 直接送入 Vocabulary Softmax；LM Head 接收的是 Contextual Features。',
+        '某个 Weight 为零不代表该 Token 没有经其他 Head、Residual 或 Layer 影响最终结果。',
       ],
-      check(
-        '为什么一张 attention-weight matrix 不足以解释最终 vocabulary prediction？',
-        [
-          paragraph(
-            '其他 heads、projection、residual、FFN、后续 layers 和 language-model head 也都会改变 logits。',
-          ),
-        ],
-      ),
+      check('Attention Weights 与 Vocabulary Probabilities 分别回答什么问题？', [
+        paragraph(
+          'Attention Weights 回答“当前 Query 读取哪些位置”；Vocabulary Probabilities 回答“下一个 Token 可能是哪一个”。',
+        ),
+      ]),
     ),
     section(
       'o0282-17-attention',
       '17. Attention 的计算成本',
-      '每个 query position 都与每个 key position 比较；更长的 context 使 score/weight matrices 迅速变大。',
+      '每个 Query Position 都要与每个 Key Position 比较；Sequence 变长时，Score 与 Weight Matrices 会迅速增大。',
       [
-        '识别 [T,T] query-row × key-column 矩阵带来的 T² 项。',
-        '以本课的 B、head 数及 T=2 与 T=1000 做可核对的数值比较。',
+        '从 [T,T] Matrix 推导 T² 项。',
+        '用本课固定 B、Head 数与不同 T 做数值比较。',
       ],
       [
         paragraph(
-          '每个 head 的 score matrix 有 T² 个 entries。对 B=2、n_head=2，所有 heads 的 scores（weights 另有相同量）共有 B×n_head×T² 个 entries；训练还需要保留额外 activation 与 gradient。',
+          '每个 Head 的 Score Matrix 有 T² 个 Elements。所有 Batch Examples 和 Heads 合计拥有 B×n_head×T² 个 Score Elements；Weights 还需要同样数量的 Elements，训练还会保存额外 Activations 与 Gradients。',
         ),
         table(
-          ['fixed B=2, n_head=2', 'all-head score entries', '比较'],
+          ['固定 B=2、n_head=2', '全部 Heads 的 Score Elements', '相对 T=2'],
           [
-            ['T=2', '2 × 2 × 2² = 16', '本课可直接看一张 2×2 slice'],
-            ['T=1000', '2 × 2 × 1000² = 4,000,000', '相对 T=2 增长 250,000 倍'],
+            ['T=2', '2 × 2 × 2² = 16', '1 倍'],
+            ['T=1000', '2 × 2 × 1000² = 4,000,000', '250,000 倍'],
           ],
-          '每行都是 query rows × key columns；weights 也需要同样数量的 entries。',
         ),
         formula(
-          String.raw`\mathrm{score\ elements}=B\,n_{\mathrm{head}}\,T^2`,
-          '所有 batch examples 和 heads 的 score entries 数。',
+          String.raw`\mathrm{Score\ Elements}=B\,n_{\mathrm{head}}\,T^2`,
+          '每个 Batch、每个 Head 都有自己的 Query×Key Position Matrix。',
         ),
         formula(
-          String.raw`\mathrm{attention\ pairwise\ cost}=O(B\,n_{\mathrm{head}}\,T^2\,\mathrm{head\_size})=O(B\,T^2\,C)`,
-          '在 C 等于 n_head 乘 head_size 时，QK 和 AV 的 pairwise work 含二次 sequence-length 项。',
+          String.raw`\mathrm{Pairwise\ Attention\ Cost}=O(B\,n_{\mathrm{head}}\,T^2d_{\mathrm{head}})=O(BT^2C)`,
+          '在 C=n_head×d_head 时，QK 与 Attention-Value Multiplication 都包含二次 Sequence Length 项。',
+        ),
+        paragraph(
+          'Causal Mask 禁止读取未来位置，但普通 Dense 实现仍可能先构造完整 T×T Matrix。不同优化实现可以减少实际 Memory 或运算，但不会改变本课需要理解的基础 Shape。',
         ),
       ],
       [
-        'O(T²) 不表示 Transformer 的所有成本只有二次；projections 与 FFN 也依赖 C，实际时间和 memory 还受实现影响。',
-        'T² 来自所有位置对的比较，不是因为一个 token vector 有 T 个 features。',
+        'O(T²) 不表示模型所有计算都只有二次项；Linear Projections 和 FFN 还依赖 C。',
+        'T² 来自所有 Query-Key Position Pairs，不是因为每个 Token Vector 有 T 个 Features。',
       ],
-      check('在 B、heads 和 width 固定时，T 翻倍，score entries 增长几倍？', [
+      check('当 B、Heads 和 Width 固定时，T 翻倍后 Score Elements 增长几倍？', [
         paragraph('四倍，因为 (2T)²=4T²。'),
       ]),
     ),
     section(
       'o0283-18-week-7-7',
-      '18. Week 7 最应该理解的 7 件事',
-      '术语很多时，学习者可能只记住碎片定义，而忘记它们是一条因果计算链。',
+      '18. Week 7 调试清单与必须掌握的 10 件事',
+      'Attention 术语和 Shape 很多，学习者容易记住碎片，却无法定位计算链中第一个出错的步骤。',
       [
-        '用七个固定要点回收 Bigram 局限、Q/K/V、matrix axes、mask、multi-head 和成本。',
-        '让同一 A/B 对比与固定 shapes 成为检索线索。',
+        '建立从输入到 Output 的逐层调试顺序。',
+        '用十个固定要点回收本周全部核心概念。',
       ],
       [
+        table(
+          ['调试顺序', '应该检查什么'],
+          [
+            ['1. X', '确认是 [B,T,C] 向量，不是 Token ID'],
+            ['2. Q/K/V', '确认 [B,T,d_head]，数值来自相应 Projection'],
+            ['3. Scores', '确认使用 K.transpose(-2,-1)，得到 [B,T,T]'],
+            ['4. Scale', '确认除以 √d_k'],
+            ['5. Mask', '确认 Future Columns 在 Softmax 前为 −∞'],
+            ['6. Softmax', '确认 dim=-1，每个 Query Row 加总为 1'],
+            ['7. Retrieval', '确认 Weights @ V，而不是 @ K'],
+            ['8. Multi-Head', '确认在 Feature Axis Concat，并经 W_O 恢复 C'],
+            ['9. Batch', '确认不同 Batch Examples 没有相互读取'],
+            ['10. Logits', '确认 LM Head 接收 Contextual Features，而不是 Attention Weights'],
+          ],
+        ),
         list(
           [
-            'Bigram 只查最后 token 的一行；相同 final 喜欢 无法区分 A 与 B。',
-            'Query 表达当前位置正在寻找什么。',
-            'Key 是每个候选位置可用于匹配的 learned clue。',
-            'Value 是被权重带回的 learned content。',
-            'scores / weights 的 [T,T] 中，row=t query，column=j key/value；Softmax 在每一行的 columns 上做。',
-            'causal mask 在 Softmax 前禁止 j>t 的未来 columns。',
-            '两个 head 的 [2,2,2] outputs concat/projection 回 [2,2,4]，但 T² 成本与 Attention 的边界仍在。',
+            'Attention 解决相同当前 Token 无法读取不同前缀的问题。',
+            'X 是 Token 的向量表示，不是 Token ID。',
+            'Query 表达当前位置需要寻找什么。',
+            'Key 提供用于匹配的 Learned Clue。',
+            'Value 提供匹配后真正带回的 Payload。',
+            'QKᵀ 的每个元素都是一个 Query-Key Dot Product Raw Score。',
+            'Scale、Mask、Row Softmax 的顺序不能交换或省略。',
+            'Causal Mask 禁止 Future，但允许全部历史和当前位置。',
+            'Multi-Head Concat 与 W_O 将多个 Head 恢复到 Model Width C。',
+            'Attention Output 是 Contextual Features；LM Head 才产生 Vocabulary Logits。',
           ],
           true,
         ),
         formula(
-          String.raw`X:[2,2,4]\longrightarrow Q,K,V:[2,2,2]\longrightarrow A:[2,2,2]\longrightarrow O:[2,2,2]\longrightarrow\operatorname{Concat}:[2,2,4]`,
-          '一个 head 从四维 model representation 得到两维 output；两个 heads 的 outputs 拼接回四维 C。',
-        ),
-        paragraph(
-          '紧凑对比：两个最终 token 都是 喜欢 → position 0 的 Key/Value 不同（我 / 猫）→ weights 或 context 可能不同 → 后续 logits 可能不同。Attention 提供这条信息通路，而不是保证模型理解。',
+          String.raw`X\rightarrow Q,K,V\rightarrow QK^\top\rightarrow /\sqrt{d_k}\rightarrow\mathrm{Mask}\rightarrow\mathrm{Softmax}\rightarrow PV\rightarrow\mathrm{MultiHead}\rightarrow H\rightarrow\mathrm{Logits}`,
+          '从输入表示到下一词原始分数的完整概念链。',
         ),
       ],
       [
-        '总结不能跳过 scaling、mask 或 Values。',
-        'attention weights 不是 vocabulary probabilities。',
+        '不要只打印 Shape；Shape 正确但 Softmax Axis 或 Matrix Axis 错误时，代码仍可能运行。',
+        '不要用一张 Attention Weight Matrix 解释整个模型的最终预测。',
       ],
-      check(
-        '请给 pipeline 中每个 tensor 命名，并说出唯一禁止 future columns 的操作。',
-        [
-          paragraph(
-            'X 是输入 representation，Q/K/V 是投影，A 是 row-softmax weights，O 是 weighted Values，Concat 恢复 C；causal masking 在 Softmax 前禁止 future columns。',
-          ),
-        ],
-      ),
+      check('如果 Scores 正确，但 Future Position 仍有正 Weight，最应该先检查哪两步？', [
+        paragraph(
+          '先检查 Causal Mask 是否在 Softmax 前正确应用，再检查 Softmax 是否沿 Key Position Axis dim=-1 运行。',
+        ),
+      ]),
     ),
     section(
       'o0284-19-week-7-week-8',
-      '19. Week 7 → Week 8',
-      'Attention 能跨位置交换信息，却还缺显式 position handling、每位置 nonlinear processing、稳定 residual paths 与 normalization，不能单独构成易堆叠的语言模型 block。',
+      '19. Week 7 → Week 8：Attention 还不是完整 Transformer Block',
+      'Attention 可以跨位置交换信息，但还缺显式 Position Information、稳定的 Residual Path、Normalization 与逐位置非线性处理。',
       [
-        '为 Week 8 的 token+position embeddings、pre-norm attention/residual 与 FFN/residual 建立准确接口。',
-        '区分跨 position mixing 与 per-position processing，并验证每次 residual addition 的 shape。',
+        '建立 Week 8 各组件的职责边界。',
+        '验证每次 Residual Addition 都要求相同 Shape。',
       ],
       [
         paragraph(
-          'Week 8 从同一 A/B batch 的 x:[2,2,4] 出发：token embedding 加 position embedding 仍是 [2,2,4]；multi-head concat 加 output projection 后 Attention output 也必须是 [2,2,4]，才能与 x 相加。Attention 负责跨 token positions 混合；FFN 对每个 position 独立使用同一组 weights。',
+          'Week 8 将从同一个 [B,T,C]=[2,2,4] 接口继续。Token Embedding 与 Position Embedding 相加后仍为 [2,2,4]；Multi-Head Attention 经过 Concat 与 W_O 后也必须返回 [2,2,4]，才能与 Residual Path 相加。',
         ),
         chain([
-          'token embedding + position embedding [2,2,4]',
-          'pre-norm multi-head attention → [2,2,4]',
-          'x + attention(LN₁(x)) → [2,2,4]',
-          'per-position FFN → [2,2,4]',
-          'x₁ + FFN(LN₂(x₁)) → contextual representation [2,2,4]',
+          'Token Embedding + Position Embedding [2,2,4]',
+          'Pre-Norm Multi-Head Attention [2,2,4]',
+          'x + Attention(LN₁(x)) [2,2,4]',
+          'Per-Position FFN [2,2,4]',
+          'x₁ + FFN(LN₂(x₁)) [2,2,4]',
+          'Language Model Head → Logits [2,2,V_vocab]',
         ]),
         formula(
           String.raw`x_1=x+\operatorname{Attention}(\operatorname{LN}_1(x)),\qquad x_2=x_1+\operatorname{FFN}(\operatorname{LN}_2(x_1))`,
-          '每个 residual addition 的两个输入均为 [B,T,C]=[2,2,4]；single-head [2,2,2] 必须先经过 multi-head concat/projection。',
+          '每次 Residual Addition 两侧 Shape 都必须为 [B,T,C]。',
         ),
-        paragraph(
-          '只比较 Q/K/V 不包含 absolute position；Week 8 的 position embeddings 补上顺序信息。A 与 B 的 position-0 区别会在这条 block pipeline 中继续存在，随后可映射为语言模型 logits。',
+        table(
+          ['组件', '主要职责'],
+          [
+            ['Position Embedding', '提供 Token 顺序与位置信息'],
+            ['Causal Multi-Head Attention', '跨允许的 Token Positions 混合信息'],
+            ['FFN', '在每个 Position 独立执行相同非线性变换'],
+            ['Residual Connection', '保留原路径并改善深层训练'],
+            ['Layer Normalization', '帮助稳定各层输入尺度'],
+          ],
         ),
       ],
       [
-        '不能把 single-head output [2,2,2] 直接与 x [2,2,4] 做 residual addition。',
-        'FFN 不混合 token positions；跨位置混合由 causal Attention 完成。',
+        '不能把 Single-Head Output [2,2,2] 直接与 x [2,2,4] 相加。',
+        'FFN 不跨 Token Positions 混合；跨位置读取由 Attention 完成。',
       ],
-      check(
-        'Week 8 哪个组件跨 token positions 混合，哪个组件逐位置独立处理？',
-        [
-          paragraph(
-            'causal multi-head Attention 跨 positions 混合；FFN 在每个 position 独立运行相同的 nonlinear transformation。',
-          ),
-        ],
-      ),
+      check('Week 8 中哪个组件跨位置混合，哪个组件逐位置独立处理？', [
+        paragraph(
+          'Causal Multi-Head Attention 跨允许的 Token Positions 混合；FFN 对每个 Position 独立使用同一套非线性网络。',
+        ),
+      ]),
     ),
   ],
 };
