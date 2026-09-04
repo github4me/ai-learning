@@ -203,7 +203,9 @@ targets = torch.tensor([
         ),
         code(
           'python',
-          `from dataclasses import dataclass
+          `import hashlib
+import json
+from dataclasses import dataclass
 
 import torch
 import torch.nn as nn
@@ -1350,11 +1352,88 @@ assert torch.allclose(
       ],
       [
         paragraph(
-          'mini-gpt-v1 的 tokenizer identity 包含 version=mini-gpt-v1、ordered tokens [我,喜欢,AI,学习,猫]、policy=whitespace-delimited;no-specials;no-pad;no-unk，以及由 artifact 内容产生的 hash。相同 V=5 绝不等于相同 ID semantics。',
+          'mini-gpt-v1 的 tokenizer artifact 只含 version=mini-gpt-v1、ordered tokens [我,喜欢,AI,学习,猫] 与 policy=whitespace-delimited;no-specials;no-pad;no-unk。canonical bytes 用 JSON 的 sorted keys、无多余空格 separators、原样 Unicode 和 UTF-8 编码得到，再计算 SHA-256；因此同一 artifact 在不同进程中产生同一 digest。相同 V=5 绝不等于相同 ID semantics。',
         ),
         code(
           'python',
-          `def save_mini_gpt_training_checkpoint(
+          `def make_tokenizer_artifact(
+    *,
+    version: str,
+    ordered_tokens: tuple[str, ...],
+    policy: str,
+) -> dict[str, object]:
+    return {
+        "version": version,
+        "ordered_tokens": list(ordered_tokens),
+        "policy": policy,
+    }
+
+
+def tokenizer_artifact_sha256(artifact: dict[str, object]) -> str:
+    canonical_bytes = json.dumps(
+        artifact,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(canonical_bytes).hexdigest()
+
+
+def canonical_mini_gpt_tokenizer_artifact() -> dict[str, object]:
+    return make_tokenizer_artifact(
+        version="mini-gpt-v1",
+        ordered_tokens=("我", "喜欢", "AI", "学习", "猫"),
+        policy="whitespace-delimited;no-specials;no-pad;no-unk",
+    )
+
+
+def validate_checkpoint_tokenizer_identity(
+    checkpoint: dict[str, object],
+    *,
+    expected_ordered_tokens: tuple[str, ...],
+    expected_tokenizer_policy: str,
+    expected_tokenizer_version: str,
+) -> None:
+    stored_tokenizer = checkpoint.get("tokenizer")
+    if not isinstance(stored_tokenizer, dict):
+        raise ValueError("checkpoint tokenizer metadata is missing")
+    required_keys = {"version", "ordered_tokens", "policy", "sha256"}
+    if set(stored_tokenizer) != required_keys:
+        raise ValueError("checkpoint tokenizer metadata has unexpected keys")
+
+    stored_artifact = {
+        "version": stored_tokenizer["version"],
+        "ordered_tokens": stored_tokenizer["ordered_tokens"],
+        "policy": stored_tokenizer["policy"],
+    }
+    stored_digest = stored_tokenizer["sha256"]
+    if not isinstance(stored_digest, str):
+        raise ValueError("checkpoint tokenizer SHA-256 must be text")
+    try:
+        recomputed_digest = tokenizer_artifact_sha256(stored_artifact)
+    except (TypeError, ValueError) as error:
+        raise ValueError(
+            "checkpoint tokenizer artifact is not canonical JSON data"
+        ) from error
+    if recomputed_digest != stored_digest:
+        raise ValueError("checkpoint tokenizer artifact failed SHA-256 check")
+
+    expected_artifact = make_tokenizer_artifact(
+        version=expected_tokenizer_version,
+        ordered_tokens=expected_ordered_tokens,
+        policy=expected_tokenizer_policy,
+    )
+    canonical_artifact = canonical_mini_gpt_tokenizer_artifact()
+    if expected_artifact != canonical_artifact:
+        raise ValueError("caller tokenizer identity is not mini-gpt-v1")
+    expected_digest = tokenizer_artifact_sha256(expected_artifact)
+    if stored_artifact != expected_artifact:
+        raise ValueError("stored tokenizer artifact does not match caller")
+    if stored_digest != expected_digest:
+        raise ValueError("stored tokenizer digest does not match caller")
+
+
+def save_mini_gpt_training_checkpoint(
     path: str,
     *,
     model: MiniGPT,
@@ -1363,21 +1442,17 @@ assert torch.allclose(
     ordered_tokens: tuple[str, ...],
     tokenizer_policy: str,
     tokenizer_version: str,
-    tokenizer_hash: str,
 ) -> None:
-    expected_tokens = ("我", "喜欢", "AI", "学习", "猫")
-    expected_policy = "whitespace-delimited;no-specials;no-pad;no-unk"
-
-    if completed_updates < 0:
-        raise ValueError("completed_updates cannot be negative")
-    if tuple(ordered_tokens) != expected_tokens:
-        raise ValueError("ordered tokens do not match mini-gpt-v1")
-    if tokenizer_version != "mini-gpt-v1":
-        raise ValueError("tokenizer version does not match mini-gpt-v1")
-    if tokenizer_policy != expected_policy:
-        raise ValueError("tokenizer policy does not match mini-gpt-v1")
-    if not tokenizer_hash.strip():
-        raise ValueError("tokenizer_hash must be non-empty")
+    if type(completed_updates) is not int or completed_updates < 0:
+        raise ValueError("completed_updates must be a non-negative integer")
+    tokenizer_artifact = make_tokenizer_artifact(
+        version=tokenizer_version,
+        ordered_tokens=ordered_tokens,
+        policy=tokenizer_policy,
+    )
+    if tokenizer_artifact != canonical_mini_gpt_tokenizer_artifact():
+        raise ValueError("tokenizer artifact does not match mini-gpt-v1")
+    tokenizer_digest = tokenizer_artifact_sha256(tokenizer_artifact)
     if model.config != GPTConfig():
         raise ValueError("model config is not the canonical GPTConfig")
     if model.lm_head.weight is model.token_embedding.weight:
@@ -1389,10 +1464,8 @@ assert torch.allclose(
             "version": 1,
         },
         "tokenizer": {
-            "version": tokenizer_version,
-            "ordered_tokens": list(ordered_tokens),
-            "policy": tokenizer_policy,
-            "hash": tokenizer_hash,
+            **tokenizer_artifact,
+            "sha256": tokenizer_digest,
         },
         "config": {
             "vocab_size": model.config.vocab_size,
@@ -1414,8 +1487,73 @@ assert torch.allclose(
         },
         "completed_updates": completed_updates,
     }
-    torch.save(checkpoint, path)`,
+    torch.save(checkpoint, path)
+
+
+def load_mini_gpt_for_inference(
+    path: str,
+    *,
+    expected_ordered_tokens: tuple[str, ...],
+    expected_tokenizer_policy: str,
+    expected_tokenizer_version: str,
+    map_location: str | torch.device,
+) -> MiniGPT:
+    checkpoint = torch.load(
+        path,
+        map_location=map_location,
+        weights_only=False,
+    )
+    if not isinstance(checkpoint, dict):
+        raise ValueError("checkpoint must be a dictionary")
+    if checkpoint.get("schema") != {
+        "name": "mini-gpt-training-checkpoint",
+        "version": 1,
+    }:
+        raise ValueError("checkpoint schema/version mismatch")
+
+    validate_checkpoint_tokenizer_identity(
+        checkpoint,
+        expected_ordered_tokens=expected_ordered_tokens,
+        expected_tokenizer_policy=expected_tokenizer_policy,
+        expected_tokenizer_version=expected_tokenizer_version,
+    )
+
+    expected_config = GPTConfig()
+    expected_config_fields = {
+        "vocab_size": expected_config.vocab_size,
+        "block_size": expected_config.block_size,
+        "n_embd": expected_config.n_embd,
+        "n_head": expected_config.n_head,
+        "n_layer": expected_config.n_layer,
+    }
+    if checkpoint.get("config") != expected_config_fields:
+        raise ValueError("checkpoint config mismatch")
+    if checkpoint.get("weight_policy") != {
+        "token_embedding_lm_head": "untied",
+    }:
+        raise ValueError("checkpoint weight policy mismatch")
+
+    model = MiniGPT(expected_config).to(map_location)
+    model.load_state_dict(checkpoint["model_state"], strict=True)
+    return model`,
           'mini_gpt_walkthrough.py',
+        ),
+        table(
+          ['canonical identity representation', 'exact value'],
+          [
+            [
+              'UTF-8 JSON text',
+              '{"ordered_tokens":["我","喜欢","AI","学习","猫"],"policy":"whitespace-delimited;no-specials;no-pad;no-unk","version":"mini-gpt-v1"}',
+            ],
+            [
+              'SHA-256 hex digest',
+              '38d630f4c589664c9bef567457d48764cbe2307734777e80f7d5d5c63ac88dd6',
+            ],
+          ],
+          'sort_keys=True、separators=(",", ":")、ensure_ascii=False，再以 UTF-8 编码',
+        ),
+        paragraph(
+          '保存端不再接受任意 hash 字符串：它从 exact artifact 直接计算 digest。加载端先从 stored fields 重建同样的 canonical bytes，验证 stored digest，再把 stored artifact 与 digest 同 caller 明确提供的 expected identity 比较；这些检查全部发生在构造和使用模型之前。SHA-256 能绑定这里记录的 bytes 并发现意外损坏或 identity mismatch，但它不是签名：它不证明来源可信，也不证明未记录的 tokenizer code、Unicode normalization 或 split behavior 等实现细节相同。',
         ),
         table(
           ['restore goal', 'required fields', 'what may be omitted'],
@@ -1441,6 +1579,10 @@ assert torch.allclose(
           ['saved key example', 'compatibility consequence'],
           [
             [
+              'tokenizer.sha256',
+              '先对 stored version/tokens/policy 重新 canonicalize 并验 digest，再与 caller expected identity 比较',
+            ],
+            [
               'token_embedding.weight [5,4]',
               '无法 strict-load 到 [6,4] 或 [5,8]',
             ],
@@ -1465,8 +1607,9 @@ assert torch.allclose(
             list(
               [
                 '用 map_location 把 checkpoint tensors 映射到目标 CPU/CUDA/MPS device。',
-                '先验证 schema、ordered tokens/policy/version/hash、exact config 与 untied policy。',
-                '构造 MiniGPT(GPTConfig(...))，再 strict load model_state。',
+                '验证 schema/version，再从 stored version、ordered tokens 与 policy 重建 canonical UTF-8 JSON，重新计算并比较 SHA-256。',
+                '用 caller 提供的 expected tokenizer artifact 再算 digest，并同时比较 stored artifact 与 digest。',
+                '验证 exact config 与 untied policy；全部 identity checks 通过后才构造 MiniGPT 并 strict load model_state。',
                 '只有 resume training 时，才按保存的 optimizer class 构造并加载 optimizer state，从 completed_updates 之后继续。',
               ],
               true,
@@ -1480,6 +1623,7 @@ assert torch.allclose(
         '同为 V=5 但 token 顺序不同，会静默改变 input rows 与 output columns 的含义。',
         '只保存 model_state 足够做已验证的 inference，不足以声称 faithful optimizer resume。',
         'completed_updates 是已经执行的 update 数，不是含糊的零起始 loop index。',
+        'SHA-256 digest 与 artifact 存在同一 checkpoint 中，不能认证来源；不要把 digest 通过当成加载不可信文件的许可。',
         'torch.save 不会把 live model 自动移动到另一个 device。',
       ],
       check('为什么两个 tokenizer 都是 V=5，checkpoint 仍可能不可用？', [
@@ -1573,7 +1717,7 @@ assert torch.allclose(
             '两个独立 pre-norm blocks 都保持 [B,T,4]：attention 因果混合可见 positions，feed_forward 逐位置处理 channels。',
             'final_norm 与 bias-free lm_head 把 [B,T,4] 变为 [B,T,5] raw logits，而不是 probabilities。',
             '有 targets 时，[2,2,5]→[4,5] 与 [2,2]→[4] 得 scalar mean CE；没有 targets 时 loss=None。',
-            '只有 registered modules/buffers 会完整进入 optimizer、device/mode traversal 与 state_dict；canonical token table/head untied，总参数 520。',
+            'registered modules 持有的 parameters 会被 model.parameters() 枚举，并在 caller 把它们传给 optimizer 后成为可优化对象；registered parameters 与 persistent registered buffers 会进入 state_dict 并随 module 移动；train()/eval() 的 mode 递归作用于 modules；buffers 不是 optimizer parameters。canonical token table/head untied，总参数 520。',
             '可用 checkpoint 需要 matching code、exact config、untied policy 与 tokenizer identity；generation 只 crop forward context、只读 last logits，却保留完整 history。',
           ],
           true,
