@@ -219,7 +219,7 @@ export const week08Revision: CuratedWeekRevision = {
           ],
         ),
         paragraph(
-          '没有 position-dependent input 的 self-attention 对 permutation 是等变的。GPT 的固定 causal mask 让 t=0 与 t=1 的可见前缀不同，因此提供了一点顺序约束；但它没有给模型一个可学习的“这是第 t 个位置”坐标。position embedding（或之后的 RoPE）显式补上这件事。',
+          '没有 positional input 的 unmasked self-attention 对 permutation 是等变的。GPT 的固定 causal mask 绑定了 sequence indices，让 t=0 与 t=1 的可见前缀不同，因此不会对任意 token permutation 保持等变；它仍没有给模型一个可学习的“这是第 t 个位置”坐标。position embedding（或之后的 RoPE）显式补上这件事。',
         ),
         formula(
           String.raw`E_{\mathrm{token}}(i)=E_{\mathrm{token}}(i)\ \text{at every position},\qquad \operatorname{token\_embedding}(\mathrm{ids}):[B,T,C]=[2,2,4]`,
@@ -339,7 +339,7 @@ export const week08Revision: CuratedWeekRevision = {
           'attention 已让 A/B 的 喜欢@1 可以带有不同 context；之后同一组 FFN weights 分别处理 batch 中四个 token rows。输入数值不同会得到不同 output，但每个位置没有自己的 FFN 参数，也不会借此直接读另一个 row。',
         ),
         formula(
-          String.raw`\operatorname{FFN}(z)=W_2\,\operatorname{GELU}(W_1z+b_1)+b_2`,
+          String.raw`\operatorname{FFN}(z)=\operatorname{GELU}(zW_1+b_1)W_2+b_2`,
           'The FFN expands each C-dimensional row, applies GELU, and projects it back to C.',
         ),
         table(
@@ -375,7 +375,7 @@ export const week08Revision: CuratedWeekRevision = {
       ],
       [
         formula(
-          String.raw`W_2(W_1z+b_1)+b_2=(W_2W_1)z+(W_2b_1+b_2)`,
+          String.raw`(zW_1+b_1)W_2+b_2=z(W_1W_2)+(b_1W_2+b_2)`,
           'Without an activation, two affine transformations compose into one affine transformation.',
         ),
         chain([
@@ -571,7 +571,7 @@ class CausalSelfAttention(nn.Module):
     def __init__(self, model_dim: int, num_heads: int, dropout: float):
         super().__init__()
         if model_dim % num_heads != 0:
-            raise ValueError("model_dim must divide evenly into num_heads")
+            raise ValueError("model_dim must be evenly divisible by num_heads")
         self.num_heads = num_heads
         self.head_size = model_dim // num_heads
         self.qkv = nn.Linear(model_dim, 3 * model_dim, bias=False)
