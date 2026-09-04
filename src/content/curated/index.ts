@@ -5,6 +5,7 @@ import { week08Revision } from './week-08';
 import { week09Revision } from './week-09';
 import { week10Revision } from './week-10';
 import { week11Revision } from './week-11';
+import { week12Revision } from './week-12';
 
 // Authored week modules append their checked-in revisions here.
 export const CURATED_WEEK_REVISIONS: readonly CuratedWeekRevision[] = [
@@ -14,6 +15,7 @@ export const CURATED_WEEK_REVISIONS: readonly CuratedWeekRevision[] = [
   week09Revision,
   week10Revision,
   week11Revision,
+  week12Revision,
 ];
 
 export { applyCuratedContent } from './apply-curated-content';
