@@ -509,7 +509,6 @@
   top: 12vh !important;
   width: min(720px, calc(100vw - 2rem)) !important;
   max-width: 720px !important;
-  transform: translateX(-50%) !important;
   border: 1px solid var(--control-boundary);
   background: var(--paper);
 }
