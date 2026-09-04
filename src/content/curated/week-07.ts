@@ -293,8 +293,8 @@ export const week07Revision: CuratedWeekRevision = {
           '这是 illustrative trained-head outcome；行是最终 喜欢 的 query，列是它可比较的 Key positions。',
         ),
         formula(
-          String.raw`Q:[2,2,2],\qquad K.\operatorname{transpose}(-2,-1):[2,2,2],\qquad S:[2,2,2]`,
-          'transpose 只交换最后两个轴，保留 batch B=2；输出的最后两轴分别是 query position 和 key position。',
+          String.raw`Q:[B,T,\mathrm{head\_size}]=[2,2,2],\qquad K.\operatorname{transpose}(-2,-1):[B,\mathrm{head\_size},T]=[2,2,2],\qquad S:[B,T,T]=[2,2,2]`,
+          'transpose 只交换 Key 的最后两个轴，保留 batch B=2；T=2 与 head_size=2 的相同数值不能掩盖从 [B,T,head_size] 到 [B,head_size,T] 的轴顺序变化。',
         ),
         paragraph(matrixAxes),
       ],
@@ -321,24 +321,24 @@ export const week07Revision: CuratedWeekRevision = {
           '缩放并 mask 后，Softmax 让同一个 query row 内的 Key positions 竞争。下面是 head 1 的 illustrative trained-head outcome；它们是 attention weights，不是 Week 6 对五个 vocabulary token 的 probabilities。',
         ),
         formula(
-          String.raw`\alpha_{t,j}=\frac{\exp(\tilde{s}_{t,j})}{\sum_{r=0}^{T-1}\exp(\tilde{s}_{t,r})}`,
-          '对固定 query row t，key positions r 的指数分数归一化为 attention weights。',
+          String.raw`\tilde{S}=S/\sqrt{d_k},\qquad \hat{S}=\operatorname{mask}(\tilde{S}),\qquad \alpha_{t,j}=\frac{\exp(\hat{s}_{t,j})}{\sum_{r=0}^{T-1}\exp(\hat{s}_{t,r})}`,
+          '先缩放 raw scores，再把 masked scores 记为 hat S；对固定 query row t，只有允许的 key positions r 的 masked-score exponentials 归一化为 attention weights。',
         ),
         table(
           [
             'prompt, t=1 final 喜欢',
-            'scaled score row [j=0,j=1]',
+            'masked score row after scale → mask [j=0,j=1]',
             'row Softmax weights [j=0,j=1]',
           ],
           [
             ['A = [我,喜欢]', '[0.8, 0.4]', '[0.599, 0.401]'],
             ['B = [猫,喜欢]', '[0.1, 0.4]', '[0.426, 0.574]'],
           ],
-          '每一 row 只在 key/value columns 上归一化。',
+          't=1 的两个 columns 都允许，所以此例的 masked row 与 scaled row 数值相同；每一 row 只在 key/value columns 上归一化。',
         ),
         formula(
-          String.raw`A=\operatorname{softmax}(\tilde{S},\mathrm{dim}=-1),\qquad A:[B,T,T]=[2,2,2]`,
-          'scores 的 shape 保持不变；最后一维 j 被转换为每个 query 的 attention weights。',
+          String.raw`A=\operatorname{softmax}(\hat{S},\mathrm{dim}=-1),\qquad \hat{S},A:[B,T,T]=[2,2,2]`,
+          'masked scores 与 weights 的 shape 保持不变；最后一维 j 被转换为每个 query 的 attention weights。',
         ),
       ],
       [
@@ -410,8 +410,8 @@ o_1 = 0.599 * v_0 + 0.401 * v_1
           '一个 causal attention head 依次比较 Query 和 Key、按根号 d_k 缩放、mask、行 Softmax，并用 weights 汇总 Values。',
         ),
         formula(
-          String.raw`S=QK^\top,\qquad \tilde{S}=S/\sqrt{d_k},\qquad A=\operatorname{softmax}(\operatorname{mask}(\tilde{S})),\qquad O=AV`,
-          '分开的中间变量依次是 raw scores、scaled scores、attention weights 和 head output。',
+          String.raw`Q:[B,T,\mathrm{head\_size}]\ @\ K^\top:[B,\mathrm{head\_size},T]\longrightarrow S:[B,T,T],\qquad \tilde{S}=S/\sqrt{d_k},\qquad \hat{S}=\operatorname{mask}(\tilde{S}),\qquad A=\operatorname{softmax}(\hat{S}),\qquad O=AV`,
+          '分开的中间变量依次是 raw scores、scaled scores、masked scores、attention weights 和 head output；Key transpose 的中间轴是 head_size，输出矩阵的最后两轴是 query position 与 key position。',
         ),
         table(
           [
@@ -510,14 +510,14 @@ scaled score row           = [1.131 / 1.414, 0.566 / 1.414]
           '一个 head 的 Q、K、V 都保留 batch B=2、token positions T=2 与两个 head features。',
         ),
         formula(
-          String.raw`Q\ @\ K.\operatorname{transpose}(-2,-1):[2,2,2]\ @\ [2,2,2]\longrightarrow[2,2,2],\qquad A\ @\ V:[2,2,2]\ @\ [2,2,2]\longrightarrow[2,2,2]`,
-          '第一次矩阵乘法把 head-feature axis 相乘，第二次把 key-position axis 与 Value position axis 相乘。',
+          String.raw`Q:[B,T,\mathrm{head\_size}]\ @\ K.\operatorname{transpose}(-2,-1):[B,\mathrm{head\_size},T]\longrightarrow S:[B,T,T],\qquad A:[B,T,T]\ @\ V:[B,T,\mathrm{head\_size}]\longrightarrow O:[B,T,\mathrm{head\_size}]`,
+          '第一次矩阵乘法把 head-feature axis 相乘，第二次把 key-position axis 与 Value position axis 相乘；本例所有 numeric shapes 都恰为 [2,2,2]，但符号轴顺序不同。',
         ),
         paragraph(matrixAxes),
       ],
       [
         'T 出现两次是两个 token-position axes，从来不是 C feature axis。',
-        '打印 shape 时不能丢失 batch；transpose 后仍是 [B,T,head_size] 的三个 axes，只是最后两轴交换后用于 matmul。',
+        '打印 shape 时不能丢失 batch；K.transpose(-2,-1) 把 K 的 [B,T,head_size] 变为 [B,head_size,T]，而 Q 仍是 [B,T,head_size]。',
       ],
       check('weights[1,1,0] 的含义是什么？', [
         paragraph(
@@ -646,7 +646,7 @@ class AttentionHead(nn.Module):
         k = self.key(x)                           # [2,2,2]
         v = self.value(x)                         # [2,2,2]
 
-        scores = q @ k.transpose(-2, -1)          # [B,T,T] = [2,2,2]
+        scores = q @ k.transpose(-2, -1)          # [B,T,head_size] @ [B,head_size,T] -> [B,T,T] = [2,2,2]
         scores = scores / math.sqrt(k.size(-1))   # k.size(-1) == head_size == 2
         mask = self.causal_mask[:T, :T]            # [T,T] = [2,2]
         scores = scores.masked_fill(~mask, float("-inf"))
@@ -661,7 +661,10 @@ class AttentionHead(nn.Module):
           ['code stage', 'input → output shape for B=2,T=2,C=4'],
           [
             ['self.query/key/value(x)', '[2,2,4] → [2,2,2]'],
-            ['q @ k.transpose(-2,-1)', '[2,2,2] @ [2,2,2] → [2,2,2]'],
+            [
+              'q @ k.transpose(-2,-1)',
+              'Q:[B,T,head_size] @ Kᵀ:[B,head_size,T] → scores:[B,T,T] (all are [2,2,2] here)',
+            ],
             ['mask / F.softmax(..., dim=-1)', '[2,2,2] → [2,2,2]'],
             ['weights @ v', '[2,2,2] @ [2,2,2] → [2,2,2]'],
           ],
@@ -698,13 +701,13 @@ class AttentionHead(nn.Module):
             ],
             [
               '2. scores + scale',
-              'S=QKᵀ/√d_k',
+              'Q:[B,T,head_size] @ Kᵀ:[B,head_size,T] → S:[B,T,T]; then S/√d_k',
               'scores=q @ k.transpose(-2,-1); scores /= sqrt(k.size(-1))',
               'A final row: [0.8,0.4]',
             ],
             [
               '3. causal mask',
-              'Ŝ=mask(S)',
+              'Ŝ=mask(Ṡ)',
               'scores=scores.masked_fill(~mask, -∞)',
               '[2,2,2] → [2,2,2]',
             ],
@@ -722,8 +725,8 @@ class AttentionHead(nn.Module):
           'projection stage 把 [2,2,4] 的 X 变为三个 [2,2,2] tensors。',
         ),
         formula(
-          String.raw`S=\frac{QK^\top}{\sqrt{d_k}},\qquad \hat{S}=\operatorname{mask}(S),\qquad A=\operatorname{softmax}(\hat{S}),\qquad O=AV`,
-          'scaled scores、mask、row Softmax 和 weighted Value retrieval 的正确顺序。',
+          String.raw`\tilde{S}=\frac{QK^\top}{\sqrt{d_k}},\qquad Q:[B,T,\mathrm{head\_size}]\ @\ K^\top:[B,\mathrm{head\_size},T]\longrightarrow\tilde{S}:[B,T,T],\qquad \hat{S}=\operatorname{mask}(\tilde{S}),\qquad A=\operatorname{softmax}(\hat{S}),\qquad O=AV`,
+          'scaled scores、mask、row Softmax 和 weighted Value retrieval 的正确顺序，同时保留 Key transpose 的符号轴顺序。',
         ),
         paragraph(
           '调试时先看 q/k/v，再看 scaled scores；若 score 看起来正确但 forbidden future column 仍有正 weight，错误就在 mask insertion 或 Softmax ordering，而不是 Value multiplication。',
