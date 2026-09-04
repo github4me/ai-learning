@@ -104,7 +104,7 @@ function median(values: number[]): number {
 }
 
 function visibleCharacterCount(span: RawSpan): number {
-  return [...span.textRaw].filter((character) => !/\s/u.test(character)).length;
+  return Array.from(span.textRaw).filter((character) => !/\s/u.test(character)).length;
 }
 
 function dominantBaseline(spans: readonly RawSpan[]): BaselineGeometry {
@@ -216,7 +216,7 @@ function renderText(
     .replaceAll('ŷ', '\u0302y')
     .replaceAll('Ŷ', '\u0302Y')
     .normalize('NFKD');
-  const characters = [...normalized];
+  const characters = Array.from(normalized);
   const latex: string[] = [];
   const accessibleText: string[] = [];
 
@@ -332,7 +332,7 @@ function script(marker: '^' | '_', value: string): string {
 }
 
 function endsWithAttachableBase(value: string): boolean | undefined {
-  const visible = [...value].filter((character) => !/\s/u.test(character));
+  const visible = Array.from(value).filter((character) => !/\s/u.test(character));
   if (visible.length === 0) return undefined;
   return /[\p{L}\p{N})\]}′]/u.test(visible.at(-1)!);
 }
