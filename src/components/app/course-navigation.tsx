@@ -1,7 +1,7 @@
 'use client';
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
 
-import { CheckCircle2, Circle } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Circle } from 'lucide-react';
 import * as React from 'react';
 
 import type {
@@ -38,6 +38,15 @@ type CompletionStatus = {
   total: number;
   isDirectTarget: boolean;
 };
+
+type ExpansionState = {
+  routeUnitId?: string;
+  unitIds: ReadonlySet<string>;
+};
+
+function defaultExpandedUnitIds(unitId?: string): ReadonlySet<string> {
+  return new Set(unitId ? [unitId] : []);
+}
 
 function unitPath(unit: CourseUnit): string {
   return unit.kind === 'appendix' ? '/appendix/mini-gpt' : `/week/${unit.slug}`;
@@ -158,17 +167,24 @@ function UnitOutline({
   currentUnitId,
   currentSectionId,
   completed,
+  expanded,
+  mode,
   onNavigate,
+  onToggle,
 }: {
   unit: CourseUnit;
   currentUnitId?: string;
   currentSectionId?: string;
   completed: ReadonlySet<string>;
+  expanded: boolean;
+  mode: 'full' | 'mobile';
   onNavigate?: CourseNavigationProps['onNavigate'];
+  onToggle: (unitId: string) => void;
 }) {
   const unitLabel =
     unit.kind === 'week' ? `Week ${unit.weekNumber}` : 'Appendix A';
   const current = unit.id === currentUnitId;
+  const sectionListId = `${mode}-${unit.id}-sections`;
   const completionStatuses = React.useMemo(
     () => completionStatusMap(unit, completed),
     [completed, unit],
@@ -180,40 +196,58 @@ function UnitOutline({
     appendixStatus.completed === appendixStatus.total;
   return (
     <div className="course-unit" data-current={current || undefined}>
-      <a
-        className="course-unit-link"
-        href={unitPath(unit)}
-        aria-current={current ? 'page' : undefined}
-        onClick={(event) => {
-          if (isUnmodifiedPrimaryActivation(event))
-            onNavigate?.({ unitId: unit.id });
-        }}
+      <div className="course-unit-header">
+        <a
+          className="course-unit-link"
+          href={unitPath(unit)}
+          aria-current={current ? 'page' : undefined}
+          onClick={(event) => {
+            if (isUnmodifiedPrimaryActivation(event))
+              onNavigate?.({ unitId: unit.id });
+          }}
+        >
+          {unit.kind === 'appendix' &&
+            (appendixRead ? (
+              <CheckCircle2 aria-hidden="true" />
+            ) : (
+              <Circle aria-hidden="true" />
+            ))}
+          <span className="course-unit-kicker">{unitLabel}</span>
+          <span>{unit.title}</span>
+          {appendixRead && <span className="nav-state">Read</span>}
+          {appendixStatus && !appendixRead && (
+            <span className="sr-only">
+              {appendixStatus.completed} of {appendixStatus.total} reference
+              sections read
+            </span>
+          )}
+          {current && <span className="nav-state">Current unit</span>}
+        </a>
+        <button
+          type="button"
+          className="course-unit-toggle"
+          aria-expanded={expanded}
+          aria-controls={sectionListId}
+          aria-label={`${expanded ? 'Collapse' : 'Expand'} ${unitLabel} sections`}
+          onClick={() => onToggle(unit.id)}
+        >
+          <ChevronDown aria-hidden="true" />
+        </button>
+      </div>
+      <div
+        id={sectionListId}
+        className="course-unit-sections"
+        hidden={!expanded}
       >
-        {unit.kind === 'appendix' &&
-          (appendixRead ? (
-            <CheckCircle2 aria-hidden="true" />
-          ) : (
-            <Circle aria-hidden="true" />
-          ))}
-        <span className="course-unit-kicker">{unitLabel}</span>
-        <span>{unit.title}</span>
-        {appendixRead && <span className="nav-state">Read</span>}
-        {appendixStatus && !appendixRead && (
-          <span className="sr-only">
-            {appendixStatus.completed} of {appendixStatus.total} reference
-            sections read
-          </span>
-        )}
-        {current && <span className="nav-state">Current unit</span>}
-      </a>
-      <MemoSectionLinks
-        nodes={unit.children}
-        unit={unit}
-        currentSectionId={currentSectionId}
-        completed={completed}
-        completionStatuses={completionStatuses}
-        onNavigate={onNavigate}
-      />
+        <MemoSectionLinks
+          nodes={unit.children}
+          unit={unit}
+          currentSectionId={currentSectionId}
+          completed={completed}
+          completionStatuses={completionStatuses}
+          onNavigate={onNavigate}
+        />
+      </div>
     </div>
   );
 }
@@ -375,6 +409,41 @@ export const CourseNavigation = React.memo(function CourseNavigation({
     () => new Set(completedSectionIds),
     [completedSectionIds],
   );
+  const currentCourseUnitId =
+    currentUnitId && course.units.some((unit) => unit.id === currentUnitId)
+      ? currentUnitId
+      : undefined;
+  const [expansionState, setExpansionState] = React.useState<ExpansionState>(
+    () => ({
+      routeUnitId: currentCourseUnitId,
+      unitIds: defaultExpandedUnitIds(currentCourseUnitId),
+    }),
+  );
+  const expandedUnitIds =
+    expansionState.routeUnitId === currentCourseUnitId
+      ? expansionState.unitIds
+      : defaultExpandedUnitIds(currentCourseUnitId);
+  const toggleUnit = React.useCallback(
+    (unitId: string) => {
+      setExpansionState((current) => {
+        const next = new Set(
+          current.routeUnitId === currentCourseUnitId
+            ? current.unitIds
+            : defaultExpandedUnitIds(currentCourseUnitId),
+        );
+        if (next.has(unitId)) next.delete(unitId);
+        else next.add(unitId);
+        return { routeUnitId: currentCourseUnitId, unitIds: next };
+      });
+    },
+    [currentCourseUnitId],
+  );
+  if (expansionState.routeUnitId !== currentCourseUnitId) {
+    setExpansionState({
+      routeUnitId: currentCourseUnitId,
+      unitIds: defaultExpandedUnitIds(currentCourseUnitId),
+    });
+  }
   if (mode === 'compact') {
     return (
       <CompactNavigation
@@ -466,7 +535,10 @@ export const CourseNavigation = React.memo(function CourseNavigation({
                   unit.id === currentUnitId ? currentSectionId : undefined
                 }
                 completed={completed}
+                expanded={expandedUnitIds.has(unit.id)}
+                mode={mode}
                 onNavigate={onNavigate}
+                onToggle={toggleUnit}
               />
             ))}
         </section>
@@ -483,7 +555,10 @@ export const CourseNavigation = React.memo(function CourseNavigation({
               appendix.id === currentUnitId ? currentSectionId : undefined
             }
             completed={completed}
+            expanded={expandedUnitIds.has(appendix.id)}
+            mode={mode}
             onNavigate={onNavigate}
+            onToggle={toggleUnit}
           />
         </section>
       )}
