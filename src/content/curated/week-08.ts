@@ -44,6 +44,12 @@ const chain = (steps: string[]): CuratedBodyBlock => ({
   steps,
 });
 
+const callout = (
+  title: string,
+  blocks: CuratedBodyBlock[],
+  tone: 'concept' | 'principle' | 'example' = 'example',
+): CuratedBodyBlock => ({ type: 'callout', tone, title, blocks });
+
 function check(prompt: string, answer: CuratedBodyBlock[]): TeachingCheck {
   return { prompt, answer };
 }
@@ -80,9 +86,9 @@ const fixedBatch =
 const blockShapeChain = [
   'ids [B,T] = [2,2]',
   'token embeddings [B,T,C] = [2,2,4] + position embeddings [T,C] = [2,4]',
-  'x0 [2,2,4]',
-  'x0 [2,2,4] + Attention(LN1(x0)) [2,2,4] → x1 [2,2,4]',
-  'x1 [2,2,4] + FFN(LN2(x1)) [2,2,4] → x2 [2,2,4]',
+  'residual_0 [2,2,4]',
+  'residual_0 + Attention(LN1(residual_0)) → residual_after_attention [2,2,4]',
+  'residual_after_attention + FFN(LN2(residual_after_attention)) → residual_after_ffn [2,2,4]',
   'contextual representation [2,2,4]',
   'final LayerNorm + LM head → logits [B,T,V_vocab] = [2,2,5]',
 ];
@@ -109,7 +115,7 @@ export const week08Revision: CuratedWeekRevision = {
     '审计每个 residual add、two-head output projection、4→16→4 FFN 与最终 [2,2,5] vocabulary logits。',
     '把 decoder-only 的因果可见性接回 Week 6 的 loss / generation interface，并为 tokenizer/data pipeline 铺垫。',
   ],
-  estimatedReadingMinutes: 75,
+  estimatedReadingMinutes: 135,
   sections: [
     section(
       'o0286-week-8',
@@ -123,11 +129,11 @@ export const week08Revision: CuratedWeekRevision = {
         paragraph(fixedBatch),
         chain(blockShapeChain),
         paragraph(
-          '两条 prompt 的 喜欢@1 在 token+position 后起点相同，但 Attention 能读取不同的第 0 行（我@0 或 猫@0），因此 x2[:,1,:] 可以不同；未经训练不能据此承诺某个续写。',
+          '两条 Prompt 的 喜欢@1 在 Token+Position 后起点相同，但 Attention 能读取不同的第 0 行（我@0 或 猫@0），因此 residual_after_ffn[:,1,:] 可以不同；未经训练不能据此承诺某个续写。',
         ),
         formula(
-          String.raw`x_0=E_{\mathrm{token}}(\mathrm{ids})+E_{\mathrm{pos}}(0{:}T),\quad x_1=x_0+\operatorname{Attention}(\operatorname{LN}_1(x_0)),\quad x_2=x_1+\operatorname{FFN}(\operatorname{LN}_2(x_1))`,
-          'x0 is token embeddings plus position embeddings; x1 adds pre-normalized attention; x2 adds pre-normalized FFN.',
+          String.raw`r_0=E_{\mathrm{token}}(\mathrm{ids})+E_{\mathrm{pos}}(0{:}T),\quad r_A=r_0+\operatorname{Attention}(\operatorname{LN}_1(r_0)),\quad r_F=r_A+\operatorname{FFN}(\operatorname{LN}_2(r_A))`,
+          'r0 is the initial residual stream; rA adds the pre-normalized attention update; rF adds the pre-normalized FFN update.',
         ),
       ],
       [
@@ -280,12 +286,29 @@ export const week08Revision: CuratedWeekRevision = {
             ],
           ],
         ),
+        callout(
+          '同一个 Token 放在不同位置会怎样？',
+          [
+            formula(
+              String.raw`E_{\mathrm{token}}[\text{喜欢}]+P[0]=[0.60,0.30,-0.20,0.10]+[0.05,0.10,-0.05,0]=[0.65,0.40,-0.25,0.10]`,
+              'The token 喜欢 at position zero receives the position-zero vector.',
+            ),
+            formula(
+              String.raw`E_{\mathrm{token}}[\text{喜欢}]+P[1]=[0.60,0.30,-0.20,0.10]+[-0.10,0,0.05,0.10]=[0.50,0.30,-0.15,0.20]`,
+              'The same token 喜欢 at position one receives a different position vector.',
+            ),
+            paragraph(
+              'Token Embedding 仍负责“它是喜欢”，Position Embedding 则让进入第一个 Block 的向量同时携带“它位于哪里”。两者相加后不要求模型把它们重新拆开；训练只需要学会利用组合后的 Features。',
+            ),
+          ],
+          'example',
+        ),
         formula(
           String.raw`x[b,t,:]=E_{\mathrm{token}}[\mathrm{ids}[b,t]]+E_{\mathrm{pos}}[t]`,
           'Each token row adds the token embedding for its ID to the learned position vector for t.',
         ),
         paragraph(
-          'position rows [T,C]=[2,4] 在 batch axis 上 broadcast，故 token rows [2,2,4] + position rows [2,4] = x0 [2,2,4]。learned absolute table 只为 configured context length 建行；out-of-range t 没有可查的 row。RoPE 是之后的 relative-position alternative，不是省略基本问题的理由。',
+          'position rows [T,C]=[2,4] 在 Batch Axis 上 Broadcast，故 Token Rows [2,2,4] + Position Rows [2,4] = residual_0 [2,2,4]。Learned Absolute Table 只为 configured context length 建行；out-of-range t 没有可查的 Row。RoPE 是之后的 relative-position alternative，不是省略基本问题的理由。',
         ),
       ],
       [
@@ -354,6 +377,23 @@ export const week08Revision: CuratedWeekRevision = {
             ['second Linear', 'W2:[4C,C]=[16,4]', '[2,2,16] → [2,2,4]'],
           ],
         ),
+        callout(
+          '本周可手算的 4→16→4 教学参数',
+          [
+            paragraph(
+              '为了让 16 个 Hidden Units 不遮住计算，本周只启用前四个 Units，其余十二个权重设为 0。真实 FFN 会学习全部稠密参数。',
+            ),
+            formula(
+              String.raw`W_1=[I_4\;\;0_{4\times12}],\qquad W_2=\begin{bmatrix}0.25I_4\\0_{12\times4}\end{bmatrix},\qquad b_1=b_2=0`,
+              'The sparse teaching matrices still perform a real four-to-sixteen-to-four FFN while keeping the arithmetic visible.',
+            ),
+            formula(
+              String.raw`\operatorname{FFN}_{\mathrm{toy}}(z)=0.25\,\operatorname{GELU}(z)`,
+              'Only the first four hidden units contribute under the teaching parameters.',
+            ),
+          ],
+          'example',
+        ),
       ],
       [
         '4C 是 hidden width，不是 four attention heads，也不是数学定律。',
@@ -378,6 +418,20 @@ export const week08Revision: CuratedWeekRevision = {
           String.raw`(zW_1+b_1)W_2+b_2=z(W_1W_2)+(b_1W_2+b_2)`,
           'Without an activation, two affine transformations compose into one affine transformation.',
         ),
+        formula(
+          String.raw`\operatorname{GELU}(x)=x\Phi(x)=\frac{x}{2}\left(1+\operatorname{erf}\!\left(\frac{x}{\sqrt2}\right)\right)`,
+          'GELU multiplies x by the standard-normal cumulative probability Phi of x.',
+        ),
+        table(
+          ['输入 x', 'GELU(x) 约等于', '与 ReLU 的直观差别'],
+          [
+            ['−1', '−0.159', '负值没有被强制归零'],
+            ['0', '0', '原点仍映射到零'],
+            ['1', '0.841', '正值被平滑保留'],
+            ['2', '1.955', '较大的正值接近原值'],
+          ],
+          'GELU 是连续的平滑非线性函数，不是一个二值开关。',
+        ),
         chain([
           'one token row z [4]',
           'Linear W1 → hidden [16]',
@@ -387,6 +441,20 @@ export const week08Revision: CuratedWeekRevision = {
         ]),
         paragraph(
           'GELU 的响应是连续、平滑的；它不是二值 if-statement，也不负责 token mixing。不同 architecture 也可能使用 ReLU、SwiGLU 等 choices，本 block 的重点是 nonlinear middle step。',
+        ),
+        code(
+          'text',
+          `Prompt A 最终位置在第二个 LayerNorm 后：
+z = [1.2476, 0.2644, -1.5404, 0.0284]
+
+教学 W1 的前四个 Hidden Pre-activations：
+[1.2476, 0.2644, -1.5404, 0.0284]
+
+GELU 后：
+[1.1152, 0.1596, -0.0952, 0.0144]
+
+再经教学 W2=0.25I：
+FFN update = [0.2788, 0.0399, -0.0238, 0.0036]`,
         ),
       ],
       [
@@ -409,7 +477,7 @@ export const week08Revision: CuratedWeekRevision = {
       ],
       [
         paragraph(
-          '对 prompt A，令 a=Attention(LN1(x0))，则 x1=x0+a；对 B，相同规则保留由 猫@0 带来的不同信息，同时加上 contextual update。分支处 gradients 相加，呼应“paths multiply; branches add”，但这不是所有 optimization problems 的保证。',
+          '对 Prompt A，令 a=Attention(LN1(residual_0))，则 residual_after_attention=residual_0+a；对 B，相同规则保留由 猫@0 带来的不同信息，同时加上 Contextual Update。分支处 Gradients 相加，呼应“paths multiply; branches add”，但这不是所有 Optimization Problems 的保证。',
         ),
         formula(
           String.raw`y=x+F(x),\qquad \frac{\partial y}{\partial x}=I+\frac{\partial F(x)}{\partial x}`,
@@ -418,20 +486,32 @@ export const week08Revision: CuratedWeekRevision = {
         table(
           ['term', 'shape in this lesson'],
           [
-            ['x0', '[B,T,C]=[2,2,4]'],
-            ['Attention(LN1(x0))', '[B,T,C]=[2,2,4]'],
-            ['x1 = x0 + attention update', '[B,T,C]=[2,2,4]'],
-            ['x1', '[B,T,C]=[2,2,4]'],
-            ['FFN(LN2(x1))', '[B,T,C]=[2,2,4]'],
-            ['x2 = x1 + FFN update', '[B,T,C]=[2,2,4]'],
+            ['residual_0', '[B,T,C]=[2,2,4]'],
+            ['Attention(LN1(residual_0))', '[B,T,C]=[2,2,4]'],
+            ['residual_after_attention', '[B,T,C]=[2,2,4]'],
+            ['FFN(LN2(residual_after_attention))', '[B,T,C]=[2,2,4]'],
+            ['residual_after_ffn', '[B,T,C]=[2,2,4]'],
           ],
+        ),
+        code(
+          'text',
+          `Prompt A 的最终“喜欢”位置：
+residual_0      = [ 0.5000, 0.3000, -0.1500,  0.2000]
+attention_update = [ 0.9944, 0.1092, -1.4326, -0.0512]
+
+逐元素相加：
+residual_after_attention
+= [1.4944, 0.4092, -1.5826, 0.1488]`,
+        ),
+        paragraph(
+          '这里的 Attention Update 将在第 10 节从 LN1、两个 Heads、Softmax Weights 和 Values 完整推导。Residual 不是覆盖旧向量，也不是 Concatenation；它把旧状态与分支提出的修改逐元素合并。',
         ),
       ],
       [
         'residual 不表示 F(x) 被丢弃，也不是 concatenation。',
         'identity route 有帮助不等于训练必然稳定。',
       ],
-      check('y 的 forward 中有哪两条贡献路径？', [
+      check('Residual Output 的 Forward 中有哪两条贡献路径？', [
         paragraph('未修改的 x identity path 与 learned branch update F(x)。'),
       ]),
     ),
@@ -446,13 +526,12 @@ export const week08Revision: CuratedWeekRevision = {
       [
         code(
           'text',
-          `x0                         [2,2,4]
-Attention(LN1(x0))         [2,2,4]
-x1 = x0 + attention_update [2,2,4]
+          `residual_0                                      [2,2,4]
+Attention(LN1(residual_0))                    [2,2,4]
+residual_after_attention                      [2,2,4]
 
-x1                         [2,2,4]
-FFN(LN2(x1))               [2,2,4]
-x2 = x1 + ffn_update       [2,2,4]`,
+FFN(LN2(residual_after_attention))            [2,2,4]
+residual_after_ffn                            [2,2,4]`,
         ),
         paragraph(
           'causal multi-head Attention 负责 cross-position mixing：每 head 是 [B,T,D]=[2,2,2]，H=2 个 heads concatenate 成 [B,T,H·D]=[2,2,4]，再经 output projection [2,2,4]→[2,2,4]。FFN 只对每个 token row 做 channel mixing，暂时到 [2,2,16]，再由 W2 回到 [2,2,4]。',
@@ -487,6 +566,37 @@ x2 = x1 + ffn_update       [2,2,4]`,
         formula(
           String.raw`\mu_{b,t}=\frac{1}{C}\sum_{c=1}^{C}x_{b,t,c},\quad \sigma^2_{b,t}=\frac{1}{C}\sum_{c=1}^{C}(x_{b,t,c}-\mu_{b,t})^2,\quad \operatorname{LN}(x)_{b,t,c}=\gamma_c\frac{x_{b,t,c}-\mu_{b,t}}{\sqrt{\sigma^2_{b,t}+\varepsilon}}+\beta_c`,
           'LayerNorm computes mean and variance across the features of one token row and then applies learned gamma and beta.',
+        ),
+        code(
+          'text',
+          `先令 gamma=[1,1,1,1]、beta=[0,0,0,0]，忽略极小 epsilon 的显示误差：
+
+x        = [1, 2, 3, 4]
+mean     = (1+2+3+4) / 4 = 2.5
+deviation = [-1.5, -0.5, 0.5, 1.5]
+variance = (2.25+0.25+0.25+2.25) / 4 = 1.25
+std      = sqrt(1.25) ≈ 1.118
+
+normalized
+= deviation / std
+≈ [-1.342, -0.447, 0.447, 1.342]`,
+        ),
+        callout(
+          '应用到本周真正的“喜欢@1”',
+          [
+            formula(
+              String.raw`r_0=[0.50,0.30,-0.15,0.20],\qquad \mu=0.2125,\qquad \sigma^2=0.05546875`,
+              'The actual final-token row has its own mean and population variance.',
+            ),
+            formula(
+              String.raw`\operatorname{LN}_1(r_0)\approx[1.221,0.371,-1.539,-0.053]\quad(\gamma=1,\beta=0,\varepsilon=10^{-5})`,
+              'The normalized final-token row used by the deterministic teaching attention.',
+            ),
+            paragraph(
+              'Gamma 与 Beta 的常见初始化分别为 1 和 0，因此 LayerNorm 一开始接近纯标准化；训练后它们可以分别缩放和移动四个 Features，所以最终输出不必保持严格零均值或单位方差。',
+            ),
+          ],
+          'example',
         ),
         table(
           [
@@ -526,27 +636,110 @@ x2 = x1 + ffn_update       [2,2,4]`,
       '10. Pre-Norm Transformer Block',
       '“block 有 LayerNorm”没有说明真实函数：norm、sublayer 与 residual 的顺序会改变 forward 与训练行为。',
       [
-        '采用 Pre-Norm：只 normalize branch input，raw residual path 绕过 norm 与 branch。',
-        '先 attention update，再用新 x1 的 Pre-Norm FFN update；Post-Norm 是有效变体但不是这里的实现。',
+        '采用 Pre-Norm：只 Normalize Branch Input，Raw Residual Stream 绕过 Norm 与 Branch。',
+        '先计算 Attention Update，再用新的 Residual Stream 计算 Pre-Norm FFN Update。',
+        '用同一组确定性教学参数把 Prompt A/B 从 residual_0 算到 Final LayerNorm。',
       ],
       [
         chain([
-          'x0 [2,2,4] → LN1（per-token）[2,2,4] → causal MHA（cross-position）[2,2,4]',
-          'raw x0 [2,2,4] + attention update [2,2,4] → x1 [2,2,4]',
-          'x1 [2,2,4] → LN2（per-token）[2,2,4] → FFN（per-token 4→16→4）[2,2,4]',
-          'raw x1 [2,2,4] + FFN update [2,2,4] → x2 [2,2,4]',
+          'residual_0 [2,2,4] → LN1 → normalized_for_attention [2,2,4]',
+          'causal MHA → attention_update [2,2,4]',
+          'residual_0 + attention_update → residual_after_attention [2,2,4]',
+          'LN2 → normalized_for_ffn [2,2,4]',
+          'FFN 4→16→4 → ffn_update [2,2,4]',
+          'residual_after_attention + ffn_update → residual_after_ffn [2,2,4]',
+          'Final LayerNorm → h [2,2,4]',
         ]),
         formula(
-          String.raw`x_1=x_0+\operatorname{Attention}(\operatorname{LN}_1(x_0)),\qquad x_2=x_1+\operatorname{FFN}(\operatorname{LN}_2(x_1))`,
-          'Pre-Norm sends normalized tensors into branches while retaining the unnormalized residual tensors for both additions.',
+          String.raw`r_A=r_0+\operatorname{Attention}(\operatorname{LN}_1(r_0)),\qquad r_F=r_A+\operatorname{FFN}(\operatorname{LN}_2(r_A))`,
+          'Pre-Norm sends normalized tensors into each branch while the direct residual route carries the corresponding raw residual stream.',
+        ),
+        paragraph(
+          '教学 Attention 使用最容易审计的参数：Head 1 选择 normalized row 的 Channels 0–1，Head 2 选择 Channels 2–3；每个 Head 内 Q=K=V；W_O 使用 Identity。它仍执行真实的 QKᵀ、Scale、Mask、Softmax 与 Weighted Values，只是把 Projection 简化为 Channel Selection。',
+        ),
+        formula(
+          String.raw`q^{(1)}=k^{(1)}=v^{(1)}=[z_0,z_1],\qquad q^{(2)}=k^{(2)}=v^{(2)}=[z_2,z_3],\qquad W_O=I_4`,
+          'The two teaching heads select disjoint channel pairs from z=LN1(residual_0).',
+        ),
+        table(
+          ['LN1 Row', 'Prompt A', 'Prompt B'],
+          [
+            ['Position 0', '[-0.2156,-1.2939,1.5095,0.0000]', '[-1.6731,0.6591,0.1521,0.8619]'],
+            ['Position 1: 喜欢', '[1.2206,0.3715,-1.5390,-0.0531]', '[1.2206,0.3715,-1.5390,-0.0531]'],
+          ],
+          '最终“喜欢”的 LN1 Row 相同；两个 Prompt 的 Position 0 不同。',
+        ),
+        code(
+          'text',
+          `Prompt A、Head 1、最终 Query 的两次打分：
+q = [1.2206, 0.3715]
+k_我 = [-0.2156, -1.2939]
+k_喜欢 = [1.2206, 0.3715]
+
+score_我
+= (1.2206×-0.2156 + 0.3715×-1.2939) / sqrt(2)
+≈ -0.5260
+
+score_喜欢
+= (1.2206×1.2206 + 0.3715×0.3715) / sqrt(2)
+≈ 1.1511
+
+Softmax([-0.5260, 1.1511])
+≈ [0.1575, 0.8425]`,
+        ),
+        table(
+          ['Final Query', 'Scaled Scores Head 1', 'Weights Head 1', 'Scaled Scores Head 2', 'Weights Head 2'],
+          [
+            ['Prompt A', '[-0.5260,1.1511]', '[0.1575,0.8425]', '[-1.6427,1.6768]', '[0.0349,0.9651]'],
+            ['Prompt B', '[-1.2709,1.1511]', '[0.0815,0.9185]', '[-0.1979,1.6768]', '[0.1330,0.8670]'],
+          ],
+          '每个 Head 对两条可见 Positions 分别做 Row Softmax。不同 Position-0 Rows 使最终 Attention Weights 不同。',
+        ),
+        code(
+          'text',
+          `Prompt A 的 Values 就是各 Head 选出的 LN1 Channels：
+
+Head 1 output
+= 0.1575×[-0.2156,-1.2939] + 0.8425×[1.2206,0.3715]
+≈ [0.9944, 0.1092]
+
+Head 2 output
+= 0.0349×[1.5095,0.0000] + 0.9651×[-1.5390,-0.0531]
+≈ [-1.4326, -0.0512]
+
+Concat 两个 Heads；教学 W_O=I_4：
+attention_update ≈ [0.9944,0.1092,-1.4326,-0.0512]`,
+        ),
+        code(
+          'text',
+          `Prompt A final row
+attention_update         = [ 0.9944, 0.1092, -1.4326, -0.0512]
+residual_0               = [ 0.5000, 0.3000, -0.1500,  0.2000]
+residual_after_attention = [ 1.4944, 0.4092, -1.5826,  0.1488]
+LN2                      = [ 1.2476, 0.2644, -1.5404,  0.0284]
+FFN update               = [ 0.2788, 0.0399, -0.0238,  0.0036]
+residual_after_ffn       = [ 1.7732, 0.4492, -1.6064,  0.1524]
+final LayerNorm h        = [ 1.3128, 0.2134, -1.4933, -0.0330]
+
+Prompt B final row
+attention_update         = [ 0.9847, 0.3949, -1.3141,  0.0686]
+residual_0               = [ 0.5000, 0.3000, -0.1500,  0.2000]
+residual_after_attention = [ 1.4847, 0.6949, -1.4641,  0.2686]
+LN2                      = [ 1.1475, 0.4158, -1.5843,  0.0209]
+FFN update               = [ 0.2508, 0.0687, -0.0224,  0.0027]
+residual_after_ffn       = [ 1.7356, 0.7637, -1.4865,  0.2713]
+final LayerNorm h        = [ 1.2100, 0.3787, -1.5462, -0.0425]`,
+        ),
+        paragraph(
+          '两条 Prompt 的 residual_0 final row 起点完全相同；差异第一次出现在 Attention 读取不同 Position 0 之后，并继续穿过 Residual、LN2、FFN 与 Final LayerNorm。Pre-Norm 的直觉是 Branch 总能接收按 Row 校准的输入，而 Direct Residual Route 仍保留未被本次 LayerNorm 改写的状态和 Identity Gradient Path。',
         ),
       ],
       [
         'LN(x + Attention(x)) 是 Post-Norm form，不要叫 Pre-Norm。',
         '不要把 LN(x) 错作 direct residual term；它必须是 raw x。',
       ],
-      check('x1=x0+Attention(LN1(x0)) 中 direct residual path 传递什么？', [
-        paragraph('原始的、pre-LayerNorm x0，shape 仍是 [2,2,4]。'),
+      check('r_A=r_0+Attention(LN1(r_0)) 中 Direct Residual Path 传递什么？', [
+        paragraph('原始的、Pre-LayerNorm residual_0，Shape 仍是 [B,T,C]=[2,2,4]。'),
       ]),
     ),
     section(
@@ -558,6 +751,117 @@ x2 = x1 + ffn_update       [2,2,4]`,
         '让 dropout 成为 shape-preserving 的 training regularization，而不污染 identity residual path。',
       ],
       [
+        callout(
+          '先运行确定性教学版本，再看可训练版本',
+          [
+            paragraph(
+              '第一段代码固定所有教学参数并复现第 10 节的数值；第二段代码才使用 nn.Linear、nn.LayerNorm 与随机初始化。两者承担不同任务，不能期待随机模型自动打印同一组结果。',
+            ),
+          ],
+          'principle',
+        ),
+        code(
+          'python',
+          `import math
+
+import torch
+import torch.nn.functional as F
+
+
+torch.set_printoptions(precision=4, sci_mode=False)
+
+ids = torch.tensor([
+    [0, 1],  # 我 喜欢
+    [4, 1],  # 猫 喜欢
+])
+
+token_table = torch.tensor([
+    [ 0.20, -0.10,  0.70,  0.30],  # 我
+    [ 0.60,  0.30, -0.20,  0.10],  # 喜欢
+    [-0.40,  0.80,  0.50, -0.30],  # AI
+    [ 0.10,  0.20,  0.90,  0.40],  # 学习
+    [-0.70,  0.40,  0.30,  0.60],  # 猫
+])
+
+position_table = torch.tensor([
+    [ 0.05, 0.10, -0.05, 0.00],
+    [-0.10, 0.00,  0.05, 0.10],
+])
+
+B, T = ids.shape
+C, num_heads = 4, 2
+head_size = C // num_heads
+
+residual_0 = F.embedding(ids, token_table) + position_table[:T]
+
+# Teaching LayerNorm: gamma=1, beta=0, epsilon=1e-5.
+normalized_for_attention = F.layer_norm(
+    residual_0,
+    normalized_shape=(C,),
+    eps=1e-5,
+)
+
+# Teaching Q/K/V projections:
+# Head 1 selects channels 0:2; Head 2 selects channels 2:4.
+heads = normalized_for_attention.view(B, T, num_heads, head_size)
+heads = heads.transpose(1, 2)  # [B,H,T,D]
+q = heads
+k = heads
+value_states = heads
+
+scores = (q @ k.transpose(-2, -1)) / math.sqrt(head_size)
+causal_mask = torch.tril(torch.ones(T, T, dtype=torch.bool))
+masked_scores = scores.masked_fill(~causal_mask, float("-inf"))
+attention_probs = F.softmax(masked_scores, dim=-1)
+
+head_outputs = attention_probs @ value_states
+attention_update = head_outputs.transpose(1, 2).contiguous().view(B, T, C)
+# Teaching W_O is I_4, so the projection leaves attention_update unchanged.
+
+residual_after_attention = residual_0 + attention_update
+normalized_for_ffn = F.layer_norm(
+    residual_after_attention,
+    normalized_shape=(C,),
+    eps=1e-5,
+)
+
+# Sparse teaching FFN:
+# W1 copies four channels into the first four of sixteen hidden units.
+hidden = torch.zeros(B, T, 4 * C)
+hidden[..., :C] = normalized_for_ffn
+hidden = F.gelu(hidden, approximate="none")
+
+# W2 selects those four units and multiplies them by 0.25.
+ffn_update = 0.25 * hidden[..., :C]
+residual_after_ffn = residual_after_attention + ffn_update
+
+final_hidden = F.layer_norm(
+    residual_after_ffn,
+    normalized_shape=(C,),
+    eps=1e-5,
+)
+
+# Reuse Week 6's five candidate scoring rules.
+W_out = torch.tensor([
+    [1.0, 0.0,  0.0, 0.0],
+    [0.0, 1.0,  2.0, 2.0],
+    [0.0, 0.0,  1.0, 1.0],
+    [0.0, 3.0, -1.0, 0.0],
+    [1.0, 2.0,  0.0, 0.0],
+])
+bias = torch.tensor([-0.2, 0.1, 0.0, 0.0, 0.0])
+
+logits = final_hidden @ W_out.T + bias
+vocabulary_probs = F.softmax(logits, dim=-1)
+
+print("final attention probabilities:\n", attention_probs[:, :, -1, :])
+print("attention update:\n", attention_update[:, -1, :])
+print("residual after attention:\n", residual_after_attention[:, -1, :])
+print("FFN update:\n", ffn_update[:, -1, :])
+print("final hidden:\n", final_hidden[:, -1, :])
+print("final logits:\n", logits[:, -1, :])
+print("final vocabulary probabilities:\n", vocabulary_probs[:, -1, :])`,
+        ),
         code(
           'python',
           `import math
@@ -576,21 +880,32 @@ class CausalSelfAttention(nn.Module):
         self.head_size = model_dim // num_heads
         self.qkv = nn.Linear(model_dim, 3 * model_dim, bias=False)
         self.output = nn.Linear(model_dim, model_dim, bias=False)
-        self.dropout = nn.Dropout(dropout)
+        self.attention_dropout = nn.Dropout(dropout)
+        self.output_dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         batch_size, time_steps, model_dim = x.shape
         q, k, value_states = self.qkv(x).chunk(3, dim=-1)
-        q = q.view(batch_size, time_steps, self.num_heads, self.head_size).transpose(1, 2)
-        k = k.view(batch_size, time_steps, self.num_heads, self.head_size).transpose(1, 2)
-        value_states = value_states.view(batch_size, time_steps, self.num_heads, self.head_size).transpose(1, 2)
+        q = q.view(
+            batch_size, time_steps, self.num_heads, self.head_size
+        ).transpose(1, 2)
+        k = k.view(
+            batch_size, time_steps, self.num_heads, self.head_size
+        ).transpose(1, 2)
+        value_states = value_states.view(
+            batch_size, time_steps, self.num_heads, self.head_size
+        ).transpose(1, 2)
+
         scores = (q @ k.transpose(-2, -1)) / math.sqrt(self.head_size)
         causal = torch.ones(time_steps, time_steps, device=x.device, dtype=torch.bool).tril()
         scores = scores.masked_fill(~causal, float("-inf"))
-        weights = self.dropout(F.softmax(scores, dim=-1))
-        heads = weights @ value_states
+
+        attention_probs = F.softmax(scores, dim=-1)
+        dropped_probs = self.attention_dropout(attention_probs)
+        heads = dropped_probs @ value_states
+
         merged = heads.transpose(1, 2).contiguous().view(batch_size, time_steps, model_dim)
-        return self.output(merged)
+        return self.output_dropout(self.output(merged))
 
 
 class TransformerBlock(nn.Module):
@@ -606,27 +921,43 @@ class TransformerBlock(nn.Module):
             nn.Dropout(dropout),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x + self.attention(self.ln1(x))
-        x = x + self.ffn(self.ln2(x))
-        return x
+    def forward(self, residual: torch.Tensor) -> torch.Tensor:
+        attention_update = self.attention(self.ln1(residual))
+        residual_after_attention = residual + attention_update
+
+        ffn_update = self.ffn(self.ln2(residual_after_attention))
+        residual_after_ffn = residual_after_attention + ffn_update
+        return residual_after_ffn
 
 
-x = torch.randn(2, 2, 4)
-assert TransformerBlock(model_dim=4, num_heads=2, dropout=0.1)(x).shape == (2, 2, 4)`,
+sample = torch.randn(2, 2, 4)
+block = TransformerBlock(model_dim=4, num_heads=2, dropout=0.1)
+block.eval()
+output = block(sample)
+print(output.shape)  # torch.Size([2, 2, 4])`,
         ),
         chain(multiHeadShapeChain),
         paragraph(
-          'ln1/ln2 是 per-token [2,2,4] normalization；attention 是 cross-position mixing 后回到 [2,2,4]；FFN 是 per-token 4→16→4。两条 `x = x + ...` 都把两份 [2,2,4] 相加，第二条输出就是 contextual representation [2,2,4]。dropout 在 model.train() 时随机移除/缩放 branch activations而不改 shape；model.eval() 会关闭它，因此 inference（除 sampling）是确定的。',
+          'ln1/ln2 是 Per-Token [2,2,4] Normalization；Attention 跨 Positions Mixing 后回到 [2,2,4]；FFN 是 Per-Token 4→16→4。两个 Residual Add 都合并两份 [2,2,4]，第二次结果就是 Block Output。model.eval() 会关闭 Dropout，因此除 Sampling 外，同一输入的 Inference 是确定的。',
+        ),
+        callout(
+          'Softmax Probability 与 Dropout 后计算权重必须分开命名',
+          [
+            paragraph(
+              'attention_probs 是 Softmax 直接输出，每个 Query Row 加总为 1。训练时 dropped_probs 会随机将部分项归零，并按 1/(1-p) 缩放保留项，因此一次 Forward 中不再保证每行加总为 1；它只是用于训练正则化的计算权重。model.eval() 时两者相同。',
+            ),
+          ],
+          'concept',
         ),
       ],
       [
         '不要在 identity residual path 上放这个 outline 的 dropout。',
         'FFN 不是第二个 attention layer；每个组件必须说明跨 position 或只在 row 内工作。',
+        '只有 attention_probs 保证 Row Sum=1；训练模式下 dropped_probs 不保证。',
       ],
       check('哪两行含 residual add，它们输出什么 shape？', [
         paragraph(
-          '两条 `x = x + ...`；每一条都把 [2,2,4] 和 [2,2,4] 合并，输出 [B,T,C]=[2,2,4]。',
+          'residual + attention_update，以及 residual_after_attention + ffn_update；每一条都把两份 [2,2,4] 合并并输出 [B,T,C]=[2,2,4]。',
         ),
       ]),
     ),
@@ -640,10 +971,10 @@ assert TransformerBlock(model_dim=4, num_heads=2, dropout=0.1)(x).shape == (2, 2
       ],
       [
         chain([
-          'x0 = token + position embeddings [2,2,4]',
-          'Block 1 → x1 contextual states [2,2,4]',
-          'Block 2 → x2 richer contextual states [2,2,4]',
-          'final LayerNorm → h [2,2,4]',
+          'x^(0) = token + position embeddings [2,2,4]',
+          'Block^(0)(x^(0)) → x^(1) contextual states [2,2,4]',
+          'Block^(1)(x^(1)) → x^(2) richer contextual states [2,2,4]',
+          'Final LayerNorm(x^(2)) → h [2,2,4]',
         ]),
         formula(
           String.raw`x^{(\ell+1)}=\operatorname{Block}^{(\ell)}(x^{(\ell)}),\qquad \ell=0,\ldots,L-1`,
@@ -651,6 +982,9 @@ assert TransformerBlock(model_dim=4, num_heads=2, dropout=0.1)(x).shape == (2, 2
         ),
         paragraph(
           '每个 block 有自己的 LayerNorm、Q/K/V/output projections 和 FFN parameters，除非 architecture 明确 weight sharing。dropout 在 training 中可按 block 配置使用但不改变 shape。n_layer 是 blocks 数量，不是 n_head。',
+        ),
+        paragraph(
+          'Pre-Norm Block 的每个 Branch Input 都被归一化，但两条 Direct Residual Routes 保留 Raw Residual Stream；堆叠结束后通常再使用 Final LayerNorm，为共享 LM Head 提供按 Row 校准的最终输入。Final LayerNorm 不是第三个 Residual Branch。',
         ),
       ],
       [
@@ -673,20 +1007,63 @@ assert TransformerBlock(model_dim=4, num_heads=2, dropout=0.1)(x).shape == (2, 2
       ],
       [
         paragraph(
-          'final LayerNorm 后，h[b,1,:] 的四个 features 分别映射为 [我,喜欢,AI,学习,猫] 的五个 raw scores。A/B 的 喜欢@1 可因前面 Attention 得到不同 h row，故五-logit row 也可不同。训练读取所有 positions；生成当前轮只读取最后 position。',
+          'Final LayerNorm 后，每个 Vocabulary Candidate 都有自己的一组四维 Scoring Weights。一个 Logit 使用当前 h Row 的全部四个 Features 做 Dot Product，再加该候选的 Bias；不是“四个 Features 分别对应五个 Scores”。',
         ),
         formula(
-          String.raw`\mathrm{logits}=hW_{\mathrm{vocab}}+b_{\mathrm{vocab}}`,
-          'The language-model head maps each contextual row to one raw score per vocabulary item.',
+          String.raw`z_v=w_v\cdot h+b_v=\sum_{c=1}^{C}w_{v,c}h_c+b_v`,
+          'Candidate v combines all C contextual features using its own scoring weights and bias.',
+        ),
+        table(
+          ['候选 v', 'Week 6 沿用的 w_v', 'b_v'],
+          [
+            ['我', '[1,0,0,0]', '−0.2'],
+            ['喜欢', '[0,1,2,2]', '0.1'],
+            ['AI', '[0,0,1,1]', '0'],
+            ['学习', '[0,3,−1,0]', '0'],
+            ['猫', '[1,2,0,0]', '0'],
+          ],
+          '同一组教学 Output Head 同时处理 Prompt A 与 Prompt B 的每个位置。',
+        ),
+        code(
+          'text',
+          `Prompt A final hidden
+h_A = [1.3128, 0.2134, -1.4933, -0.0330]
+
+例如“学习”的 Logit：
+z_学习 = [0,3,-1,0] · h_A + 0
+       = 3(0.2134) - (-1.4933)
+       ≈ 2.1336
+
+全部 Logits [我,喜欢,AI,学习,猫]
+z_A = [1.1128, -2.7390, -1.5262, 2.1336, 1.7397]
+
+Prompt B final hidden
+h_B = [1.2100, 0.3787, -1.5462, -0.0425]
+z_B = [1.0100, -2.6987, -1.5887, 2.6821, 1.9674]`,
+        ),
+        formula(
+          String.raw`W_{\mathrm{out}}\in\mathbb{R}^{V_{\mathrm{vocab}}\times C}=[5,4],\qquad \mathrm{logits}=H W_{\mathrm{out}}^{\mathsf T}+b`,
+          'The shared output head maps every [C] contextual row to [V_vocab] raw scores.',
+        ),
+        table(
+          ['Prompt final row', 'Vocabulary Probabilities [我,喜欢,AI,学习,猫]', '最高候选'],
+          [
+            ['A', '[0.1742,0.0037,0.0124,0.4835,0.3261]', '学习'],
+            ['B', '[0.1108,0.0027,0.0082,0.5897,0.2886]', '学习'],
+          ],
+          '不同 Context 可以产生不同分布，即使这一次 Argmax 碰巧仍是同一个 Token。',
         ),
         table(
           ['quantity', 'shape'],
           [
             ['h', '[B,T,C]=[2,2,4]'],
-            ['W_vocab', '[C,V_vocab]=[4,5]'],
+            ['W_out', '[V_vocab,C]=[5,4]'],
             ['b_vocab', '[V_vocab]=[5]'],
             ['logits', '[B,T,V_vocab]=[2,2,5]'],
           ],
+        ),
+        paragraph(
+          '训练时 LM Head 对所有 Positions 运行，以便同时形成 B×T 道下一词分类题；生成当前轮只消费 logits[:,−1,:]。Logits 是 Raw Scores，Vocabulary Softmax 才把它们转成概率。',
         ),
       ],
       [
@@ -695,7 +1072,7 @@ assert TransformerBlock(model_dim=4, num_heads=2, dropout=0.1)(x).shape == (2, 2
       ],
       check('为什么 [2,2,4] 会成为 [2,2,5]？', [
         paragraph(
-          '每个 four-feature row 乘 [4,5] 的 LM-head matrix，得到词表中五个 candidates 的 scores。',
+          '每个四维 h Row 与五行候选 Scoring Weights 分别做 Dot Product，等价于 H@[5,4]ᵀ，得到五个 Raw Scores。',
         ),
       ]),
     ),
@@ -713,7 +1090,7 @@ assert TransformerBlock(model_dim=4, num_heads=2, dropout=0.1)(x).shape == (2, 2
           `ids A/B                                      [2,2]
 token embeddings                             [2,2,4]
 position embeddings                          [2,4] (broadcast across B)
-x0 = token + position                        [2,2,4]
+residual_0 = token + position                 [2,2,4]
 one or more Transformer blocks               [2,2,4]
 final LayerNorm                              [2,2,4]
 LM head                                      [2,2,5]
@@ -725,6 +1102,91 @@ training: logits.reshape(B*T,V_vocab)        [4,5]
 generation: logits[:, -1, :]                 [2,5]
             sampled/argmax next_id            [2,1]
             appended ids                       [2,3]`,
+        ),
+        code(
+          'python',
+          `class MiniGPT(nn.Module):
+    def __init__(
+        self,
+        vocab_size: int,
+        context_length: int,
+        model_dim: int,
+        num_heads: int,
+        num_layers: int,
+        dropout: float,
+    ):
+        super().__init__()
+        self.context_length = context_length
+        self.token_embedding = nn.Embedding(vocab_size, model_dim)
+        self.position_embedding = nn.Embedding(context_length, model_dim)
+        self.blocks = nn.ModuleList([
+            TransformerBlock(model_dim, num_heads, dropout)
+            for _ in range(num_layers)
+        ])
+        self.final_norm = nn.LayerNorm(model_dim)
+        self.lm_head = nn.Linear(model_dim, vocab_size)
+
+    def forward(
+        self,
+        token_ids: torch.Tensor,
+        targets: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
+        B, T = token_ids.shape
+        if T > self.context_length:
+            raise ValueError("Sequence length exceeds context_length")
+
+        positions = torch.arange(T, device=token_ids.device)
+        residual = (
+            self.token_embedding(token_ids)
+            + self.position_embedding(positions)
+        )
+
+        for block in self.blocks:
+            residual = block(residual)
+
+        final_hidden = self.final_norm(residual)
+        logits = self.lm_head(final_hidden)
+
+        if targets is None:
+            return logits, None
+
+        loss = F.cross_entropy(
+            logits.reshape(B * T, logits.size(-1)),
+            targets.reshape(B * T),
+        )
+        return logits, loss
+
+
+model = MiniGPT(
+    vocab_size=5,
+    context_length=8,
+    model_dim=4,
+    num_heads=2,
+    num_layers=2,
+    dropout=0.1,
+)
+
+inputs = torch.tensor([
+    [0, 1],  # 我 喜欢
+    [4, 1],  # 猫 喜欢
+])
+targets = torch.tensor([
+    [1, 2],  # 喜欢 AI
+    [1, 3],  # 喜欢 学习
+])
+
+logits, loss = model(inputs, targets)
+print(logits.shape)  # torch.Size([2, 2, 5])
+print(loss.shape)    # torch.Size([])`,
+        ),
+        callout(
+          '为什么这段代码不会打印教学示例的固定 Logits？',
+          [
+            paragraph(
+              'MiniGPT 使用随机初始化的可学习参数，职责是展示真实训练接口；第 11 节第一段代码使用固定稀疏参数，职责是精确复现数学。随机模型必须经 Loss、Backpropagation 与 Optimizer 训练后，参数才会形成有用路由。',
+            ),
+          ],
+          'concept',
         ),
         formula(
           String.raw`\mathcal{L}=\operatorname{CrossEntropy}(\operatorname{reshape}(\mathrm{logits},[BT,V_{\mathrm{vocab}}]),\operatorname{reshape}(\mathrm{targets},[BT]))`,
