@@ -489,7 +489,7 @@ optimizer = torch.optim.AdamW(
           'python',
           `def train_mini_gpt_step(
     model: MiniGPT,
-    optimizer: torch.optim.Optimizer,
+    optimizer: torch.optim.AdamW,
     inputs: torch.Tensor,
     targets: torch.Tensor,
     device: torch.device,
@@ -500,6 +500,11 @@ optimizer = torch.optim.AdamW(
         raise ValueError("max_grad_norm must be positive")
     if type(completed_updates) is not int or completed_updates < 0:
         raise ValueError("completed_updates must be a non-negative integer")
+    validate_mini_gpt_adamw_completed_updates(
+        model,
+        optimizer,
+        completed_updates,
+    )
 
     model.train()
     inputs = inputs.to(device)
@@ -611,7 +616,7 @@ optimizer = torch.optim.AdamW(
           'python',
           `def train_mini_gpt_epoch(
     model: MiniGPT,
-    optimizer: torch.optim.Optimizer,
+    optimizer: torch.optim.AdamW,
     train_batches,
     device: torch.device,
     accumulation_steps: int = 1,
@@ -621,6 +626,11 @@ optimizer = torch.optim.AdamW(
         raise ValueError("accumulation_steps must be a positive integer")
     if type(completed_updates) is not int or completed_updates < 0:
         raise ValueError("completed_updates must be a non-negative integer")
+    validate_mini_gpt_adamw_completed_updates(
+        model,
+        optimizer,
+        completed_updates,
+    )
 
     # Validate all batches before touching model mode, gradients, or optimizer.
     batches = list(train_batches)
@@ -1160,7 +1170,7 @@ optimizer = torch.optim.AdamW(
           'python',
           `def overfit_mini_gpt_one_batch(
     model: MiniGPT,
-    optimizer: torch.optim.Optimizer,
+    optimizer: torch.optim.AdamW,
     inputs: torch.Tensor,
     targets: torch.Tensor,
     device: torch.device,
@@ -1171,6 +1181,11 @@ optimizer = torch.optim.AdamW(
         raise ValueError("updates must be a positive integer")
     if type(completed_updates) is not int or completed_updates < 0:
         raise ValueError("completed_updates must be a non-negative integer")
+    validate_mini_gpt_adamw_completed_updates(
+        model,
+        optimizer,
+        completed_updates,
+    )
 
     model.train()
     inputs = inputs.to(device)
@@ -1250,7 +1265,7 @@ optimizer = torch.optim.AdamW(
       '只保存 model.state_dict() 也许能在外部条件恰好一致时 inference，却不能证明 tokenizer meanings、architecture policy 或 AdamW history 匹配，更不能 faithful resume。',
       [
         '直接调用 Week 10 的 canonical saver/inference loader，不重定义或削弱其 schema、config、tokenizer hash 与 untied policy。',
-        '由成功的 optimizer.step() 推进 completed_updates，并在 save/resume 时把它与 AdamW per-parameter step state 交叉验证。',
+        '由成功的 optimizer.step() 推进 completed_updates，并在 training/save/resume 时验证 AdamW 只有一个 group、逐项绑定同序 MiniGPT parameters，且 count 与每个 step state 一致。',
         '为 training resume 增加一个调用端 loader：先验证全部 identity 与 optimizer metadata，再构造和使用模型。',
       ],
       [
@@ -1268,7 +1283,10 @@ optimizer = torch.optim.AdamW(
             ],
             ['weight_policy', 'token_embedding_lm_head=untied'],
             ['model_state', 'Week 10 exact state-dict names and tensors'],
-            ['optimizer', 'fully qualified class + state_dict'],
+            [
+              'optimizer',
+              'exact AdamW class + one canonical ordered model-parameter group + state_dict',
+            ],
             ['completed_updates', '已完成 optimizer.step() 的非负整数次数'],
           ],
         ),
@@ -1288,44 +1306,89 @@ optimizer = torch.optim.AdamW(
         ),
         code(
           'python',
-          `def validate_mini_gpt_adamw_completed_updates(
-    optimizer: torch.optim.Optimizer,
+          `def validate_mini_gpt_adamw_model_binding(
+    model: MiniGPT,
+    optimizer: torch.optim.AdamW,
+) -> list[torch.nn.Parameter]:
+    if type(model) is not MiniGPT:
+        raise TypeError("faithful training requires exactly MiniGPT")
+    if type(optimizer) is not torch.optim.AdamW:
+        raise TypeError("faithful training requires exactly torch.optim.AdamW")
+
+    model_parameters = list(model.parameters())
+    if not model_parameters:
+        raise ValueError("MiniGPT must have parameters")
+    if len(optimizer.param_groups) != 1:
+        raise ValueError("AdamW must have exactly one canonical param group")
+
+    live_group = optimizer.param_groups[0]
+    live_parameters = live_group.get("params")
+    if not isinstance(live_parameters, list):
+        raise ValueError("AdamW live params must be a list")
+    if len(live_parameters) != len(model_parameters):
+        raise ValueError("AdamW must own every MiniGPT parameter exactly once")
+    if any(
+        actual is not expected
+        for actual, expected in zip(live_parameters, model_parameters)
+    ):
+        raise ValueError("AdamW parameters must match MiniGPT identity and order")
+    return model_parameters
+
+
+def validate_mini_gpt_adamw_state_dict(
+    model: MiniGPT,
+    optimizer_state: object,
     completed_updates: int,
 ) -> None:
-    if type(optimizer) is not torch.optim.AdamW:
-        raise TypeError("faithful resume requires exactly torch.optim.AdamW")
     if type(completed_updates) is not int or completed_updates < 0:
         raise ValueError("completed_updates must be a non-negative integer")
+    if not isinstance(optimizer_state, dict):
+        raise ValueError("AdamW state_dict must be a dictionary")
+    if set(optimizer_state) != {"state", "param_groups"}:
+        raise ValueError("AdamW state_dict keys mismatch")
 
-    optimizer_state = optimizer.state_dict()
-    state = optimizer_state.get("state")
-    param_groups = optimizer_state.get("param_groups")
+    state = optimizer_state["state"]
+    param_groups = optimizer_state["param_groups"]
     if not isinstance(state, dict) or not isinstance(param_groups, list):
         raise ValueError("malformed AdamW state_dict")
+    if len(param_groups) != 1 or not isinstance(param_groups[0], dict):
+        raise ValueError("serialized AdamW must have one canonical param group")
 
-    parameter_ids: list[int] = []
-    for group in param_groups:
-        if not isinstance(group, dict) or not isinstance(group.get("params"), list):
-            raise ValueError("malformed AdamW param_groups")
-        parameter_ids.extend(group["params"])
-    if not parameter_ids or len(set(parameter_ids)) != len(parameter_ids):
-        raise ValueError("AdamW parameter IDs must be non-empty and unique")
-    expected_ids = set(parameter_ids)
+    model_parameters = list(model.parameters())
+    expected_ids = list(range(len(model_parameters)))
+    stored_ids = param_groups[0].get("params")
+    if not isinstance(stored_ids, list) or not all(
+        type(parameter_id) is int for parameter_id in stored_ids
+    ):
+        raise ValueError("serialized AdamW parameter IDs must be integers")
+    if stored_ids != expected_ids:
+        raise ValueError("serialized AdamW parameter IDs/order are not canonical")
 
-    # A newly constructed AdamW has no per-parameter state before its first step.
+    # AdamW creates per-parameter state lazily on its first successful step.
     if completed_updates == 0:
         if state:
-            raise ValueError("zero completed updates require a fresh empty AdamW state")
+            raise ValueError("zero completed updates require empty AdamW state")
         return
 
-    if set(state) != expected_ids:
-        raise ValueError("nonzero progress requires AdamW state for every parameter")
+    if not all(type(parameter_id) is int for parameter_id in state):
+        raise ValueError("AdamW state keys must be integer parameter IDs")
+    if set(state) != set(expected_ids):
+        raise ValueError("nonzero progress requires state for every parameter")
 
-    observed_steps: set[int] = set()
-    for parameter_id in parameter_ids:
+    amsgrad = param_groups[0].get("amsgrad")
+    if type(amsgrad) is not bool:
+        raise ValueError("AdamW amsgrad metadata must be boolean")
+    expected_state_keys = {"step", "exp_avg", "exp_avg_sq"}
+    if amsgrad:
+        expected_state_keys.add("max_exp_avg_sq")
+
+    for parameter_id, parameter in enumerate(model_parameters):
         parameter_state = state[parameter_id]
-        if not isinstance(parameter_state, dict) or "step" not in parameter_state:
-            raise ValueError("every AdamW parameter state must contain step")
+        if not isinstance(parameter_state, dict):
+            raise ValueError("each AdamW parameter state must be a dictionary")
+        if set(parameter_state) != expected_state_keys:
+            raise ValueError("AdamW per-parameter state keys mismatch")
+
         raw_step = parameter_state["step"]
         if torch.is_tensor(raw_step):
             if raw_step.numel() != 1:
@@ -1336,10 +1399,31 @@ optimizer = torch.optim.AdamW(
         numeric_step = float(raw_step)
         if not math.isfinite(numeric_step) or not numeric_step.is_integer():
             raise ValueError("AdamW step must be a finite integer")
-        observed_steps.add(int(numeric_step))
+        if int(numeric_step) != completed_updates:
+            raise ValueError("completed_updates disagrees with AdamW step state")
 
-    if observed_steps != {completed_updates}:
-        raise ValueError("completed_updates disagrees with AdamW step state")
+        moment_names = ["exp_avg", "exp_avg_sq"]
+        if amsgrad:
+            moment_names.append("max_exp_avg_sq")
+        for moment_name in moment_names:
+            moment = parameter_state[moment_name]
+            if not torch.is_tensor(moment) or moment.shape != parameter.shape:
+                raise ValueError(
+                    f"AdamW {moment_name} shape mismatches parameter order"
+                )
+
+
+def validate_mini_gpt_adamw_completed_updates(
+    model: MiniGPT,
+    optimizer: torch.optim.AdamW,
+    completed_updates: int,
+) -> None:
+    validate_mini_gpt_adamw_model_binding(model, optimizer)
+    validate_mini_gpt_adamw_state_dict(
+        model,
+        optimizer.state_dict(),
+        completed_updates,
+    )
 
 
 def train_and_save_week11_one_batch(
@@ -1355,7 +1439,11 @@ def train_and_save_week11_one_batch(
 ) -> tuple[list[float], int]:
     # Check resume progress before training, then derive new progress from
     # successful optimizer.step calls rather than from requested_updates.
-    validate_mini_gpt_adamw_completed_updates(optimizer, completed_updates)
+    validate_mini_gpt_adamw_completed_updates(
+        model,
+        optimizer,
+        completed_updates,
+    )
     history, completed_updates = overfit_mini_gpt_one_batch(
         model,
         optimizer,
@@ -1365,7 +1453,11 @@ def train_and_save_week11_one_batch(
         updates=requested_updates,
         completed_updates=completed_updates,
     )
-    validate_mini_gpt_adamw_completed_updates(optimizer, completed_updates)
+    validate_mini_gpt_adamw_completed_updates(
+        model,
+        optimizer,
+        completed_updates,
+    )
 
     # Save through the canonical Week 10 API; do not invent new keys.
     save_mini_gpt_training_checkpoint(
@@ -1379,6 +1471,9 @@ def train_and_save_week11_one_batch(
     )
     return history, completed_updates`,
           'week11_training_and_generation.py',
+        ),
+        paragraph(
+          'Live check 不只数 parameters：它要求 AdamW 恰有一个 group，且 group.params 与 list(model.parameters()) 等长、同序，并对每一项用 is 验证是同一个 Parameter object；因此 subset、reorder、duplicate 或 multiple groups 都会在 training/save 前被拒绝。Serialized IDs 则是 PyTorch 的 positional bookkeeping，不是 Python id(parameter)：本 canonical one-group layout 必须精确为 0..n−1，且在 optimizer.load_state_dict 前就检查 group/order、state keys、moment shapes 与每个 step。',
         ),
         code(
           'python',
@@ -1449,7 +1544,8 @@ def load_mini_gpt_training_resume(
     )
     if optimizer_payload["class"] != expected_optimizer_class:
         raise ValueError("optimizer class mismatch")
-    if not isinstance(optimizer_payload["state"], dict):
+    serialized_optimizer_state = optimizer_payload["state"]
+    if not isinstance(serialized_optimizer_state, dict):
         raise ValueError("optimizer state must be a dictionary")
 
     # Construct and use state only after every identity check above passes.
@@ -1457,9 +1553,23 @@ def load_mini_gpt_training_resume(
     model.load_state_dict(checkpoint["model_state"], strict=True)
     if model.lm_head.weight is model.token_embedding.weight:
         raise ValueError("restored model must keep canonical untied weights")
-    optimizer = torch.optim.AdamW(model.parameters())
-    optimizer.load_state_dict(optimizer_payload["state"])
-    validate_mini_gpt_adamw_completed_updates(optimizer, completed_updates)
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=1e-3,
+        weight_decay=1e-2,
+    )
+    validate_mini_gpt_adamw_model_binding(model, optimizer)
+    validate_mini_gpt_adamw_state_dict(
+        model,
+        serialized_optimizer_state,
+        completed_updates,
+    )
+    optimizer.load_state_dict(serialized_optimizer_state)
+    validate_mini_gpt_adamw_completed_updates(
+        model,
+        optimizer,
+        completed_updates,
+    )
     return model, optimizer, completed_updates`,
           'week11_training_and_generation.py',
         ),
@@ -1503,7 +1613,7 @@ def load_mini_gpt_training_resume(
           ],
         ),
         paragraph(
-          'map_location 决定 serialized tensors 映射到哪个 CPU/CUDA/MPS device；model、后续 inputs 与 targets 仍必须共置。Fresh optimizer 的合法起点是 completed_updates=0 且 AdamW per-parameter state 为空；非零 progress 则要求每个 canonical parameter 都有 step，并且所有 step 恰好等于 completed_updates。Save 前和 resume load 后都执行这项交叉检查。SHA-256 绑定已记录的 canonical bytes、用于发现 identity mismatch 或损坏，但不是来源签名；只 load trusted files。',
+          'map_location 决定 serialized tensors 映射到哪个 CPU/CUDA/MPS device；model、后续 inputs 与 targets 仍必须共置。Fresh optimizer 的合法起点是 completed_updates=0、一个完整 canonical param group 且 per-parameter state 为空；非零 progress 则要求同一组每个 parameter 都有匹配 shape 的 AdamW moments，且所有 step 恰好等于 completed_updates。Resume 在 load_state_dict 前验证 serialized layout，load 后再验证 live object binding 与 state。由于 frozen schema 不另存 parameter names，恶意交换两个同 shape moment payload 无法仅凭 IDs 证明来源；所以仍只 load trusted files。SHA-256 绑定 tokenizer canonical bytes、用于发现 identity mismatch 或损坏，但不是来源签名。',
         ),
       ],
       [
@@ -1513,13 +1623,14 @@ def load_mini_gpt_training_resume(
         'Inference-only restore 与 faithful resume 的承诺不同；前者不需要 optimizer，后者不能省略。',
         'completed_updates 是已完成 update 的 count，不是 zero-based loop index。',
         '不要把 requested update 数直接写进 completed_updates；只有 optimizer.step() 成功后才递增，并与 AdamW step state 核对。',
+        '只比较 parameter 数量仍会漏掉 subset/reorder/multiple-group 风险；必须验证 live object identity/order 与 serialized canonical IDs。',
         '加载不可信 torch.save 文件有安全风险；digest 通过也不等于来源可信。',
       ],
       check(
         'Meaningful inference 与 faithful training resume 的 checkpoint 要求差在哪里？',
         [
           paragraph(
-            '两者都要 schema、精确 tokenizer identity、config、untied policy 与 model_state；faithful resume 还必须匹配并恢复 AdamW class/state 和无歧义的 completed_updates。',
+            '两者都要 schema、精确 tokenizer identity、config、untied policy 与 model_state；faithful resume 还必须匹配并恢复 exact AdamW class、唯一且同序绑定 canonical model parameters 的 group/state，以及与每个 step 一致的 completed_updates。',
           ),
         ],
       ),
@@ -1679,25 +1790,25 @@ assert next_logits.shape == (1, 5)`,
       '15. Temperature τ：只改变 Sampling 分布的尖锐程度',
       'Raw last-position logits 可能让抽样太集中或太分散；若直接手选 token，就看不见模型分数与 sampling policy 的分工。',
       [
-        '在 Softmax 前只引入一个 transformation：用正的 temperature τ 除 logits。',
+        '在 Softmax 前先逐行减去最大 logit，再用正的 temperature τ 缩放；说明这个稳定化不改变 probabilities。',
         '把 τ 与 sequence axis T、training learning rate 彻底分开。',
       ],
       [
         paragraph(
-          '直白地说，τ<1 会放大 logit 差距，让最高分候选更集中；τ>1 会缩小差距，让分布更平；τ=1 保持普通 Softmax。它是 inference-time sampling control，不改变 model parameters、AdamW state 或训练目标。T 在本周始终保留给 sequence/time axis。',
+          '直白地说，τ<1 会放大 logit 差距，让最高分候选更集中；τ>1 会缩小差距，让分布更平；τ=1 保持普通 Softmax。实际计算先让每行减去自己的 maximum，使最大值变成 0，再除以 τ；所有 candidates 同减一个常数不会改变 ranking 或 Softmax probabilities，却避免正方向的 exponential overflow。它是 inference-time sampling control，不改变 model parameters、AdamW state 或训练目标。T 在本周始终保留给 sequence/time axis。',
         ),
         callout(
           '固定最后位置的五个带标签 logits',
           [
             paragraph(
-              '候选顺序 [我, 喜欢, AI, 学习, 猫]，z=[0,2,1,-1,-0.5]，shape [1,5]。当 τ=1 时，z/τ 仍为 [0,2,1,-1,-0.5]；本节先只观察 scaling，下一节再手算 probabilities。',
+              '候选顺序 [我, 喜欢, AI, 学习, 猫]，z=[0,2,1,-1,-0.5]，shape [1,5]。该行 maximum m=2，所以稳定实现先得到 z-m=[-2,0,-1,-3,-2.5]；当 τ=1 时仍是这组 centered scores。它与直接用原 z 得到完全相同的 probabilities；下一节会保留原始带标签概率表。',
             ),
           ],
           'example',
         ),
         formula(
-          String.raw`p_i(\tau)=\frac{\exp(z_i/\tau)}{\sum_{j=1}^{V}\exp(z_j/\tau)},\qquad \tau>0`,
-          'z_i 是 token i 的 last-position logit；先除正数 tau，再沿五个 vocabulary candidates 归一化。',
+          String.raw`p_i(\tau)=\frac{\exp((z_i-m)/\tau)}{\sum_{j=1}^{V}\exp((z_j-m)/\tau)}=\frac{\exp(z_i/\tau)}{\sum_{j=1}^{V}\exp(z_j/\tau)},\qquad m=\max_j z_j,\quad \tau>0`,
+          '逐行减去共同 maximum m 不改变 Softmax；center 后最大 scaled logit 为 0。',
         ),
         table(
           ['τ setting', 'scaled logits 的相对间距', 'sampling effect'],
@@ -1708,18 +1819,20 @@ assert next_logits.shape == (1, 5)`,
           ],
         ),
         chain([
-          'last logits z [B,5]',
-          'validate τ>0',
-          'scaled logits z/τ [B,5]',
+          'finite floating last logits z [B,5]',
+          'promote float16/bfloat16 至至少 float32，并 validate τ>0',
+          'row-center z−max(z) [B,5]，再 scale /τ [B,5]',
+          'reject non-finite centered/scaled values with a clear numeric-domain error',
           'ranking 不变；relative gaps 改变',
           '之后才做 optional top-k 与 Softmax',
         ]),
         paragraph(
-          'Positive τ 除法保持 candidate ranking；它只改变相对概率差距。τ=0 会除零，τ<0 会翻转 ranking，都不是本 sampling API 允许的设置。',
+          'Positive τ 除法保持 candidate ranking；它只改变相对概率差距。τ=0 会除零，τ<0 会翻转 ranking，都不是本 sampling API 允许的设置。即使 raw logits 都 finite，极小 τ 也可能让负的 centered gaps 在 working dtype 中溢出为 -∞；helper 会在 Softmax 前用明确 ValueError 拒绝，而不是把 NaN 交给 multinomial。',
         ),
       ],
       [
         'τ 必须严格大于 0；不要把 τ=0 当作 argmax 的写法。',
+        'Finite raw logits 不保证任意极小 τ 都可表示；必须检查 promoted、centered、scaled values。',
         '不要在训练 CE 中偷偷除以 τ，除非你明确在改变训练 objective。',
         'τ 不是 learning rate，也不是 top-k；三者分别控制 optimizer、distribution sharpness 与 candidate set。',
         'T 表示 sequence axis，sampling temperature 只写作 τ 或 tau。',
@@ -1752,11 +1865,11 @@ assert next_logits.shape == (1, 5)`,
           '同一 last-position scores；只改变正的 sampling temperature τ',
         ),
         paragraph(
-          'τ=0.5 时，z/τ=[0,4,2,-2,-1]；对应 exponentials 约 [1.000,54.598,7.389,0.135,0.368]，总和约 63.490。最高 logit“喜欢”因此得到约 0.860。τ=2 时，z/τ=[0,1,0.5,-0.5,-0.25]，差距缩小。',
+          'τ=0.5 时，原始等价手算仍是 z/τ=[0,4,2,-2,-1]，其 exponentials 总和约 63.490。稳定实现先减 m=2，再除 τ，得到 [-4,0,-2,-6,-5]；这只是把前一向量所有项同减 4，所以 probabilities 完全相同，而最大 exponential 现在只是 exp(0)=1。最高 logit“喜欢”仍得到约 0.860。τ=2 时差距缩小，centering 同样不改变结果。',
         ),
         formula(
-          String.raw`[0,4,2,-2,-1]\xrightarrow{\exp}[1.000,54.598,7.389,0.135,0.368]\xrightarrow{/63.490}[0.016,0.860,0.116,0.002,0.006]`,
-          'tau 等于 0.5 的 labelled five-token example；向量顺序始终为我、喜欢、AI、学习、猫。',
+          String.raw`\operatorname{softmax}([0,4,2,-2,-1])=\operatorname{softmax}([-4,0,-2,-6,-5])\approx[0.016,0.860,0.116,0.002,0.006]`,
+          'tau 等于 0.5 的 labelled five-token example；减去共同 maximum-scaled constant 4 后，向量顺序与 probabilities 不变。',
         ),
         code(
           'python',
@@ -1768,8 +1881,21 @@ temperature = 0.5
 if not math.isfinite(temperature) or temperature <= 0:
     raise ValueError("temperature must be positive")
 
-scaled_logits = next_logits / temperature  # [1,5]
+sampling_logits = (
+    next_logits.float()
+    if next_logits.dtype in (torch.float16, torch.bfloat16)
+    else next_logits
+)
+centered_logits = sampling_logits - sampling_logits.amax(
+    dim=-1,
+    keepdim=True,
+)
+scaled_logits = centered_logits / temperature  # [-4,0,-2,-6,-5]
+if not bool(torch.isfinite(scaled_logits).all()):
+    raise ValueError("temperature is too small for stable scaling")
 probabilities = F.softmax(scaled_logits, dim=-1)  # [1,5]
+if not bool(torch.isfinite(probabilities).all()):
+    raise ValueError("sampling probabilities must be finite")
 next_id = torch.multinomial(
     probabilities,
     num_samples=1,
@@ -1777,8 +1903,8 @@ next_id = torch.multinomial(
           'week11_training_and_generation.py',
         ),
         formula(
-          String.raw`z\ [1,5]\to z/\tau\ [1,5]\to p\ [1,5]\to\mathrm{next\_id}\ [1,1]`,
-          'Scaling 和 Softmax 保持五个 candidates；multinomial 最终为每个 batch row 采一个 integer class ID。',
+          String.raw`z\ [1,5]\to z-\max(z)\ [1,5]\to (z-\max(z))/\tau\ [1,5]\to p\ [1,5]\to\mathrm{next\_id}\ [1,1]`,
+          'Promotion、centering、scaling 和 Softmax 都保持五个 candidates；multinomial 最终为每个 batch row 采一个 integer class ID。',
         ),
         paragraph(
           'torch.argmax(probabilities, dim=-1, keepdim=True) 也输出 [1,1]，但总选最高 probability；torch.multinomial 会按概率随机抽样，所以可能选择非 argmax token。二者都是 forward 之后的 choice policy，不是另一次模型计算。',
@@ -1805,7 +1931,7 @@ next_id = torch.multinomial(
       'Temperature τ 只调整所有有限 logits 的相对 probability，仍会给每个 candidate 非零质量；极低分 token 仍可能被抽中。',
       [
         '把 top-k 加作独立的 candidate filter：保留 k 个最高 scaled logits，其余设为负无穷。',
-        '验证 τ 与 k，严格按 scaling→filter→Softmax→multinomial 顺序实现唯一命名 helper。',
+        '验证 floating logits、τ、k 与数值有效性，严格按 promotion→centering→scaling→filter→Softmax→multinomial 实现唯一命名 helper。',
       ],
       [
         paragraph(
@@ -1827,6 +1953,9 @@ next_id = torch.multinomial(
           ],
           '保留 喜欢、AI、我；denominator=exp(2)+exp(1)+exp(0)=11.107',
         ),
+        paragraph(
+          '表格保留前一节的 uncentered τ=1 scores，方便逐 token 核对 11.107 与 probabilities。实际 helper 对每行同减 maximum 2，使用 [-2,0,-1,-3,-2.5]；top-3 survivors、ranking 与最后 probabilities 完全相同，只把 survivor denominator 等价地缩放为 exp(-2)+exp(0)+exp(-1)。',
+        ),
         code(
           'python',
           `def sample_mini_gpt_next_id(
@@ -1834,20 +1963,56 @@ next_id = torch.multinomial(
     temperature: float = 1.0,
     top_k: int | None = None,
 ) -> torch.Tensor:
+    if not isinstance(last_logits, torch.Tensor):
+        raise TypeError("last_logits must be a tensor")
     if last_logits.ndim != 2:
         raise ValueError("last_logits must have shape [B,V]")
+    if last_logits.size(0) < 1:
+        raise ValueError("last_logits must contain at least one batch row")
     if last_logits.size(-1) != 5:
         raise ValueError("mini-gpt-v1 requires V=5")
+    if not torch.is_floating_point(last_logits):
+        raise TypeError("last_logits must use a floating dtype")
     if not bool(torch.isfinite(last_logits).all()):
         raise ValueError("last_logits must be finite")
+    if type(temperature) not in (int, float):
+        raise TypeError("temperature must be a real number")
+    temperature = float(temperature)
     if not math.isfinite(temperature) or temperature <= 0:
         raise ValueError("temperature must be positive")
 
-    scaled_logits = last_logits / temperature
-    vocabulary_size = scaled_logits.size(-1)
+    vocabulary_size = last_logits.size(-1)
     if top_k is not None:
         if type(top_k) is not int or not 1 <= top_k <= vocabulary_size:
             raise ValueError("top_k must be an integer in [1,V]")
+
+    # Softmax support and numeric headroom are safer than half precision.
+    working_dtype = (
+        torch.float64
+        if last_logits.dtype == torch.float64
+        else torch.float32
+    )
+    sampling_logits = last_logits.to(dtype=working_dtype)
+    dtype_limits = torch.finfo(working_dtype)
+    if temperature < dtype_limits.tiny:
+        raise ValueError("temperature is too small for the sampling dtype")
+    if temperature > dtype_limits.max:
+        raise ValueError("temperature is too large for the sampling dtype")
+
+    row_max = sampling_logits.amax(dim=-1, keepdim=True)
+    centered_logits = sampling_logits - row_max
+    if not bool(torch.isfinite(centered_logits).all()):
+        raise ValueError("last_logits range is too wide after centering")
+
+    scaled_logits = centered_logits / temperature
+    if not bool(torch.isfinite(scaled_logits).all()):
+        raise ValueError(
+            "temperature is too small for this logit range and sampling dtype"
+        )
+
+    # Top-k stays after temperature scaling and before Softmax.
+    filtered_logits = scaled_logits
+    if top_k is not None:
         top_values, top_indices = torch.topk(
             scaled_logits,
             k=top_k,
@@ -1862,9 +2027,17 @@ next_id = torch.multinomial(
             index=top_indices,
             src=top_values,
         )
-        scaled_logits = filtered_logits
 
-    probabilities = F.softmax(scaled_logits, dim=-1)
+    probabilities = F.softmax(filtered_logits, dim=-1)
+    probability_sums = probabilities.sum(dim=-1)
+    if (
+        not bool(torch.isfinite(probabilities).all())
+        or bool((probabilities < 0).any())
+        or not bool(torch.isfinite(probability_sums).all())
+        or bool((probability_sums <= 0).any())
+    ):
+        raise ValueError("temperature/top_k produced unusable probabilities")
+
     next_id = torch.multinomial(probabilities, num_samples=1)
     assert next_id.dtype == torch.long
     return next_id  # [B,1]`,
@@ -1872,15 +2045,15 @@ next_id = torch.multinomial(
         ),
         chain([
           'last_logits z [B,V]=[B,5]',
-          'validate τ>0 and optional integer 1≤k≤V',
-          'scale z/τ [B,5]',
+          'validate floating/finite z、τ>0 与 optional integer 1≤k≤V',
+          'promote low precision → row-center → finite scale (z−max(z))/τ [B,5]',
           'retain top k logits; others become -∞ [B,5]',
-          'Softmax renormalizes survivors [B,5]',
+          'Softmax renormalizes survivors；verify finite nonnegative row mass [B,5]',
           'multinomial samples next_id torch.long [B,1]',
         ]),
         formula(
-          String.raw`\widetilde z_i=\begin{cases}z_i/\tau,&i\in\operatorname{TopK}(z/\tau)\\-\infty,&\text{otherwise}\end{cases},\qquad p_i=\operatorname{softmax}(\widetilde z)_i`,
-          '过滤发生在 Softmax 之前；负无穷候选的 exponential 为零，survivors 的 probabilities 重新和为 1。',
+          String.raw`c_i=\frac{z_i-\max_j z_j}{\tau},\qquad \widetilde c_i=\begin{cases}c_i,&i\in\operatorname{TopK}(c)\\-\infty,&\text{otherwise}\end{cases},\qquad p_i=\operatorname{softmax}(\widetilde c)_i`,
+          'Promotion 后先 center/scale，再在 Softmax 前过滤；负无穷候选的 exponential 为零，survivors 的 probabilities 重新和为 1。',
         ),
         paragraph(
           'k=1 使剩余 distribution 在唯一最高项上确定；k=V=5 不过滤任何 finite candidate。Cutoff 处相同 logits 的 tie selection 可依实现而定，不能承诺相等分数中固定保留哪一个。',
@@ -1888,6 +2061,7 @@ next_id = torch.multinomial(
       ],
       [
         '必须拒绝 k=0、negative k、k>V 与非 integer k。',
+        '不能因 raw logits finite 就假定 scaled logits 也 finite；half/bfloat 要先 promote，极小 τ 溢出要明确拒绝。',
         '必须先 filter logits 再 Softmax，才能让 survivors 正确重新归一化。',
         '不能在 multinomial 之后才过滤；token 已经被选中。',
         'top-k 不代表“top-k tokens 都追加”；每个 batch row 仍只 sample 一个 [1] ID。',
@@ -1977,7 +2151,7 @@ def generate_mini_gpt_sampled(
           'crop only forward context → [B,min(L_history,2)]',
           'MiniGPT(context), no targets → [B,T_context,5]',
           'logits[:,-1,:] → [B,5]',
-          'τ scale → optional top-k → Softmax → multinomial',
+          'promote + row-center + τ scale → optional top-k → checked Softmax → multinomial',
           'next_id torch.long [B,1]',
           'append to uncropped history → [B,L_history+1]',
         ]),
@@ -2130,8 +2304,8 @@ assert no_loss is None`,
             ],
             [
               'checkpoint load 后乱码/异常',
-              'tokenizer/config/tie policy/member keys 不匹配',
-              '先核 schema、canonical JSON/SHA-256 与 strict state keys',
+              'tokenizer/config/tie policy/member keys 或 AdamW group/order 不匹配',
+              '先核 identity，再在 optimizer load 前核 canonical IDs/state shapes',
             ],
             [
               'device error',
@@ -2150,8 +2324,8 @@ assert no_loss is None`,
             ],
             [
               'τ/top-k 产生 invalid distribution',
-              'τ≤0、k 越界、或 filter 顺序错误',
-              'validate τ>0、1≤k≤V；filter logits before Softmax',
+              'τ≤0/过小、low-precision overflow、k 越界或 filter 顺序错误',
+              'promote、row-center、核 scaled/probabilities finite，再 Softmax/sample',
             ],
           ],
         ),
@@ -2173,7 +2347,7 @@ assert last_logits.shape == (3, 5)
           'MiniGPT representations [3,2,4] → logits [3,2,5]',
           'reshape [6,5] + [6] → mean loss [] → backward → step',
           'generation contract：context [B,T_context] → logits [B,T_context,5]',
-          'select last [B,5] → τ/top-k/Softmax → next_id [B,1]',
+          'select last [B,5] → safe center/τ/top-k/Softmax → next_id [B,1]',
         ]),
         formula(
           String.raw`\mathrm{training}:\ [3,2]\to[3,2,4]\to[3,2,5]\to[6,5]+[6]\to[]`,
@@ -2220,7 +2394,7 @@ assert last_logits.shape == (3, 5)
             'Step 是一次 parameter update，epoch 是走完 training batches 一遍；accumulation 可让多次 forward/backward 只产生一次 completed update。',
             'Held-out validation 必须同时用 eval() 与 no_grad()、恢复先前 mode，并按 reduction=sum / valid target count 做 token-weighted 聚合；same-corpus score 不是 validation。',
             '两个相同 [我] causal contexts 分别标为 喜欢 与 学习，所以 empirical optimum 是 0.5/0.5，batch mean NLL 只会趋近而不会以 finite weights 达到 ln(2)/3≈0.231；检查 [我,喜欢] 与 [猫,喜欢] 等可区分 contexts 是否能分化。',
-            '兼容 checkpoint 复用 Week 10 exact schema/tokenizer SHA-256/config/untied state keys；inference 则 target-free 地 crop context、取 logits[:,-1,:]、按 τ 和 optional top-k 处理、Softmax/multinomial 得 [B,1] 并 append full history。',
+            '兼容 checkpoint 复用 Week 10 exact schema/tokenizer SHA-256/config/untied state keys，并校验 AdamW 对 canonical parameters 的 group/object/order 绑定；inference 则 target-free 地 crop context、取 logits[:,-1,:]、promote/center 后按 τ 和 optional top-k 处理、检查 Softmax probabilities，再 multinomial 得 [B,1] 并 append full history。',
           ],
           true,
         ),
