@@ -22,10 +22,15 @@ const formula = (latex: string, accessibleText: string): CuratedBodyBlock => ({
   accessibleText,
 });
 
-const code = (language: string, value: string): CuratedBodyBlock => ({
+const code = (
+  language: string,
+  value: string,
+  filename?: string,
+): CuratedBodyBlock => ({
   type: 'code',
   language,
   code: value,
+  ...(filename ? { filename } : {}),
 });
 
 const table = (
@@ -638,21 +643,133 @@ total after two rounds: 31 - 2 - 2 = 27`,
           String.raw`\operatorname{encode}_{A}(\mathrm{text})\to\mathrm{ids}\in\{0,\ldots,V_A-1\}^{L},\qquad A_{\mathrm{after}}=A_{\mathrm{before}}`,
           'Encoding 只应用 frozen A；不会更新 pair counts、添加 Vocabulary row 或改变 merge order。',
         ),
+        paragraph(
+          '下面把 w09-readable-v1 写成一个最小、具体的 teaching artifact，而不是调用未配置的通用 library tokenizer。它使用 identity normalization、显式 ordered Vocabulary，以及固定的 longest-first content routes；无法匹配的一个 Unicode code point 映射为 <UNK>。这个 routing 是教学约定，不声称由前面两轮 toy BPE 直接产生。',
+        ),
         code(
           'python',
-          `# The two APIs make boundary ownership explicit.
+          `TOKENS = (
+    "<BOS>",
+    "<EOS>",
+    "<PAD>",
+    "<UNK>",
+    "我",
+    "喜欢",
+    "AI",
+    "，",
+    "也",
+    "猫",
+    "。",
+)
+TOKEN_TO_ID = {token: token_id for token_id, token in enumerate(TOKENS)}
+ID_TO_TOKEN = {token_id: token for token, token_id in TOKEN_TO_ID.items()}
+
+BOS_ID = TOKEN_TO_ID["<BOS>"]  # 0
+EOS_ID = TOKEN_TO_ID["<EOS>"]  # 1
+PAD_ID = TOKEN_TO_ID["<PAD>"]  # 2
+UNK_ID = TOKEN_TO_ID["<UNK>"]  # 3
+
+# Deterministic longest-first routing for this small teaching artifact.
+# Equal-length routes retain this declared order.
+CONTENT_ROUTES = ("喜欢", "AI", "我", "，", "也", "猫", "。")
+HIDDEN_ON_DECODE_IDS = {BOS_ID, EOS_ID, PAD_ID}
+
+
+class ReadableTokenizerV1:
+    version = "w09-readable-v1"
+    normalization = "identity"
+    vocabulary = TOKENS
+
+    def segment_content(self, text: str) -> list[str]:
+        pieces: list[str] = []
+        cursor = 0
+        while cursor < len(text):
+            matched = next(
+                (
+                    piece
+                    for piece in CONTENT_ROUTES
+                    if text.startswith(piece, cursor)
+                ),
+                None,
+            )
+            if matched is None:
+                pieces.append("<UNK>")
+                cursor += 1
+            else:
+                pieces.append(matched)
+                cursor += len(matched)
+        return pieces
+
+    def encode_content(
+        self,
+        text: str,
+        *,
+        add_special_tokens: bool = False,
+    ) -> list[int]:
+        if add_special_tokens:
+            raise ValueError("encode_content never adds BOS/EOS")
+        return [TOKEN_TO_ID[piece] for piece in self.segment_content(text)]
+
+    def encode_document(
+        self,
+        text: str,
+        *,
+        add_special_tokens: bool = True,
+    ) -> list[int]:
+        if not add_special_tokens:
+            raise ValueError("use encode_content when boundaries are unwanted")
+        return [
+            BOS_ID,
+            *self.encode_content(text, add_special_tokens=False),
+            EOS_ID,
+        ]
+
+    def decode(
+        self,
+        ids: list[int],
+        *,
+        skip_special_tokens: bool = True,
+    ) -> str:
+        pieces: list[str] = []
+        for token_id in ids:
+            if token_id not in ID_TO_TOKEN:
+                raise ValueError(f"token ID out of range: {token_id}")
+            if skip_special_tokens and token_id in HIDDEN_ON_DECODE_IDS:
+                continue
+            pieces.append(ID_TO_TOKEN[token_id])
+        return "".join(pieces)
+
+
+W09_READABLE_V1 = ReadableTokenizerV1()
+
+
 def encode_content(text: str) -> list[int]:
-    return tokenizer.encode(text, add_special_tokens=False)
+    return W09_READABLE_V1.encode_content(
+        text,
+        add_special_tokens=False,
+    )
 
 
 def encode_document(text: str) -> list[int]:
-    return tokenizer.encode(text, add_special_tokens=True)
+    return W09_READABLE_V1.encode_document(
+        text,
+        add_special_tokens=True,
+    )
 
 
-content_ids = encode_content("我喜欢AI，AI也喜欢猫。")
-document_ids = encode_document("我喜欢AI，AI也喜欢猫。")
+RUNNING_TEXT = "我喜欢AI，AI也喜欢猫。"
+content_ids = encode_content(RUNNING_TEXT)
+document_ids = encode_document(RUNNING_TEXT)
 
-# Neither call mutates tokenizer.vocabulary or tokenizer.merges.`,
+assert content_ids == [4, 5, 6, 7, 6, 8, 5, 9, 10]
+assert document_ids == [0, *content_ids, 1]
+assert W09_READABLE_V1.decode(
+    document_ids,
+    skip_special_tokens=True,
+) == RUNNING_TEXT
+
+# These calls never mutate vocabulary, routes, or IDs.`,
+          'w09_readable_v1.py',
         ),
       ],
       [
@@ -767,25 +884,27 @@ Model input ID 6 is numerically in range, but its learned row and displayed toke
         ),
         code(
           'python',
-          `BOS_ID = 0
-EOS_ID = 1
+          `from w09_readable_v1 import (
+    BOS_ID,
+    EOS_ID,
+    W09_READABLE_V1,
+    encode_content,
+    encode_document,
+)
 
-
-def encode_content(text: str) -> list[int]:
-    return tokenizer.encode(text, add_special_tokens=False)
-
-
-def encode_document(text: str) -> list[int]:
-    return tokenizer.encode(text, add_special_tokens=True)
-
-
-content_ids = encode_content("我喜欢AI，AI也喜欢猫。")
-document_ids = encode_document("我喜欢AI，AI也喜欢猫。")
+text = "我喜欢AI，AI也喜欢猫。"
+content_ids = encode_content(text)
+document_ids = encode_document(text)
 
 assert document_ids == [BOS_ID, *content_ids, EOS_ID]
+assert W09_READABLE_V1.decode(
+    document_ids,
+    skip_special_tokens=True,
+) == text
 
 # Wrong: encode_document already owns both boundaries.
 # duplicated = [BOS_ID, *encode_document(text), EOS_ID]`,
+          'special_tokens_example.py',
         ),
         formula(
           String.raw`0\le \mathrm{special\_id}<V,\qquad V_{\mathrm{w09\text{-}readable\text{-}v1}}=11`,
@@ -883,6 +1002,8 @@ assert document_ids == [BOS_ID, *content_ids, EOS_ID]
           'python',
           `import torch
 
+from w09_readable_v1 import encode_document
+
 documents = ["我喜欢AI，AI也喜欢猫。"]
 
 # encode_document already inserts exactly one BOS and one EOS per document.
@@ -895,6 +1016,7 @@ stream_tensor = torch.tensor(stream, dtype=torch.long)
 assert stream == [0, 4, 5, 6, 7, 6, 8, 5, 9, 10, 1]
 assert tuple(stream_tensor.shape) == (11,)
 assert stream_tensor.dtype == torch.long`,
+          'corpus_to_tensor.py',
         ),
         formula(
           String.raw`s^{(d)}\in\{0,\ldots,V-1\}^{L_d},\qquad s=\operatorname{concat}\!\left(s^{(1)},\ldots,s^{(D)}\right)\in\{0,\ldots,V-1\}^{L},\qquad L=\sum_{d=1}^{D}L_d`,
@@ -944,8 +1066,11 @@ assert stream_tensor.dtype == torch.long`,
           'form windows separately inside each split',
         ]),
         formula(
-          String.raw`\mathrm{train\_stream}:[L_{\mathrm{train}}],\qquad \mathrm{val\_stream}:[L_{\mathrm{val}}],\qquad \mathrm{train\ windows}\cap\mathrm{val\ windows}=\varnothing\ \text{by policy}`,
-          '两条 stream 独立生成 [B,T] windows；validation targets 只用于 measurement，不更新参数。',
+          String.raw`D_{\mathrm{train}}\cap D_{\mathrm{val}}=\varnothing,\qquad \forall w\in W_{\mathrm{train}}:\operatorname{source}(w)\in D_{\mathrm{train}},\qquad \forall w\in W_{\mathrm{val}}:\operatorname{source}(w)\in D_{\mathrm{val}}`,
+          'Train 与 validation 的 source-document provenance 不相交；每个 window instance 只在所属 document 的 lane 内产生。',
+        ),
+        paragraph(
+          '这是 provenance guarantee，不是 value-level deduplication：两份独立 documents 可能都包含常见短语或 boilerplate，因此完全相同的 ID window values 可以自然地分别出现在 train 与 validation。若任务还要求去重，必须另外声明 document/group deduplication policy。',
         ),
         table(
           ['stage', 'train lane', 'validation lane'],
@@ -960,12 +1085,13 @@ assert stream_tensor.dtype == torch.long`,
       [
         '不能训练完 model 后才从同一 windows 挑一部分叫 validation。',
         '从零训练 tokenizer 时，默默在 validation text 上 fit merges 会污染 protocol。',
+        'Document split 不保证两边绝不会出现数值相同的 token sequence；它保证 source provenance 分离。',
         'train loss 下降不能替代 held-out validation。',
         '使用 pretrained tokenizer 时应锁定外部 artifact，而不是在本 corpus 上偷偷重训。',
       ],
       check('为什么应在 stream concatenation 之前按 documents 分割？', [
         paragraph(
-          '这样相邻上下文与几乎重叠的 windows 不会跨进两个 splits，也能在每条 lane 内独立保留 document boundaries。',
+          '这样同一 source document 与同一个 window instance 不会跨进两个 splits，也能在每条 lane 内独立保留 document boundaries；不同 documents 仍可能独立产生相同的 token-value sequence。',
         ),
       ]),
     ),
