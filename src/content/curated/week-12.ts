@@ -758,7 +758,7 @@ assert loss.ndim == 0`,
             '候选顺序 [我,喜欢,AI,学习,猫]，若 raw logits=[0,2,1,-1,0] 且 target=喜欢，则 Softmax target probability≈0.592，single-position NLL=-ln(0.592)≈0.524。',
           ),
           formula(
-            String.raw`p(\mathrm{喜欢})=\frac{e^2}{e^0+e^2+e^1+e^{-1}+e^0}\approx0.592,\qquad -\ln p\approx0.524`,
+            String.raw`p_{\mathrm{target}}=\frac{e^2}{e^0+e^2+e^1+e^{-1}+e^0}\approx0.592,\qquad -\ln p_{\mathrm{target}}\approx0.524`,
             '固定 didactic logits 的单题结果；不是声称模型训练后一定产生这些数。',
           ),
         ]),

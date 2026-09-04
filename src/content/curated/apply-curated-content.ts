@@ -7,12 +7,19 @@ import type { CuratedWeekRevision } from './types';
 function collectDescendantAnchors(section: SectionNode): string[] {
   const anchors: string[] = [];
   for (const child of section.children) {
-    anchors.push(child.id, ...child.aliases, ...collectDescendantAnchors(child));
+    anchors.push(
+      child.id,
+      ...child.aliases,
+      ...collectDescendantAnchors(child),
+    );
   }
   return anchors;
 }
 
-function collectBlockIds(blocks: readonly ContentBlock[], output: string[]): void {
+function collectBlockIds(
+  blocks: readonly ContentBlock[],
+  output: string[],
+): void {
   for (const block of blocks) {
     output.push(block.id);
     if (block.type === 'callout') collectBlockIds(block.blocks, output);
@@ -33,7 +40,9 @@ function applyWeekRevision(
     revision.sections.map((section) => [section.sectionId, section]),
   );
   if (revisionsBySectionId.size !== revision.sections.length)
-    throw new Error(`Duplicate curated section revision in ${revision.weekSlug}`);
+    throw new Error(
+      `Duplicate curated section revision in ${revision.weekSlug}`,
+    );
 
   const directSectionIds = week.children.map((section) => section.id);
   const missing = directSectionIds.filter(
@@ -57,10 +66,7 @@ function applyWeekRevision(
     );
     collectBlockIds(blocks, curatedBlockIds);
     const aliases = sectionRevision.collapseChildren
-      ? unique([
-          ...section.aliases,
-          ...collectDescendantAnchors(section),
-        ])
+      ? unique([...section.aliases, ...collectDescendantAnchors(section)])
       : section.aliases;
     return {
       ...section,
@@ -83,9 +89,7 @@ function applyWeekRevision(
   };
 }
 
-export function applyCuratedContent(
-  course: Readonly<Course>,
-): Course {
+export function applyCuratedContent(course: Readonly<Course>): Course {
   return applyCuratedContentWithRevisions(course, CURATED_WEEK_REVISIONS);
 }
 

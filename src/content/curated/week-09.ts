@@ -186,10 +186,22 @@ export const week09Revision: CuratedWeekRevision = {
         table(
           ['概念', '本章含义', '固定句中的例子'],
           [
-            ['Token', 'Tokenizer 发出的一个离散计算单位', '可以是 我、喜欢、AI，也可能是某个 byte'],
-            ['Vocabulary', '允许 token 与 ID 的有限清单', 'w09-readable-v1 有 V=11 个 entries'],
+            [
+              'Token',
+              'Tokenizer 发出的一个离散计算单位',
+              '可以是 我、喜欢、AI，也可能是某个 byte',
+            ],
+            [
+              'Vocabulary',
+              '允许 token 与 ID 的有限清单',
+              'w09-readable-v1 有 V=11 个 entries',
+            ],
             ['Token ID', '某个 entry 的整数地址', '在该快照中 AI 的地址是 6'],
-            ['Tokenizer', 'normalization、split、encode、decode 与 special-token policy 的整体协议', '将固定句映射成下方 stream'],
+            [
+              'Tokenizer',
+              'normalization、split、encode、decode 与 special-token policy 的整体协议',
+              '将固定句映射成下方 stream',
+            ],
           ],
         ),
         table(
@@ -241,7 +253,13 @@ export const week09Revision: CuratedWeekRevision = {
           '对“我喜欢AI，AI也喜欢猫。”，同一 raw text 在不同规则下可以发出不同数量的单位。下面的 word-like row 依赖指定 segmenter；subword row 恰好看起来一样，只是这个教学词表训练后的结果，并非 subword 的定义。',
         ),
         table(
-          ['scheme', 'emitted units', 'count L', 'immediate benefit', 'immediate cost'],
+          [
+            'scheme',
+            'emitted units',
+            'count L',
+            'immediate benefit',
+            'immediate cost',
+          ],
           segmentationRows,
           '同一固定句的四种明确切分',
         ),
@@ -264,11 +282,14 @@ export const week09Revision: CuratedWeekRevision = {
         '中文没有空格不表示它天然只有一种 word segmentation。',
         '跨 tokenizer 比较 L 时，必须先承认每个 position 的单位不同。',
       ],
-      check('13 个 Unicode code points 是否证明所有 tokenizer 都会产生 13 个 IDs？', [
-        paragraph(
-          '不会。character rule 在这里产生 13 个单位；word-like 与示意 subword 各产生 9 个，byte rule 产生 31 个。L 由 tokenizer artifact 决定。',
-        ),
-      ]),
+      check(
+        '13 个 Unicode code points 是否证明所有 tokenizer 都会产生 13 个 IDs？',
+        [
+          paragraph(
+            '不会。character rule 在这里产生 13 个单位；word-like 与示意 subword 各产生 9 个，byte rule 产生 31 个。L 由 tokenizer artifact 决定。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0326-2-word',
@@ -285,9 +306,24 @@ export const week09Revision: CuratedWeekRevision = {
         table(
           ['choice', 'Vocabulary / coverage', 'sequence length', '主要代价'],
           [
-            ['whole word', '需要很多完整词；缺项时常依赖 <UNK> 或额外 fallback', '常见词通常较短', 'V 大或 unknown information loss'],
-            ['character / byte', 'base V 较小；byte base 可覆盖有效 UTF-8', '固定句为 13 / 31', '更多 positions 与更弱的人类可读性'],
-            ['subword', 'common pieces + smaller fallback pieces', '通常介于两端；本示意为 9', '需要冻结训练出的 merges 与 routing rules'],
+            [
+              'whole word',
+              '需要很多完整词；缺项时常依赖 <UNK> 或额外 fallback',
+              '常见词通常较短',
+              'V 大或 unknown information loss',
+            ],
+            [
+              'character / byte',
+              'base V 较小；byte base 可覆盖有效 UTF-8',
+              '固定句为 13 / 31',
+              '更多 positions 与更弱的人类可读性',
+            ],
+            [
+              'subword',
+              'common pieces + smaller fallback pieces',
+              '通常介于两端；本示意为 9',
+              '需要冻结训练出的 merges 与 routing rules',
+            ],
           ],
         ),
         formula(
@@ -324,10 +360,25 @@ export const week09Revision: CuratedWeekRevision = {
           '固定句的 13、9、31 positions 只显示方向，不证明“9 最优”。较大的 V 可以为常见片段分配单独 entry，较小的 V 则常要用更多 positions 表达同一文字。模型仍会在每个 position 输出 V 个 logits。',
         ),
         table(
-          ['design direction', 'vocabulary-facing tables', 'same text length', 'context / Attention implication'],
           [
-            ['smaller V', '较少 rows 与 output candidates', '往往更大 L', '固定 T 能覆盖的原文可能更少，位置对更多'],
-            ['larger V', '较多 rows 与 output candidates', '常见片段往往更短', '每一步的 LM-head computation / memory 增大'],
+            'design direction',
+            'vocabulary-facing tables',
+            'same text length',
+            'context / Attention implication',
+          ],
+          [
+            [
+              'smaller V',
+              '较少 rows 与 output candidates',
+              '往往更大 L',
+              '固定 T 能覆盖的原文可能更少，位置对更多',
+            ],
+            [
+              'larger V',
+              '较多 rows 与 output candidates',
+              '常见片段往往更短',
+              '每一步的 LM-head computation / memory 增大',
+            ],
           ],
         ),
         formula(
@@ -419,11 +470,14 @@ assert decode_characters(ids) == text`,
         '本示例遇到 Vocabulary 外字符会 KeyError；真实 encoder 必须定义 unknown、fallback 或 error policy。',
         'Character tokenizer 仍要定义 Unicode normalization，不能仅靠一张字典解决所有等价形式。',
       ],
-      check('为什么明知本句会有 13 个 tokens，仍值得先实现 character tokenizer？', [
-        paragraph(
-          '它让 Vocabulary、integer lookup、encode、decode、torch.long 与 [L] shape 全部可手查，从而暴露所有 tokenizer 共享的基本数据契约。',
-        ),
-      ]),
+      check(
+        '为什么明知本句会有 13 个 tokens，仍值得先实现 character tokenizer？',
+        [
+          paragraph(
+            '它让 Vocabulary、integer lookup、encode、decode、torch.long 与 [L] shape 全部可手查，从而暴露所有 tokenizer 共享的基本数据契约。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0333-5-unicode-utf-8',
@@ -490,11 +544,31 @@ assert utf8_bytes.hex(" ").upper() == (
           '假设 w09-readable-v1 的 word-only variant 忘了把固定句中的 猫 放进 Vocabulary：它可以输出 <UNK> 的 ID 3，但所有未知片段都会坍缩到同一地址，无法 exact decode 猫。byte-capable fallback 则能保留 E7 8C AB，随后仍可重建原文。',
         ),
         table(
-          ['policy', '猫 不可 direct lookup 时的 output', 'round-trip', 'cost / behavior'],
           [
-            ['<UNK>', '[3]', '有损：只能还原为 unknown marker', '短，但不同未知片段共享一个 ID'],
-            ['subword / byte fallback', '一个或多个已知 smaller-piece IDs', '若 normalization/byte policy lossless，可保留原始文字', 'k 可能大于 1，sequence 变长'],
-            ['explicit error', '不产生 IDs', '调用方必须处理失败', '适合不允许自动 replacement 的严格输入'],
+            'policy',
+            '猫 不可 direct lookup 时的 output',
+            'round-trip',
+            'cost / behavior',
+          ],
+          [
+            [
+              '<UNK>',
+              '[3]',
+              '有损：只能还原为 unknown marker',
+              '短，但不同未知片段共享一个 ID',
+            ],
+            [
+              'subword / byte fallback',
+              '一个或多个已知 smaller-piece IDs',
+              '若 normalization/byte policy lossless，可保留原始文字',
+              'k 可能大于 1，sequence 变长',
+            ],
+            [
+              'explicit error',
+              '不产生 IDs',
+              '调用方必须处理失败',
+              '适合不允许自动 replacement 的严格输入',
+            ],
           ],
         ),
         formula(
@@ -621,9 +695,19 @@ total after two rounds: 31 - 2 - 2 = 27`,
         table(
           ['phase', 'input', 'changes artifacts?', 'output'],
           [
-            ['tokenizer training', 'training corpus documents', '是：选择 normalization、base vocab、merges、special IDs', 'versioned artifact A'],
+            [
+              'tokenizer training',
+              'training corpus documents',
+              '是：选择 normalization、base vocab、merges、special IDs',
+              'versioned artifact A',
+            ],
             ['text encoding', 'one text + frozen A', '否', 'IDs in 0..V_A−1'],
-            ['model training', 'batches of frozen-A IDs', '否：A 不变；model parameters 改变', 'updated neural weights'],
+            [
+              'model training',
+              'batches of frozen-A IDs',
+              '否：A 不变；model parameters 改变',
+              'updated neural weights',
+            ],
           ],
         ),
         chain([
@@ -778,11 +862,14 @@ assert W09_READABLE_V1.decode(
         '若 tokenizer 在 validation documents 上重新 fitting，会改变评估协议并可能泄漏信息。',
         'encode_content 与 encode_document 的 boundary ownership 必须清楚，不能重复添加 BOS/EOS。',
       ],
-      check('固定 BPE rule (41,49)→256 后，再 encode 固定句会改变这条 rule 吗？', [
-        paragraph(
-          '不会。Encoding 只按保存的 ordered merges 应用规则；改变 merge 需要产生新 tokenizer version，并同步改变与之绑定的 model interfaces。',
-        ),
-      ]),
+      check(
+        '固定 BPE rule (41,49)→256 后，再 encode 固定句会改变这条 rule 吗？',
+        [
+          paragraph(
+            '不会。Encoding 只按保存的 ordered merges 应用规则；改变 merge 需要产生新 tokenizer version，并同步改变与之绑定的 model interfaces。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0340-9-tokenizer-model',
@@ -799,12 +886,27 @@ assert W09_READABLE_V1.decode(
         table(
           ['bundle item', 'why model loading needs it'],
           [
-            ['ordered token list / Vocabulary', '定义每个 embedding row 与 LM-head column 的名称'],
+            [
+              'ordered token list / Vocabulary',
+              '定义每个 embedding row 与 LM-head column 的名称',
+            ],
             ['ordered BPE merges', '决定新文字如何组合成 Vocabulary entries'],
-            ['normalizer + pre-tokenizer', '决定 merge 前看到的 symbols 与 boundaries'],
-            ['special-token IDs / insertion policy', '定义 BOS、EOS、PAD、UNK 的控制地址与何时出现'],
-            ['tokenizer version / content hash', '在加载前做精确 compatibility check'],
-            ['model config + weights', '声明 V、C、context 等 shape，并保存已学习参数'],
+            [
+              'normalizer + pre-tokenizer',
+              '决定 merge 前看到的 symbols 与 boundaries',
+            ],
+            [
+              'special-token IDs / insertion policy',
+              '定义 BOS、EOS、PAD、UNK 的控制地址与何时出现',
+            ],
+            [
+              'tokenizer version / content hash',
+              '在加载前做精确 compatibility check',
+            ],
+            [
+              'model config + weights',
+              '声明 V、C、context 等 shape，并保存已学习参数',
+            ],
           ],
           'Tokenizer artifact 与 model checkpoint 是一个兼容性 bundle',
         ),
@@ -859,12 +961,37 @@ Model input ID 6 is numerically in range, but its learned row and displayed toke
           '在 Week 9 的可读快照中，0..3 是 reserved specials，内容 entries 从 4 开始。它们是 model-visible Vocabulary entries，不是输入中看见字符 <EOS> 就自动产生的魔法。是否显示、mask、停止生成或忽略 loss 都需要调用方与模型 API 明确约定。',
         ),
         table(
-          ['ID', 'special token', 'role in w09-readable-v1', 'typical handling'],
           [
-            ['0', '<BOS>', '文档起点 / 初始 context', 'encode_document 在最前添加一次'],
-            ['1', '<EOS>', '文档终点', 'encode_document 在最后添加一次；generation 可把它当 stop candidate'],
-            ['2', '<PAD>', '把不等长 rows 补成 rectangle', '通常在 attention / loss 中 mask'],
-            ['3', '<UNK>', 'word-only fallback 的 unknown marker', '有损；不是 byte fallback 的必需品'],
+            'ID',
+            'special token',
+            'role in w09-readable-v1',
+            'typical handling',
+          ],
+          [
+            [
+              '0',
+              '<BOS>',
+              '文档起点 / 初始 context',
+              'encode_document 在最前添加一次',
+            ],
+            [
+              '1',
+              '<EOS>',
+              '文档终点',
+              'encode_document 在最后添加一次；generation 可把它当 stop candidate',
+            ],
+            [
+              '2',
+              '<PAD>',
+              '把不等长 rows 补成 rectangle',
+              '通常在 attention / loss 中 mask',
+            ],
+            [
+              '3',
+              '<UNK>',
+              'word-only fallback 的 unknown marker',
+              '有损；不是 byte fallback 的必需品',
+            ],
           ],
         ),
         table(
@@ -955,9 +1082,21 @@ assert W09_READABLE_V1.decode(
           ['object', 'example value', 'job'],
           [
             ['PAD token ID', '2', '占住矩形 tensor 的 unused slot'],
-            ['attention_mask', 'real=1, pad=0', '禁止 query 把 PAD key 当作上下文；具体 API 还会处理 padded queries'],
-            ['causal mask', 'j≤t', '禁止任何 query 读取 future key，不判断 PAD'],
-            ['loss ignore index', '-100', '让 padded target 不计入 cross entropy'],
+            [
+              'attention_mask',
+              'real=1, pad=0',
+              '禁止 query 把 PAD key 当作上下文；具体 API 还会处理 padded queries',
+            ],
+            [
+              'causal mask',
+              'j≤t',
+              '禁止任何 query 读取 future key，不判断 PAD',
+            ],
+            [
+              'loss ignore index',
+              '-100',
+              '让 padded target 不计入 cross entropy',
+            ],
           ],
         ),
         formula(
@@ -980,11 +1119,14 @@ assert W09_READABLE_V1.decode(
         'causal mask 与 padding mask 解决不同问题。',
         'EOS 与 padding 的相对顺序必须由 document/padding policy 定义。',
       ],
-      check('为什么 input_ids.shape=[2,11] 仍不足以说明这个 padded batch 正确？', [
-        paragraph(
-          'Shape 只保证矩形。还需 attention mask 排除 padding keys，并用 ignore_index 或等价 loss mask 排除 padded targets；causal mask 另行阻止 future leakage。',
-        ),
-      ]),
+      check(
+        '为什么 input_ids.shape=[2,11] 仍不足以说明这个 padded batch 正确？',
+        [
+          paragraph(
+            'Shape 只保证矩形。还需 attention mask 排除 padding keys，并用 ignore_index 或等价 loss mask 排除 padded targets；causal mask 另行阻止 future leakage。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0343-12-corpus-token-tensor',
@@ -1076,9 +1218,21 @@ assert stream_tensor.dtype == torch.long`,
           ['stage', 'train lane', 'validation lane'],
           [
             ['raw data', 'train documents', 'held-out validation documents'],
-            ['tokenizer', 'fit A here if from scratch, then freeze', 'only apply frozen A'],
-            ['model', 'forward + loss + backward + step', 'eval/no_grad forward + loss only'],
-            ['claim', 'optimization progress', 'estimate on held-out token sequences'],
+            [
+              'tokenizer',
+              'fit A here if from scratch, then freeze',
+              'only apply frozen A',
+            ],
+            [
+              'model',
+              'forward + loss + backward + step',
+              'eval/no_grad forward + loss only',
+            ],
+            [
+              'claim',
+              'optimization progress',
+              'estimate on held-out token sequences',
+            ],
           ],
         ),
       ],
@@ -1118,7 +1272,12 @@ assert stream_tensor.dtype == torch.long`,
 y = s[1:5] = [4,5,6,7] = [我, 喜欢, AI, ，]       shape [T]=[4]`,
         ),
         table(
-          ['position t', 'input token', 'target next token', 'causal model may use'],
+          [
+            'position t',
+            'input token',
+            'target next token',
+            'causal model may use',
+          ],
           [
             ['0', '<BOS>', '我', '[<BOS>]'],
             ['1', '我', '喜欢', '[<BOS>, 我]'],
@@ -1256,10 +1415,22 @@ assert inputs.shape == targets.shape == (2, 4)`,
         table(
           ['tokenizer responsibility', 'model / training responsibility'],
           [
-            ['normalization and segmentation', 'learn useful continuous features from examples'],
-            ['ordered Vocabulary and ID lookup', 'combine left context with Attention / FFN'],
-            ['special-token and fallback policy', 'produce and update vocabulary logits via loss'],
-            ['decode IDs under fixed artifact', 'model probability, behavior, factuality and errors'],
+            [
+              'normalization and segmentation',
+              'learn useful continuous features from examples',
+            ],
+            [
+              'ordered Vocabulary and ID lookup',
+              'combine left context with Attention / FFN',
+            ],
+            [
+              'special-token and fallback policy',
+              'produce and update vocabulary logits via loss',
+            ],
+            [
+              'decode IDs under fixed artifact',
+              'model probability, behavior, factuality and errors',
+            ],
           ],
         ),
         formula(
@@ -1341,7 +1512,13 @@ assert inputs.shape == targets.shape == (2, 4)`,
           '“我喜欢AI，AI也喜欢猫。”已经完成 Week 9 的全部可读 pipeline。它的 w09-readable-v1 IDs 只用于本章，不能因为都是整数就自动兼容另一模型。Week 10 会回到课程的五-token、按空格切分 corpus，并在进入 embedding 前重新按 mini-gpt-v1 编码。',
         ),
         table(
-          ['artifact', 'tokens / IDs', 'V and specials', 'context example', 'lifetime'],
+          [
+            'artifact',
+            'tokens / IDs',
+            'V and specials',
+            'context example',
+            'lifetime',
+          ],
           [
             [
               'w09-readable-v1',
@@ -1406,11 +1583,14 @@ assert int(idx.max()) < 5
         'mini-gpt-v1 没有 BOS/EOS/PAD/UNK；不要把 0..3 继续解释为 Week 9 specials。',
         'Tokenizer 提供 IDs；token/position embeddings 与 contextual representation 仍由模型负责。',
       ],
-      check('Week 10 从本章接收的精确起点是什么？为什么不能复用 Week 9 batch？', [
-        paragraph(
-          '它从 mini-gpt-v1 的 idx=[[0,1],[4,1]]、shape [2,2] 开始；该 artifact 为 V=5、无 specials、block_size=2。Week 9 batch 属于 V=11、T=4 的另一 ID space，会导致地址越界与长度不兼容。',
-        ),
-      ]),
+      check(
+        'Week 10 从本章接收的精确起点是什么？为什么不能复用 Week 9 batch？',
+        [
+          paragraph(
+            '它从 mini-gpt-v1 的 idx=[[0,1],[4,1]]、shape [2,2] 开始；该 artifact 为 V=5、无 specials、block_size=2。Week 9 batch 属于 V=11、T=4 的另一 ID space，会导致地址越界与长度不兼容。',
+          ),
+        ],
+      ),
     ),
   ],
 };

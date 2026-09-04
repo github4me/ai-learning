@@ -2,16 +2,19 @@ import courseData from '../src/content/course.generated.json';
 import { getCourse } from '../src/content/course-runtime';
 import { CURATED_WEEK_REVISIONS } from '../src/content/curated';
 import { findSection, loadCourse } from '../src/content/load-course';
-import type { ContentBlock, Course, SectionNode, WeekUnit } from '../src/content/schema';
+import type {
+  ContentBlock,
+  Course,
+  SectionNode,
+  WeekUnit,
+} from '../src/content/schema';
 
 function invariant(condition: unknown, message: string): asserts condition {
-  if (!condition) throw new Error(`Curated content validation failed: ${message}`);
+  if (!condition)
+    throw new Error(`Curated content validation failed: ${message}`);
 }
 
-function collectBlockIds(
-  blocks: readonly ContentBlock[],
-  ids: string[],
-): void {
+function collectBlockIds(blocks: readonly ContentBlock[], ids: string[]): void {
   for (const block of blocks) {
     ids.push(block.id);
     if (block.type === 'callout') collectBlockIds(block.blocks, ids);
@@ -83,7 +86,10 @@ function validateSection(course: Course, section: SectionNode): void {
     `${section.id} has teaching frames in the wrong top-level order`,
   );
   const check = section.blocks[checkIndex];
-  invariant(check?.type === 'knowledgeCheck', `${section.id} is missing its knowledge check`);
+  invariant(
+    check?.type === 'knowledgeCheck',
+    `${section.id} is missing its knowledge check`,
+  );
   invariant(
     (check.answer?.length ?? 0) > 0,
     `${section.id} has an empty knowledge-check answer`,
@@ -110,7 +116,10 @@ function validateSection(course: Course, section: SectionNode): void {
     if (block.type === 'code')
       invariant(block.code.trim().length > 0, `${block.id} has empty code`);
     if (block.type === 'formula')
-      invariant(block.latex.trim().length > 0, `${block.id} has an empty formula`);
+      invariant(
+        block.latex.trim().length > 0,
+        `${block.id} has an empty formula`,
+      );
     if (block.type === 'table')
       invariant(
         block.headers.length > 0 && block.rows.length > 0,
@@ -149,7 +158,10 @@ for (const revision of CURATED_WEEK_REVISIONS) {
   for (const sectionId of baselineIds) {
     const section = finalWeek.children.find((child) => child.id === sectionId);
     invariant(section, `${revision.weekSlug} is missing ${sectionId}`);
-    invariant(section.children.length === 0, `${sectionId} has remaining child sections`);
+    invariant(
+      section.children.length === 0,
+      `${sectionId} has remaining child sections`,
+    );
     validateSection(course, section);
     collectBlockIds(section.blocks, ids);
   }

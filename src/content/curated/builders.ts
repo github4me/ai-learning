@@ -7,7 +7,10 @@ function text(value: string): InlineNode[] {
   return [{ type: 'text', value }];
 }
 
-function createBlockIdFactory(weekSlug: string, sectionId: string): BlockIdFactory {
+function createBlockIdFactory(
+  weekSlug: string,
+  sectionId: string,
+): BlockIdFactory {
   const weekNumber = weekSlug.match(/^week-(\d+)$/u)?.[1]?.padStart(2, '0');
   if (!weekNumber) throw new Error(`Invalid curated week slug: ${weekSlug}`);
   let sequence = 0;

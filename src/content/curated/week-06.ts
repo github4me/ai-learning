@@ -32,7 +32,12 @@ const table = (
   headers: string[],
   rows: string[][],
   caption?: string,
-): CuratedBodyBlock => ({ type: 'table', headers, rows, ...(caption ? { caption } : {}) });
+): CuratedBodyBlock => ({
+  type: 'table',
+  headers,
+  rows,
+  ...(caption ? { caption } : {}),
+});
 
 const chain = (steps: string[]): CuratedBodyBlock => ({
   type: 'conceptChain',
@@ -89,7 +94,8 @@ const embeddingRows = [
 export const week06Revision: CuratedWeekRevision = {
   weekSlug: 'week-06',
   title: 'Week 6 - 从 Token 到最小语言模型：用一个例子理解预测',
-  keyQuestion: '模型怎样把“我 喜欢 AI”变成可训练的 next-token prediction，并逐个 token 生成？',
+  keyQuestion:
+    '模型怎样把“我 喜欢 AI”变成可训练的 next-token prediction，并逐个 token 生成？',
   objectives: [
     '区分 token、tokenizer、vocabulary、ID、embedding、logit 与 probability。',
     '沿同一批数据追踪 [3,3] → [3,2] → [3,2,4] → [3,2,5] → [6,5]。',
@@ -106,7 +112,9 @@ export const week06Revision: CuratedWeekRevision = {
         '先建立共同的训练与生成接口；后续替换 Bigram 为 Attention 时，接口仍然保留。',
       ],
       [
-        paragraph('本周始终使用同一个 tokenizer 规则：按空格切分。固定词表、语料和维度不随章节改变。训练时模型同时学习六个“当前 token → 真实下一 token”问题；生成时则一次只追加一个 token。'),
+        paragraph(
+          '本周始终使用同一个 tokenizer 规则：按空格切分。固定词表、语料和维度不随章节改变。训练时模型同时学习六个“当前 token → 真实下一 token”问题；生成时则一次只追加一个 token。',
+        ),
         table(['ID', 'Token'], vocabularyRows, '固定 Vocabulary（V=5）'),
         code(
           'text',
@@ -144,7 +152,9 @@ targets = [[1,2],   [1,0],   [3,2]]`,
         '训练同时监督全部 B×T 个位置；只有生成的当前轮只使用最后位置。',
       ],
       check('本周固定的六道预测题是什么？', [
-        paragraph('我→喜欢、喜欢→AI、猫→喜欢、喜欢→我、我→学习、学习→AI。它们来自同一三条语料各自右移一位后的两个位置。'),
+        paragraph(
+          '我→喜欢、喜欢→AI、猫→喜欢、喜欢→我、我→学习、学习→AI。它们来自同一三条语料各自右移一位后的两个位置。',
+        ),
       ]),
     ),
     section(
@@ -156,7 +166,9 @@ targets = [[1,2],   [1,0],   [3,2]]`,
         '能对固定 corpus 说明编码与解码，而不把 ID 当成语义大小。',
       ],
       [
-        paragraph('Token 是 Tokenizer 交给模型处理的基本单位，不一定是完整单词，也可能是字符、subword 或 byte。本周为了能手算，Tokenizer 按空格切分。Vocabulary 是它允许使用的有限 token 清单；Token ID 是某个 token 在这份清单中的整数地址。'),
+        paragraph(
+          'Token 是 Tokenizer 交给模型处理的基本单位，不一定是完整单词，也可能是字符、subword 或 byte。本周为了能手算，Tokenizer 按空格切分。Vocabulary 是它允许使用的有限 token 清单；Token ID 是某个 token 在这份清单中的整数地址。',
+        ),
         table(
           ['原文', 'Tokens', 'IDs'],
           [
@@ -166,14 +178,18 @@ targets = [[1,2],   [1,0],   [3,2]]`,
           ],
           '同一 Tokenizer 下的完整编码',
         ),
-        callout('把四个词分开记', [
-          list([
-            'Token：实际交给模型的一个处理单位，例如“猫”。',
-            'Tokenizer：切分、编码和解码的规则与程序。',
-            'Vocabulary：可被编码的 token 清单。',
-            'Token ID：token 在 Vocabulary 中的位置，例如 猫 的地址是 4。',
-          ]),
-        ], 'concept'),
+        callout(
+          '把四个词分开记',
+          [
+            list([
+              'Token：实际交给模型的一个处理单位，例如“猫”。',
+              'Tokenizer：切分、编码和解码的规则与程序。',
+              'Vocabulary：可被编码的 token 清单。',
+              'Token ID：token 在 Vocabulary 中的位置，例如 猫 的地址是 4。',
+            ]),
+          ],
+          'concept',
+        ),
       ],
       [
         'Token 不等于“单词”；单位由 Tokenizer 规则决定。',
@@ -181,7 +197,9 @@ targets = [[1,2],   [1,0],   [3,2]]`,
         'ID 负责寻址，不负责表达含义。',
       ],
       check('“猫 喜欢 我”为何编码为 [4,1,0]？ID 4 表达什么？', [
-        paragraph('因为 Vocabulary 中 猫 位于索引 4；4 只是地址，不是语义大小。'),
+        paragraph(
+          '因为 Vocabulary 中 猫 位于索引 4；4 只是地址，不是语义大小。',
+        ),
       ]),
     ),
     section(
@@ -193,10 +211,21 @@ targets = [[1,2],   [1,0],   [3,2]]`,
         '把“地址”与“学习后会改变的 row”清楚分开。',
       ],
       [
-        paragraph('Embedding 把离散 ID 查成一个可学习的连续向量。这里的输入表是 nn.Embedding(V,C) = nn.Embedding(5,4)：五个 Vocabulary rows，每行四个 learned features。下面是明确标注的教学初始值，不是人工写好的词义。'),
-        table(['ID / Token', 'c₀', 'c₁', 'c₂', 'c₃'], embeddingRows, 'didactic initial value：E 的形状 [V,C]=[5,4]'),
-        formula(String.raw`E[\mathrm{token\_id}]\in\mathbb{R}^{4}`, 'token_id 查出 E[token_id]，得到长度 C=4 的向量。'),
-        paragraph('例如 我 选择 E[0]=[0.20,-0.10,0.70,0.30]；猫 选择 E[4]=[-0.70,0.40,0.30,0.60]。训练会经由 Loss、Backpropagation 和 Optimizer 修改这些坐标。'),
+        paragraph(
+          'Embedding 把离散 ID 查成一个可学习的连续向量。这里的输入表是 nn.Embedding(V,C) = nn.Embedding(5,4)：五个 Vocabulary rows，每行四个 learned features。下面是明确标注的教学初始值，不是人工写好的词义。',
+        ),
+        table(
+          ['ID / Token', 'c₀', 'c₁', 'c₂', 'c₃'],
+          embeddingRows,
+          'didactic initial value：E 的形状 [V,C]=[5,4]',
+        ),
+        formula(
+          String.raw`E[\mathrm{token\_id}]\in\mathbb{R}^{4}`,
+          'token_id 查出 E[token_id]，得到长度 C=4 的向量。',
+        ),
+        paragraph(
+          '例如 我 选择 E[0]=[0.20,-0.10,0.70,0.30]；猫 选择 E[4]=[-0.70,0.40,0.30,0.60]。训练会经由 Loss、Backpropagation 和 Optimizer 修改这些坐标。',
+        ),
       ],
       [
         'Embedding 不是人工撰写的词义字典。',
@@ -216,8 +245,15 @@ targets = [[1,2],   [1,0],   [3,2]]`,
         '固定 [V,C]=[5,4] 中 rows 是 token、columns 是 feature。',
       ],
       [
-        formula(String.raw`E\in\mathbb{R}^{V\times C}=\mathbb{R}^{5\times4}`, 'E 的 row 轴大小 V=5，每行一个 token；column 轴大小 C=4，每列一个 learned feature。'),
-        table(['ID / Token', 'c₀', 'c₁', 'c₂', 'c₃'], embeddingRows, '与第 2 节相同的 didactic initial value'),
+        formula(
+          String.raw`E\in\mathbb{R}^{V\times C}=\mathbb{R}^{5\times4}`,
+          'E 的 row 轴大小 V=5，每行一个 token；column 轴大小 C=4，每列一个 learned feature。',
+        ),
+        table(
+          ['ID / Token', 'c₀', 'c₁', 'c₂', 'c₃'],
+          embeddingRows,
+          '与第 2 节相同的 didactic initial value',
+        ),
         code(
           'text',
           `one_hot(4) = [0,0,0,0,1]
@@ -228,7 +264,9 @@ one_hot(4) @ E
 
 nn.Embedding(5,4).weight.shape == [5,4]`,
         ),
-        paragraph('One-hot 是选择机制：它只把第 4 row 选出来。实际实现不会创建长度 V 的巨大 one-hot vector，而是直接读取 E[id]；两者前向结果相同。'),
+        paragraph(
+          'One-hot 是选择机制：它只把第 4 row 选出来。实际实现不会创建长度 V 的巨大 one-hot vector，而是直接读取 E[id]；两者前向结果相同。',
+        ),
       ],
       [
         'One-hot 不是最终的 learned representation。',
@@ -248,7 +286,9 @@ nn.Embedding(5,4).weight.shape == [5,4]`,
         '逐位置显示 inputs [3,2] 如何只新增 feature axis 变为 [3,2,4]。',
       ],
       [
-        paragraph('rank 是 axis 的数量；[3,2] 有两个 axis，axis size 分别是 3 和 2。N=3 是原句长度，右移后 T=N−1=2。Embedding 只接收 inputs，targets 仍是整数 ID。'),
+        paragraph(
+          'rank 是 axis 的数量；[3,2] 有两个 axis，axis size 分别是 3 和 2。N=3 是原句长度，右移后 T=N−1=2。Embedding 只接收 inputs，targets 仍是整数 ID。',
+        ),
         code(
           'text',
           `raw IDs [B,N] = [[0,1,2], [4,1,0], [0,3,2]]  # [3,3]
@@ -277,7 +317,11 @@ targets [B,T] = [[1,2],   [1,0],   [3,2]]    # [3,2]
             ['N', '3', 'shift 前每个 source sequence 的 tokens'],
             ['T', '2', '每条 shifted input 的训练位置'],
             ['C', '4', '每个位置的连续 features'],
-            ['V', '5', 'lookup table rows / vocabulary candidates，不是 x 的额外 axis'],
+            [
+              'V',
+              '5',
+              'lookup table rows / vocabulary candidates，不是 x 的额外 axis',
+            ],
           ],
         ),
       ],
@@ -309,7 +353,11 @@ row 3（学习）被选择一次
 row 4（猫）被选择一次
 row 2（AI）在 inputs 中被选择零次`,
         ),
-        table(['ID / Token', 'c₀', 'c₁', 'c₂', 'c₃'], embeddingRows, '更新前仍使用同一 didactic initial [5,4] matrix'),
+        table(
+          ['ID / Token', 'c₀', 'c₁', 'c₂', 'c₃'],
+          embeddingRows,
+          '更新前仍使用同一 didactic initial [5,4] matrix',
+        ),
         code(
           'text',
           `E_before[0] = [ 0.20, -0.10, 0.70, 0.30]
@@ -321,7 +369,9 @@ E_after[0]
 = [0.16, -0.08, 0.69, 0.30]`,
         ),
         callout('高级边界：这不是“没 lookup 就一定不更新”', [
-          paragraph('上面的 gradient 是对六任务平均 loss backprop 后的教学示例，不能只由 corpus 推导。这里讨论独立、未与输出 head 绑权的 nn.Embedding(5,4) 的 input-lookup 路径：AI 虽出现在 targets，却未出现在 inputs，所以 E[2] 没有这一路的 lookup gradient。若权重绑定，输出路径可给出 dense gradients；decoupled weight decay 或已有 optimizer moments 也可能改变零 lookup-gradient 参数。'),
+          paragraph(
+            '上面的 gradient 是对六任务平均 loss backprop 后的教学示例，不能只由 corpus 推导。这里讨论独立、未与输出 head 绑权的 nn.Embedding(5,4) 的 input-lookup 路径：AI 虽出现在 targets，却未出现在 inputs，所以 E[2] 没有这一路的 lookup gradient。若权重绑定，输出路径可给出 dense gradients；decoupled weight decay 或已有 optimizer moments 也可能改变零 lookup-gradient 参数。',
+          ),
         ]),
       ],
       [
@@ -330,7 +380,9 @@ E_after[0]
         '“没有 lookup gradient”只描述这一路径，不能泛化为参数绝不会改变。',
       ],
       check('哪些 rows 收到 input-lookup gradient？AI row 为什么没有？', [
-        paragraph('{0,1,3,4} 收到；ID 2 未出现在 inputs，只出现在 targets，因此 input lookup 没有选择 E[2]。'),
+        paragraph(
+          '{0,1,3,4} 收到；ID 2 未出现在 inputs，只出现在 targets，因此 input lookup 没有选择 E[2]。',
+        ),
       ]),
     ),
     section(
@@ -342,9 +394,17 @@ E_after[0]
         '明确模型输出的是整个 Vocabulary distribution，不是一个保证为真的答案。',
       ],
       [
-        paragraph('条件概率先用一句话理解：在已经看到上下文后，某候选成为下一个 token 的相对可能性。Language Model 为每个 Vocabulary candidate 给出这一整张分布；高概率表示更符合训练中学到的模式，不保证内容真实。'),
-        formula(String.raw`P(x_{t+1}\mid x_{\le t})`, '给定到位置 t 为止的左侧 token，预测下一 token 的条件概率。'),
-        formula(String.raw`\sum_{v=0}^{V-1}P(x_{t+1}=v\mid x_{\le t})=1`, '五个 candidate 的条件概率必须加总为 1。'),
+        paragraph(
+          '条件概率先用一句话理解：在已经看到上下文后，某候选成为下一个 token 的相对可能性。Language Model 为每个 Vocabulary candidate 给出这一整张分布；高概率表示更符合训练中学到的模式，不保证内容真实。',
+        ),
+        formula(
+          String.raw`P(x_{t+1}\mid x_{\le t})`,
+          '给定到位置 t 为止的左侧 token，预测下一 token 的条件概率。',
+        ),
+        formula(
+          String.raw`\sum_{v=0}^{V-1}P(x_{t+1}=v\mid x_{\le t})=1`,
+          '五个 candidate 的条件概率必须加总为 1。',
+        ),
         table(
           ['输入位置', '当前可见上下文（一般语言模型）', 'Target'],
           [
@@ -357,7 +417,9 @@ E_after[0]
           ],
           'B×T=3×2 的六道 next-token 分类题',
         ),
-        paragraph('一般语言模型可使用可见的全部左侧上下文；第 13 节的 Bigram 是刻意简化的特殊模型，只使用当前 token。'),
+        paragraph(
+          '一般语言模型可使用可见的全部左侧上下文；第 13 节的 Bigram 是刻意简化的特殊模型，只使用当前 token。',
+        ),
       ],
       [
         'Language Model 输出的是完整分布，不只是 argmax token。',
@@ -365,7 +427,9 @@ E_after[0]
         '概率描述模型分布，不是事实核验。',
       ],
       check('为什么“我→喜欢”和“我→学习”可以同时出现在训练集中？', [
-        paragraph('同一当前 token 可以在不同上下文或样本中有不同后续；模型学习的是分布而非为每个输入地址写一个永远唯一的答案。'),
+        paragraph(
+          '同一当前 token 可以在不同上下文或样本中有不同后续；模型学习的是分布而非为每个输入地址写一个永远唯一的答案。',
+        ),
       ]),
     ),
     section(
@@ -388,14 +452,31 @@ E_after[0]
         table(
           ['对比项', '训练（teacher forcing）', '生成（autoregressive）'],
           [
-            ['已知内容', '真实 inputs 与真实 targets', '只有当前 prompt，之后包含模型刚选出的 token'],
-            ['一次处理的位置', '并行处理全部 B×T 个位置', '当前轮只从最后位置选择一个 token'],
-            ['loss / backward / step', '计算并更新参数', '不计算或反传，不更新参数'],
+            [
+              '已知内容',
+              '真实 inputs 与真实 targets',
+              '只有当前 prompt，之后包含模型刚选出的 token',
+            ],
+            [
+              '一次处理的位置',
+              '并行处理全部 B×T 个位置',
+              '当前轮只从最后位置选择一个 token',
+            ],
+            [
+              'loss / backward / step',
+              '计算并更新参数',
+              '不计算或反传，不更新参数',
+            ],
             ['序列长度', '固定训练窗口 [3,2]', '每轮增长一个 token'],
           ],
         ),
-        formula(String.raw`P(x_{1:T})=\prod_{t=1}^{T}P(x_t\mid x_{<t})`, '一段序列的概率是每一步条件概率的连乘，而不是彼此独立的概率。'),
-        paragraph('auto 指模型刚选出的输出会成为下一轮输入之一，并不表示“自动训练”。若前一步选错，后续分布也会在该生成历史上继续计算。'),
+        formula(
+          String.raw`P(x_{1:T})=\prod_{t=1}^{T}P(x_t\mid x_{<t})`,
+          '一段序列的概率是每一步条件概率的连乘，而不是彼此独立的概率。',
+        ),
+        paragraph(
+          'auto 指模型刚选出的输出会成为下一轮输入之一，并不表示“自动训练”。若前一步选错，后续分布也会在该生成历史上继续计算。',
+        ),
       ],
       [
         '生成不是一次 forward 就产生任意长文本。',
@@ -403,7 +484,9 @@ E_after[0]
         '生成时不会调用 backward() 或 optimizer.step()。',
       ],
       check('为什么训练可并行而生成要逐个 token？', [
-        paragraph('训练时真实右移 inputs 已经给齐每个位置；生成的下一输入依赖本轮刚选出的 next_id，必须先确定它。'),
+        paragraph(
+          '训练时真实右移 inputs 已经给齐每个位置；生成的下一输入依赖本轮刚选出的 next_id，必须先确定它。',
+        ),
       ]),
     ),
     section(
@@ -424,7 +507,12 @@ targets [B,T] = [[1,2],   [1,0],   [3,2]]    # [3,2]
 T = N - 1 = 2`,
         ),
         table(
-          ['batch, position', 'input token', 'target token', '一般 causal LM 此处可见的左侧'],
+          [
+            'batch, position',
+            'input token',
+            'target token',
+            '一般 causal LM 此处可见的左侧',
+          ],
           [
             ['[0,0]', '我', '喜欢', '我'],
             ['[0,1]', '喜欢', 'AI', '我 喜欢'],
@@ -435,7 +523,9 @@ T = N - 1 = 2`,
           ],
         ),
         callout('shift 和 causal mask 分工不同', [
-          paragraph('right shift 规定每个位置的“正确下一 token”。一般 Transformer 一次读入整行时还必须用 causal mask 禁止位置 t 看右侧 future token；Bigram 每个位置只查当前 token，本身没有跨位置读取。'),
+          paragraph(
+            'right shift 规定每个位置的“正确下一 token”。一般 Transformer 一次读入整行时还必须用 causal mask 禁止位置 t 看右侧 future token；Bigram 每个位置只查当前 token，本身没有跨位置读取。',
+          ),
         ]),
       ],
       [
@@ -444,7 +534,9 @@ T = N - 1 = 2`,
         'shift 不是移动 Embedding，而是移动监督关系。',
       ],
       check('target[1,1] 是什么？它对应哪个预测问题？', [
-        paragraph('target[1,1]=0，即 我；在一般 causal LM 中它是“猫 喜欢 → 我”的监督，在 Bigram 中简化为“喜欢 → 我”。'),
+        paragraph(
+          'target[1,1]=0，即 我；在一般 causal LM 中它是“猫 喜欢 → 我”的监督，在 Bigram 中简化为“喜欢 → 我”。',
+        ),
       ]),
     ),
     section(
@@ -456,8 +548,13 @@ T = N - 1 = 2`,
         '理解 logit 不是 probability：可为负，且不要求和为 1。',
       ],
       [
-        paragraph('对一个预测位置，logit 向量的索引必须与固定词表顺序 [我, 喜欢, AI, 学习, 猫] 对齐。若上下文表示 h 有 C=4 个 features，常见 output head 把 [C] 映射为 [V]。'),
-        formula(String.raw`z=Wh+b,\quad W\in\mathbb{R}^{V\times C},\quad [C]=[4]\to[V]=[5]`, '输出层对四维 hidden vector 产生五个未经归一化的候选分数。'),
+        paragraph(
+          '对一个预测位置，logit 向量的索引必须与固定词表顺序 [我, 喜欢, AI, 学习, 猫] 对齐。若上下文表示 h 有 C=4 个 features，常见 output head 把 [C] 映射为 [V]。',
+        ),
+        formula(
+          String.raw`z=Wh+b,\quad W\in\mathbb{R}^{V\times C},\quad [C]=[4]\to[V]=[5]`,
+          '输出层对四维 hidden vector 产生五个未经归一化的候选分数。',
+        ),
         table(
           ['Token ID', 'Token', 'logit z'],
           [
@@ -469,8 +566,14 @@ T = N - 1 = 2`,
           ],
           '上下文“我”的固定 labelled logits example；候选顺序不可改变',
         ),
-        formula(String.raw`z=[0,2,1,-1,0]`, '喜欢得分最高，但 2 是 score，不是 200% probability。'),
-        formula(String.raw`[B,T,C]=[3,2,4]\to[B,T,V]=[3,2,5]`, '每个 batch、时间位置都有一个五-token logit vector。'),
+        formula(
+          String.raw`z=[0,2,1,-1,0]`,
+          '喜欢得分最高，但 2 是 score，不是 200% probability。',
+        ),
+        formula(
+          String.raw`[B,T,C]=[3,2,4]\to[B,T,V]=[3,2,5]`,
+          '每个 batch、时间位置都有一个五-token logit vector。',
+        ),
       ],
       [
         'logit 不是 probability；负 logit 合法。',
@@ -478,7 +581,9 @@ T = N - 1 = 2`,
         '所有 logits 同时加一个常数不改变 Softmax，因为相对差距不变。',
       ],
       check('本例 z[3]=-1 代表什么？', [
-        paragraph('它表示候选 学习 的原始相对分数较低，不是 -1% 概率；Softmax 后它仍有正概率。'),
+        paragraph(
+          '它表示候选 学习 的原始相对分数较低，不是 -1% 概率；Softmax 后它仍有正概率。',
+        ),
       ]),
     ),
     section(
@@ -490,7 +595,10 @@ T = N - 1 = 2`,
         '完整计算固定的 labelled example，保留所有约定数值。',
       ],
       [
-        formula(String.raw`p_i=\frac{e^{z_i}}{\sum_{j=0}^{V-1}e^{z_j}}`, '先把每个 logit 变正，再除以所有五个 exponentials 的总和。'),
+        formula(
+          String.raw`p_i=\frac{e^{z_i}}{\sum_{j=0}^{V-1}e^{z_j}}`,
+          '先把每个 logit 变正，再除以所有五个 exponentials 的总和。',
+        ),
         table(
           ['candidate order', 'logit', 'exponential', 'probability'],
           [
@@ -500,7 +608,8 @@ T = N - 1 = 2`,
             ['学习', '-1', '0.368', '0.029'],
             ['猫', '0', '1.000', '0.080'],
           ],
-          '固定顺序 [我, 喜欢, AI, 学习, 猫]；logits [0,2,1,-1,0]'),
+          '固定顺序 [我, 喜欢, AI, 学习, 猫]；logits [0,2,1,-1,0]',
+        ),
         code(
           'text',
           `exponentials = [1.000,7.389,2.718,0.368,1.000]
@@ -509,7 +618,9 @@ probabilities = [0.080,0.592,0.218,0.029,0.080]
 0.080 + 0.592 + 0.218 + 0.029 + 0.080 ≈ 1`,
         ),
         callout('数值稳定性（高级）', [
-          paragraph('softmax(z)=softmax(z−max(z))。本例可先从 [0,2,1,-1,0] 减去最大值 2，得到 [-2,0,-1,-3,-2]；概率不变，但能避免过大的 exponentials。训练实现交给 PyTorch 的稳定算法。'),
+          paragraph(
+            'softmax(z)=softmax(z−max(z))。本例可先从 [0,2,1,-1,0] 减去最大值 2，得到 [-2,0,-1,-3,-2]；概率不变，但能避免过大的 exponentials。训练实现交给 PyTorch 的稳定算法。',
+          ),
         ]),
       ],
       [
@@ -519,7 +630,9 @@ probabilities = [0.080,0.592,0.218,0.029,0.080]
         '对 [B,T,V] 应沿 vocabulary 维 dim=-1 做 Softmax。',
       ],
       check('为何 喜欢 的 logit 最高，但它不是“唯一答案”？', [
-        paragraph('Softmax 给它 0.592，不是 1；其余候选仍保留概率，sampling 也可能选择它们。'),
+        paragraph(
+          'Softmax 给它 0.592，不是 1；其余候选仍保留概率，sampling 也可能选择它们。',
+        ),
       ]),
     ),
     section(
@@ -531,7 +644,10 @@ probabilities = [0.080,0.592,0.218,0.029,0.080]
         '用固定 Softmax distribution 精确计算 target=喜欢 时的 0.524。',
       ],
       [
-        formula(String.raw`L=-\ln(p_y)`, '单个位置的 Cross Entropy：y 是正确 token ID，p_y 是该位置给正确 token 的概率。'),
+        formula(
+          String.raw`L=-\ln(p_y)`,
+          '单个位置的 Cross Entropy：y 是正确 token ID，p_y 是该位置给正确 token 的概率。',
+        ),
         table(
           ['上下文', 'target', 'p(correct)', 'loss'],
           [
@@ -540,8 +656,13 @@ probabilities = [0.080,0.592,0.218,0.029,0.080]
             ['我（若 target 改为）', '猫', '0.080', '约 2.524'],
           ],
         ),
-        paragraph('Cross Entropy 不只检查 argmax 是否正确：若正确答案同样是喜欢，概率从 0.51 升到 0.90，loss 仍会下降。对多个位置，平均 loss 是每个正确 target 负对数概率的平均。'),
-        formula(String.raw`\frac{\partial L}{\partial z_i}=p_i-\mathrm{one\_hot}(y)_i`, 'Softmax 与 Cross Entropy 组合后，logit gradient 等于 probability 减去正确 target 的 one-hot vector。'),
+        paragraph(
+          'Cross Entropy 不只检查 argmax 是否正确：若正确答案同样是喜欢，概率从 0.51 升到 0.90，loss 仍会下降。对多个位置，平均 loss 是每个正确 target 负对数概率的平均。',
+        ),
+        formula(
+          String.raw`\frac{\partial L}{\partial z_i}=p_i-\mathrm{one\_hot}(y)_i`,
+          'Softmax 与 Cross Entropy 组合后，logit gradient 等于 probability 减去正确 target 的 one-hot vector。',
+        ),
         code(
           'text',
           `p                     = [0.080, 0.592, 0.218, 0.029, 0.080]
@@ -571,9 +692,17 @@ the other candidates have positive gradients, so their relative logits are pushe
         '把六个 [B,T] 位置明确展平为六行 V=5 的分类题。',
       ],
       [
-        paragraph('F.cross_entropy 在内部稳定地结合 LogSoftmax 与 negative log likelihood。因此它的输入是 raw logits；targets 是范围 0 到 V−1 的 torch.long IDs，而不是 one-hot vectors。'),
+        paragraph(
+          'F.cross_entropy 在内部稳定地结合 LogSoftmax 与 negative log likelihood。因此它的输入是 raw logits；targets 是范围 0 到 V−1 的 torch.long IDs，而不是 one-hot vectors。',
+        ),
         table(
-          ['flattened row', 'batch position', 'input / context', 'target token', 'target ID'],
+          [
+            'flattened row',
+            'batch position',
+            'input / context',
+            'target token',
+            'target ID',
+          ],
           [
             ['0', '[0,0]', '我 / 我', '喜欢', '1'],
             ['1', '[0,1]', '喜欢 / 我 喜欢', 'AI', '2'],
@@ -603,7 +732,10 @@ loss = F.cross_entropy(
 # probabilities = F.softmax(logits_2d, dim=-1)
 # loss = F.cross_entropy(probabilities, targets_1d)`,
         ),
-        formula(String.raw`[3,2,5]\to[6,5]\quad\text{and}\quad[3,2]\to[6]`, '合并 B 与 T，只改变组织方式；对应关系和 vocabulary axis V=5 保持不变。'),
+        formula(
+          String.raw`[3,2,5]\to[6,5]\quad\text{and}\quad[3,2]\to[6]`,
+          '合并 B 与 T，只改变组织方式；对应关系和 vocabulary axis V=5 保持不变。',
+        ),
       ],
       [
         '不要先 Softmax 再传给 F.cross_entropy。',
@@ -611,7 +743,9 @@ loss = F.cross_entropy(
         'PyTorch 对 [B,T,V] 的类别维理解不应靠猜测；本例明确 reshape 为 [B×T,V]。',
       ],
       check('为什么 logits_2d 是 [6,5] 而 targets_1d 是 [6]？', [
-        paragraph('B×T=3×2=6 道分类题；每题有 V=5 个 raw logits，而 target 只需一个正确类别 ID。'),
+        paragraph(
+          'B×T=3×2=6 道分类题；每题有 V=5 个 raw logits，而 target 只需一个正确类别 ID。',
+        ),
       ]),
     ),
     section(
@@ -623,13 +757,28 @@ loss = F.cross_entropy(
         '用可运行模型显示 [B,T] IDs 如何产生 [B,T,V_vocab] logits 和 loss。',
       ],
       [
-        paragraph('通常的输入 nn.Embedding(V,C)=nn.Embedding(5,4) 的 row 是四维连续 representation；本节的 nn.Embedding(V_vocab,V_vocab)=nn.Embedding(5,5) 是另一张表。它的每一 row 直接存五个“候选下一 token”的 logits，不是五维语义 embedding。'),
-        formula(String.raw`P(x_{t+1}\mid x_1,\ldots,x_t)=P(x_{t+1}\mid x_t)`, 'Bigram 的强假设：预测时只使用当前 token，忽略更早左侧上下文。'),
+        paragraph(
+          '通常的输入 nn.Embedding(V,C)=nn.Embedding(5,4) 的 row 是四维连续 representation；本节的 nn.Embedding(V_vocab,V_vocab)=nn.Embedding(5,5) 是另一张表。它的每一 row 直接存五个“候选下一 token”的 logits，不是五维语义 embedding。',
+        ),
+        formula(
+          String.raw`P(x_{t+1}\mid x_1,\ldots,x_t)=P(x_{t+1}\mid x_t)`,
+          'Bigram 的强假设：预测时只使用当前 token，忽略更早左侧上下文。',
+        ),
         table(
           ['table', 'shape', 'row meaning', 'column / feature meaning'],
           [
-            ['input embedding E', '[V,C]=[5,4]', '当前 token', '四个 learned features'],
-            ['Bigram W_bigram', '[V,V]=[5,5]', '当前 token', '五个 candidate next-token logits'],
+            [
+              'input embedding E',
+              '[V,C]=[5,4]',
+              '当前 token',
+              '四个 learned features',
+            ],
+            [
+              'Bigram W_bigram',
+              '[V,V]=[5,5]',
+              '当前 token',
+              '五个 candidate next-token logits',
+            ],
           ],
         ),
         code(
@@ -660,16 +809,24 @@ class BigramLanguageModel(nn.Module):
         )
         return logits, loss`,
         ),
-        formula(String.raw`\mathrm{logits}[b,t,:]=W_{\mathrm{bigram}}[\mathrm{token\_ids}[b,t],:]`, '输入每一个 ID 时，读出该 ID 的完整 five-candidate logit row；本 batch 输出 [3,2,5]。'),
+        formula(
+          String.raw`\mathrm{logits}[b,t,:]=W_{\mathrm{bigram}}[\mathrm{token\_ids}[b,t],:]`,
+          '输入每一个 ID 时，读出该 ID 的完整 five-candidate logit row；本 batch 输出 [3,2,5]。',
+        ),
       ],
       [
         'Bigram row 的值是 logits，Softmax 前不是 probabilities。',
         'nn.Embedding(5,5) 在这里不是同一张 [5,4] semantic/input table。',
         'Bigram 不会综合整句；相同当前 token 必然给相同 logits。',
       ],
-      check('为什么 Bigram 的 token_table.weight.shape 是 [5,5]，而输入 embedding 是 [5,4]？', [
-        paragraph('Bigram 每个 row 必须直接给 V=5 个下一-token logits；普通输入 embedding 每个 row 则只携带 C=4 个 learned features。'),
-      ]),
+      check(
+        '为什么 Bigram 的 token_table.weight.shape 是 [5,5]，而输入 embedding 是 [5,4]？',
+        [
+          paragraph(
+            'Bigram 每个 row 必须直接给 V=5 个下一-token logits；普通输入 embedding 每个 row 则只携带 C=4 个 learned features。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0246-14-loop',
@@ -709,7 +866,10 @@ for step in range(500):
     if step % 100 == 0:
         print(step, float(loss))`,
         ),
-        formula(String.raw`L=-\frac{1}{B\times T}\sum_b\sum_t\log\operatorname{softmax}(\mathrm{logits}[b,t,:])[\mathrm{targets}[b,t]]`, '本 batch 对六个位置的 correct next-token negative log probability 求平均。'),
+        formula(
+          String.raw`L=-\frac{1}{B\times T}\sum_b\sum_t\log\operatorname{softmax}(\mathrm{logits}[b,t,:])[\mathrm{targets}[b,t]]`,
+          '本 batch 对六个位置的 correct next-token negative log probability 求平均。',
+        ),
         table(
           ['步骤', '改变的状态'],
           [
@@ -727,7 +887,9 @@ for step in range(500):
         '一个 mini-batch 没查到某 row 只说明没有该数据 lookup gradient；weight decay 等优化器规则仍可能影响参数。',
       ],
       check('为什么 “喜欢” row 会收到来自不同 target 的训练信号？', [
-        paragraph('在六题中 喜欢→AI 与 喜欢→我 都会查 W_bigram[1,:]；Cross Entropy 会让这一 row 把概率分配给数据中出现的两种后续。'),
+        paragraph(
+          '在六题中 喜欢→AI 与 喜欢→我 都会查 W_bigram[1,:]；Cross Entropy 会让这一 row 把概率分配给数据中出现的两种后续。',
+        ),
       ]),
     ),
     section(
@@ -750,8 +912,16 @@ last_logits = logits[:, -1, :]  # [1,5]，用于本轮追加`,
         table(
           ['strategy', 'rule', 'result characteristic'],
           [
-            ['Argmax', '永远选择最大 probability', '同一 state 可重复，较确定但可能单一'],
-            ['Sampling', '按 Softmax probability 抽样', '高概率更常出现，低概率仍可能被选，更多样'],
+            [
+              'Argmax',
+              '永远选择最大 probability',
+              '同一 state 可重复，较确定但可能单一',
+            ],
+            [
+              'Sampling',
+              '按 Softmax probability 抽样',
+              '高概率更常出现，低概率仍可能被选，更多样',
+            ],
           ],
         ),
         code(
@@ -783,7 +953,9 @@ def generate(model, token_ids, max_new_tokens, temperature=1.0):
 # Greedy alternative:
 # next_id = torch.argmax(last_logits, dim=-1, keepdim=True)  # [B,1]`,
         ),
-        paragraph('温度 τ>0 使用 softmax(last_logits / τ)：τ=1 保持原分布，τ<1 更尖锐，τ>1 更平坦。本教学词表没有 <EOS>，所以必须用 max_new_tokens 限定循环。'),
+        paragraph(
+          '温度 τ>0 使用 softmax(last_logits / τ)：τ=1 保持原分布，τ<1 更尖锐，τ>1 更平坦。本教学词表没有 <EOS>，所以必须用 max_new_tokens 限定循环。',
+        ),
       ],
       [
         'logits[-1,:,:] 取的是最后一个 batch；正确切片是 logits[:, -1, :]。',
@@ -792,7 +964,9 @@ def generate(model, token_ids, max_new_tokens, temperature=1.0):
         'Sampling 不是均匀随机；Argmax 也不一定更“正确”。',
       ],
       check('为什么 next_id 必须是 [B,1] 而不是 [B]？', [
-        paragraph('torch.cat 沿 dim=1 追加一个新的时间位置；[B,1] 正好是一列 token ID，与已有 token_ids [B,T] 拼成 [B,T+1]。'),
+        paragraph(
+          'torch.cat 沿 dim=1 追加一个新的时间位置；[B,1] 正好是一列 token ID，与已有 token_ids [B,T] 拼成 [B,T+1]。',
+        ),
       ]),
     ),
     section(
@@ -817,9 +991,16 @@ last_b = logits_b[:, -1, :]
 
 assert torch.equal(last_a, last_b)`,
         ),
-        paragraph('两个 prompt 最后的 ID 都是 1，所以 Bigram 都只查 W_bigram[1,:]。这不是偶然的训练结果：只要表仍是 [V_vocab,V_vocab] 并且输入接口只提供当前 token，更早的 我 或 猫 不可能影响最后位置输出。'),
-        formula(String.raw`a_{\mathrm{last}}=b_{\mathrm{last}}\Rightarrow W_{\mathrm{bigram}}[a_{\mathrm{last}},:]=W_{\mathrm{bigram}}[b_{\mathrm{last}},:]\Rightarrow P(\mathrm{next}\mid a)=P(\mathrm{next}\mid b)`, '相同末 token 的两个上下文，在 Bigram 中必得相同 next-token distribution。'),
-        paragraph('固定词表的表只有 5×5=25 个 logits；它可以记住一步转移，是教学与数据管线 baseline，却不能表示同一当前词在不同长上下文中的不同续写。'),
+        paragraph(
+          '两个 prompt 最后的 ID 都是 1，所以 Bigram 都只查 W_bigram[1,:]。这不是偶然的训练结果：只要表仍是 [V_vocab,V_vocab] 并且输入接口只提供当前 token，更早的 我 或 猫 不可能影响最后位置输出。',
+        ),
+        formula(
+          String.raw`a_{\mathrm{last}}=b_{\mathrm{last}}\Rightarrow W_{\mathrm{bigram}}[a_{\mathrm{last}},:]=W_{\mathrm{bigram}}[b_{\mathrm{last}},:]\Rightarrow P(\mathrm{next}\mid a)=P(\mathrm{next}\mid b)`,
+          '相同末 token 的两个上下文，在 Bigram 中必得相同 next-token distribution。',
+        ),
+        paragraph(
+          '固定词表的表只有 5×5=25 个 logits；它可以记住一步转移，是教学与数据管线 baseline，却不能表示同一当前词在不同长上下文中的不同续写。',
+        ),
       ],
       [
         '多训练几轮无法创造模型没有提供的早期-token 信息通路。',
@@ -827,7 +1008,9 @@ assert torch.equal(last_a, last_b)`,
         '偶尔生成通顺片段不证明模型利用了整句；局部相邻统计也可能看似合理。',
       ],
       check('为何 [我,喜欢] 与 [猫,喜欢] 的 last logits 必然相同？', [
-        paragraph('最后 token 都是 喜欢（ID 1），Bigram 只读取同一 row W_bigram[1,:]，不读取更早位置。'),
+        paragraph(
+          '最后 token 都是 喜欢（ID 1），Bigram 只读取同一 row W_bigram[1,:]，不读取更早位置。',
+        ),
       ]),
     ),
     section(
@@ -839,11 +1022,19 @@ assert torch.equal(last_a, last_b)`,
         '明确 PPL 仅衡量正规化 next-token likelihood，不等于事实、推理或安全质量。',
       ],
       [
-        formula(String.raw`\mathrm{mean\_NLL}=-\frac{1}{N}\sum_i\log P(x_i\mid x_{<i}),\qquad \mathrm{PPL}=\exp(\mathrm{mean\_NLL})`, 'N 是有效预测 token 数；本课程自然对数下 PPL 是有效 token 平均 NLL 的 exp。'),
+        formula(
+          String.raw`\mathrm{mean\_NLL}=-\frac{1}{N}\sum_i\log P(x_i\mid x_{<i}),\qquad \mathrm{PPL}=\exp(\mathrm{mean\_NLL})`,
+          'N 是有效预测 token 数；本课程自然对数下 PPL 是有效 token 平均 NLL 的 exp。',
+        ),
         table(
           ['每个真实 token 的 probability', 'mean_NLL', 'PPL', '直觉'],
           [
-            ['1/5（五个候选均匀）', 'ln(5) ≈ 1.609', '5', '像在五个候选间同样犹豫'],
+            [
+              '1/5（五个候选均匀）',
+              'ln(5) ≈ 1.609',
+              '5',
+              '像在五个候选间同样犹豫',
+            ],
             ['1/2', 'ln(2) ≈ 0.693', '2', '平均像在两个候选间犹豫'],
           ],
         ),
@@ -874,15 +1065,24 @@ def evaluate_perplexity(model, data_loader):
 
     return math.exp(total_nll / total_tokens)`,
         ),
-        callout('可比条件', [
-          list([
-            '同一 tokenizer、Vocabulary、留出语料与数据划分。',
-            '同一文本预处理、BOS/EOS/PAD、mask/ignore_index 规则。',
-            '同一 context length、窗口 / stride 策略、自然对数和有效-token 加权 reduction。',
-            '同一正规化自回归 next-token 任务，并都使用 model.eval() 与 torch.no_grad()。',
-          ], true),
-          paragraph('若有 padding 或 ignore_index=-100，分母也只能计算未被 mask 的有效 targets；不能简单平均大小不同 batch 的 mean losses。'),
-        ], 'principle'),
+        callout(
+          '可比条件',
+          [
+            list(
+              [
+                '同一 tokenizer、Vocabulary、留出语料与数据划分。',
+                '同一文本预处理、BOS/EOS/PAD、mask/ignore_index 规则。',
+                '同一 context length、窗口 / stride 策略、自然对数和有效-token 加权 reduction。',
+                '同一正规化自回归 next-token 任务，并都使用 model.eval() 与 torch.no_grad()。',
+              ],
+              true,
+            ),
+            paragraph(
+              '若有 padding 或 ignore_index=-100，分母也只能计算未被 mask 的有效 targets；不能简单平均大小不同 batch 的 mean losses。',
+            ),
+          ],
+          'principle',
+        ),
       ],
       [
         '先平均每个 token 的 NLL，再做一次 exp；不能先算每 token PPL 再平均。',
@@ -891,7 +1091,9 @@ def evaluate_perplexity(model, data_loader):
         '低 PPL 不保证回答真实、安全或对人有用。',
       ],
       check('什么时候可以写 perplexity = torch.exp(loss)？', [
-        paragraph('只有 loss 确实是所有有效 token 的平均自然对数 NLL 时；跨 batch 时要确保按有效 token 数加权。'),
+        paragraph(
+          '只有 loss 确实是所有有效 token 的平均自然对数 NLL 时；跨 batch 时要确保按有效 token 数加权。',
+        ),
       ]),
     ),
     section(
@@ -939,12 +1141,17 @@ next_id                              [1,1]
 appended prompt                      [1,3]`,
         ),
         callout('两条建模路径，不要串接', [
-          paragraph('一般语言模型把 IDs 先查成四维 input embeddings [3,2,4]，再由能使用左侧上下文的模块和 output head 产生 [3,2,5] logits。Bigram 是替代这个中间表示与上下文模块的 shortcut：它直接把每个 ID 查为一 row 五候选 logits，所以没有 [3,2,4] 中间张量。两条路径随后都用相同的 right-shift targets、[6,5]/[6] cross-entropy 和最后位置生成接口。'),
+          paragraph(
+            '一般语言模型把 IDs 先查成四维 input embeddings [3,2,4]，再由能使用左侧上下文的模块和 output head 产生 [3,2,5] logits。Bigram 是替代这个中间表示与上下文模块的 shortcut：它直接把每个 ID 查为一 row 五候选 logits，所以没有 [3,2,4] 中间张量。两条路径随后都用相同的 right-shift targets、[6,5]/[6] cross-entropy 和最后位置生成接口。',
+          ),
         ]),
         table(
           ['训练', '生成'],
           [
-            ['文本 → IDs → shifted inputs/targets → [B,T,V] logits → flatten → cross-entropy → backward → update', 'prompt IDs → [B,T,V] logits → logits[:, -1, :] [B,V] → Argmax/Sampling → next_id [B,1] → append → repeat'],
+            [
+              '文本 → IDs → shifted inputs/targets → [B,T,V] logits → flatten → cross-entropy → backward → update',
+              'prompt IDs → [B,T,V] logits → logits[:, -1, :] [B,V] → Argmax/Sampling → next_id [B,1] → append → repeat',
+            ],
           ],
         ),
       ],
@@ -954,9 +1161,14 @@ appended prompt                      [1,3]`,
         '训练不只用最后位置；生成当前轮才只用最后位置。',
         '低 PPL 不会消除 Bigram 只能看到当前 token 的结构限制。',
       ],
-      check('为何 Week 7 加入 Attention 后仍保留 logits、cross-entropy 和 logits[:, -1, :]？', [
-        paragraph('Attention 改善的是每个位置如何融合可见左侧上下文；语言模型仍输出 vocabulary logits，用 right-shift target 训练，并自回归地从最后位置追加一个 token。'),
-      ]),
+      check(
+        '为何 Week 7 加入 Attention 后仍保留 logits、cross-entropy 和 logits[:, -1, :]？',
+        [
+          paragraph(
+            'Attention 改善的是每个位置如何融合可见左侧上下文；语言模型仍输出 vocabulary logits，用 right-shift target 训练，并自回归地从最后位置追加一个 token。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0253-19-week-6-week-7',
@@ -967,15 +1179,25 @@ appended prompt                      [1,3]`,
         '保留 Week 6 的 next-token interface，同时谨慎说明 Attention 提供能力而非保证理解。',
       ],
       [
-        paragraph('Self-Attention 让每个位置动态汇总允许看到的历史位置。Query 是当前位置正在寻找什么信息，Key 是每个候选位置提供的匹配线索，Value state 是匹配后真正汇总的内容。它们通常由同一 hidden representation 的不同可学习投影得到，不是三个额外 token。'),
+        paragraph(
+          'Self-Attention 让每个位置动态汇总允许看到的历史位置。Query 是当前位置正在寻找什么信息，Key 是每个候选位置提供的匹配线索，Value state 是匹配后真正汇总的内容。它们通常由同一 hidden representation 的不同可学习投影得到，不是三个额外 token。',
+        ),
         table(
           ['quantity', 'typical shape', 'meaning'],
           [
             ['query, key', '[B,T,d_k]', '用于位置间匹配'],
             ['value_states', '[B,T,d_v]', '被权重汇总的内容'],
-            ['attention scores / weights', '[B,T,T]', '每个 Query 对每个 Key position 的分数 / 归一化权重'],
+            [
+              'attention scores / weights',
+              '[B,T,T]',
+              '每个 Query 对每个 Key position 的分数 / 归一化权重',
+            ],
             ['context', '[B,T,d_v]', '加权 Values'],
-            ['final vocabulary logits', '[B,T,V_vocab]', '仍是 Week 6 的 next-token 接口'],
+            [
+              'final vocabulary logits',
+              '[B,T,V_vocab]',
+              '仍是 Week 6 的 next-token 接口',
+            ],
           ],
         ),
         code(
@@ -992,8 +1214,13 @@ scores = scores.masked_fill(~causal_mask, float("-inf"))
 weights = F.softmax(scores, dim=-1)                # [B, T, T]
 context = weights @ value_states                   # [B, T, d_v]`,
         ),
-        formula(String.raw`\mathrm{score}_{t,j}=\frac{q_t\cdot k_j}{\sqrt{d_k}},\qquad \alpha_{t,j}=\operatorname{softmax}_j(\mathrm{score}_{t,j}),\qquad \mathrm{context}_t=\sum_{j\le t}\alpha_{t,j}\,\mathrm{value}_j`, 'causal mask 只允许 j≤t；每个 Query 在可见 Key positions 的最后一维上归一化。'),
-        paragraph('对 prompt A=[我,喜欢] 与 B=[猫,喜欢]，第二位置的当前 token 虽都为 喜欢，但 Attention 可读取不同的第 0 位置，因此最后 logits 可能不同。它只是提供使用更长上下文的路径；未经训练并不保证模型会给某个特定答案，更不保证“理解”。'),
+        formula(
+          String.raw`\mathrm{score}_{t,j}=\frac{q_t\cdot k_j}{\sqrt{d_k}},\qquad \alpha_{t,j}=\operatorname{softmax}_j(\mathrm{score}_{t,j}),\qquad \mathrm{context}_t=\sum_{j\le t}\alpha_{t,j}\,\mathrm{value}_j`,
+          'causal mask 只允许 j≤t；每个 Query 在可见 Key positions 的最后一维上归一化。',
+        ),
+        paragraph(
+          '对 prompt A=[我,喜欢] 与 B=[猫,喜欢]，第二位置的当前 token 虽都为 喜欢，但 Attention 可读取不同的第 0 位置，因此最后 logits 可能不同。它只是提供使用更长上下文的路径；未经训练并不保证模型会给某个特定答案，更不保证“理解”。',
+        ),
       ],
       [
         'Attention 不会替代 token embedding、vocabulary output head 或 cross-entropy。',
@@ -1002,9 +1229,14 @@ context = weights @ value_states                   # [B, T, d_v]`,
         'Softmax 对每个 Query 的可见 Key 维（scores 最后一维）做，不跨 Query positions。',
         '进入 Week 7 后生成仍只使用 logits[:, -1, :]。',
       ],
-      check('Attention 如何让两个都以“喜欢”结尾的 prompt 可能产生不同 last logits？', [
-        paragraph('Bigram 只查 喜欢 的一 row；Attention 的第二位置还可按 causal mask 关注前面不同的 我 或 猫，得到不同 context representation，再映射为可能不同的 vocabulary logits。'),
-      ]),
+      check(
+        'Attention 如何让两个都以“喜欢”结尾的 prompt 可能产生不同 last logits？',
+        [
+          paragraph(
+            'Bigram 只查 喜欢 的一 row；Attention 的第二位置还可按 causal mask 关注前面不同的 我 或 猫，得到不同 context representation，再映射为可能不同的 vocabulary logits。',
+          ),
+        ],
+      ),
     ),
   ],
 };
