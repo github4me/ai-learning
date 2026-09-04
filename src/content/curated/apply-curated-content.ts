@@ -1,6 +1,7 @@
 import { COURSE_CONTENT_VERSION } from '../content-version';
 import type { ContentBlock, Course, SectionNode, WeekUnit } from '../schema';
 import { materializeTeachingSection } from './builders';
+import { CURATED_WEEK_REVISIONS } from './index';
 import type { CuratedWeekRevision } from './types';
 
 function collectDescendantAnchors(section: SectionNode): string[] {
@@ -84,7 +85,13 @@ function applyWeekRevision(
 
 export function applyCuratedContent(
   course: Readonly<Course>,
-  revisions: readonly CuratedWeekRevision[] = CURATED_WEEK_REVISIONS,
+): Course {
+  return applyCuratedContentWithRevisions(course, CURATED_WEEK_REVISIONS);
+}
+
+function applyCuratedContentWithRevisions(
+  course: Readonly<Course>,
+  revisions: readonly CuratedWeekRevision[],
 ): Course {
   const revisionsByWeekSlug = new Map<string, CuratedWeekRevision>(
     revisions.map((revision) => [revision.weekSlug, revision]),
@@ -112,5 +119,3 @@ export function applyCuratedContent(
 
   return { ...course, version: COURSE_CONTENT_VERSION, units };
 }
-
-export const CURATED_WEEK_REVISIONS: readonly CuratedWeekRevision[] = [];

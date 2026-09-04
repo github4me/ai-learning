@@ -22,7 +22,7 @@ export type TeachingSectionRevision = {
   title?: string;
   problem: string;
   purpose: string[];
-  blocks: CuratedBodyBlock[];
+  blocks: [CuratedBodyBlock, ...CuratedBodyBlock[]];
   pitfalls: string[];
   check: TeachingCheck;
   collapseChildren: true;

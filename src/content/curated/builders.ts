@@ -87,6 +87,10 @@ export function materializeTeachingSection(
   revision: TeachingSectionRevision,
   source: SourceRef,
 ): ContentBlock[] {
+  if (revision.blocks.length === 0)
+    throw new Error(
+      `Curated section ${revision.sectionId} must include worked content`,
+    );
   const nextId = createBlockIdFactory(weekSlug, revision.sectionId);
   return [
     {

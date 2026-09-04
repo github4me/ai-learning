@@ -48,36 +48,41 @@ function collectText(block: ContentBlock): string {
   }
 }
 
-function findBlock(
+function findBlockIndex(
   blocks: readonly ContentBlock[],
   predicate: (block: ContentBlock) => boolean,
-): ContentBlock | undefined {
-  for (const block of blocks) {
-    if (predicate(block)) return block;
-  }
-  return undefined;
+): number {
+  return blocks.findIndex(predicate);
 }
 
 function validateSection(course: Course, section: SectionNode): void {
-  const problem = findBlock(
+  const problemIndex = findBlockIndex(
     section.blocks,
     (block) => block.type === 'callout' && block.title === '先看问题',
   );
-  const purpose = findBlock(
+  const purposeIndex = findBlockIndex(
     section.blocks,
     (block) => block.type === 'callout' && block.title === '为什么需要它',
   );
-  const pitfalls = findBlock(
+  const pitfallsIndex = findBlockIndex(
     section.blocks,
     (block) => block.type === 'callout' && block.title === '常见误区',
   );
-  const check = findBlock(
+  const checkIndex = findBlockIndex(
     section.blocks,
     (block) => block.type === 'knowledgeCheck',
   );
-  invariant(problem, `${section.id} is missing its problem frame`);
-  invariant(purpose, `${section.id} is missing its purpose frame`);
-  invariant(pitfalls, `${section.id} is missing its misconception frame`);
+  invariant(problemIndex === 0, `${section.id} is missing its problem frame`);
+  invariant(purposeIndex === 1, `${section.id} is missing its purpose frame`);
+  invariant(
+    pitfallsIndex > purposeIndex + 1,
+    `${section.id} is missing worked content between purpose and pitfalls`,
+  );
+  invariant(
+    checkIndex === section.blocks.length - 1 && checkIndex > pitfallsIndex,
+    `${section.id} has teaching frames in the wrong top-level order`,
+  );
+  const check = section.blocks[checkIndex];
   invariant(check?.type === 'knowledgeCheck', `${section.id} is missing its knowledge check`);
   invariant(
     (check.answer?.length ?? 0) > 0,
