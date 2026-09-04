@@ -129,6 +129,15 @@ export const week11Revision: CuratedWeekRevision = {
         paragraph(
           `直白地说，模型只负责计算；外层 Week 11 training/generation module 决定怎样使用计算结果。Training 用 labels 并且是唯一会故意更新 θ 的 phase；validation 用真正 held-out labels 测量当前 θ；checkpointing 把兼容的长期 state 写出或读回；inference 没有 targets，只选择并追加 token。${canonicalIdentity}`,
         ),
+        callout(
+          '先把 Week 10 文件作为无副作用的 Module',
+          [
+            paragraph(
+              'Week 10 把 canonical definitions 统一标为 mini_gpt_walkthrough.py；其中确实定义了下方导入的 GPTConfig、MiniGPT、save_mini_gpt_training_checkpoint、load_mini_gpt_for_inference 与 validate_checkpoint_tokenizer_identity。作为标准 Python packaging 步骤，应把 Week 10 的顶层演示 statements 移入 main() 并只在 if __name__ == "__main__": 分支调用，definitions 仍留在 module scope。这样 import 只发布 frozen API，不会训练、保存 checkpoint 或执行 walkthrough；这不改变任何 class/function signature、member name 或 state-dict key。本章以下代码假定已完成这个无 API 变化的整理。',
+            ),
+          ],
+          'principle',
+        ),
         code(
           'python',
           `# week11_training_and_generation.py
@@ -138,7 +147,7 @@ import math
 import torch
 import torch.nn.functional as F
 
-from mini_gpt_model import (
+from mini_gpt_walkthrough import (
     GPTConfig,
     MiniGPT,
     load_mini_gpt_for_inference,
@@ -165,14 +174,14 @@ CANONICAL_TOKENIZER_VERSION = "mini-gpt-v1"`,
             ],
             [
               'validation',
-              'held-out inputs/targets；测量 current θ',
+              'held-out inputs/targets；读取 current θ 并测量',
               '暂时改变 module mode，再恢复；不改 θ/optimizer',
               '不能 backward 或 step',
             ],
             [
               'checkpointing',
-              '序列化或恢复 model/tokenizer/config/optimizer/progress',
-              'save 不学习；load 明确恢复长期 state',
+              'save 读取并持久化 parameters、optimizer、config、tokenizer、progress；load 验证后恢复',
+              'model/optimizer load_state_dict 明确替换长期 values；不是 learning update',
               '不能用相同 shape 代替 identity validation',
             ],
             [
@@ -184,33 +193,48 @@ CANONICAL_TOKENIZER_VERSION = "mini-gpt-v1"`,
           ],
         ),
         table(
-          ['state', 'owner', '何时改变', '用途'],
+          ['state', 'owner', '何时改变', '谁读取或持久化'],
           [
             [
               'parameters θ',
               'model',
-              '只在 optimizer.step()',
-              'training 与 inference',
+              'optimizer.step() 学习更新；model.load_state_dict() 显式恢复',
+              'training、validation、inference 读取；checkpoint save 持久化',
             ],
             [
               'parameter.grad',
               '各 parameter',
               'backward 累加；zero_grad 清除',
-              '下一次 update window',
+              'optimizer.step() 读取；canonical checkpoint 不保存 transient .grad',
             ],
             [
               'AdamW moments / counters',
               'optimizer',
-              '只在 optimizer.step()',
-              'faithful training resume',
+              'optimizer.step() 学习更新；optimizer.load_state_dict() 显式恢复',
+              'training step 读取/更新；checkpoint save 持久化供 faithful resume',
             ],
             [
-              'activations / loss graph',
+              'completed_updates',
+              'training caller',
+              '每次成功 optimizer.step() 后加 1；checkpoint load 恢复',
+              'logging/checkpoint save；resume 再与 AdamW step state 核对',
+            ],
+            [
+              'GPTConfig / tokenizer identity',
+              'model / data caller',
+              '本 run 内冻结；load 先验证 canonical values，再构造 matching objects',
+              '所有 phase 依赖；checkpoint save 明确持久化',
+            ],
+            [
+              'activations / loss value / training graph',
               '当前 forward',
-              'forward 建立；backward 后通常释放',
-              '这一轮计算',
+              'forward 建立 values；只有 grad-enabled training 建 graph',
+              'training/validation 当前计算；checkpoint 不持久化',
             ],
           ],
+        ),
+        paragraph(
+          '“只有 optimizer.step() 执行 learning update”仍然成立：load_state_dict() 也会替换 model/optimizer values，但那是显式 restoration，不是从当前 batch error 学习。Checkpoint save 读取并持久化 parameters、optimizer、config、tokenizer 与 progress；faithful load 先验证 config/tokenizer identity，再用已保存值替换 parameters、optimizer state 与 progress。',
         ),
         chain([
           'training：forward [3,2] → logits [3,2,5] + loss [] → backward → step',
@@ -219,11 +243,15 @@ CANONICAL_TOKENIZER_VERSION = "mini-gpt-v1"`,
           'inference：prompt → last logits [B,5] → next_id [B,1] → append history',
         ]),
         formula(
-          String.raw`f_{\theta}(\mathrm{inputs})\to\mathrm{logits}\in\mathbb{R}^{3\times2\times5},\qquad \theta\leftarrow\operatorname{AdamW}(\theta,\nabla_{\theta}\mathcal L)\ \text{only in training}`,
-          '每次 forward 都能产生三行、两个位置、五个候选的 logits；只有 training 的 optimizer step 更新参数。',
+          String.raw`f_{\theta}:\mathbb{N}^{B\times T}\to\mathbb{R}^{B\times T\times5},\qquad B\ge1,\quad1\le T\le2`,
+          'General canonical forward 接受可变正 batch size B 与一到两个 context positions，并为每个位置输出五个 logits。',
         ),
         paragraph(
-          '[3,2,5] 是 30 个 raw scores，不是一句自动生成的文字。Validation 与 inference 都应使用 no-grad，但前者有 held-out targets 并聚合 loss，后者没有 targets 且只消费当前最后位置的分布。',
+          '固定 Week 6/11 training batch 才取 B=3、T=2，因此其一次 forward 是 [3,2]→[3,2,5]，也就是 30 个 raw scores，而不是一句自动生成的文字。Inference 可以是 [1,2]→[1,2,5]，validation 则是 [B_i,T_i]→[B_i,T_i,5]。Validation 与 inference 都应使用 no-grad，但前者有 held-out targets 并聚合 loss，后者没有 targets 且只消费当前最后位置的分布。',
+        ),
+        formula(
+          String.raw`\theta\leftarrow\operatorname{AdamW}(\theta,\nabla_{\theta}\mathcal L)\quad\text{is the only learning update}`,
+          'Checkpoint load 可以恢复参数值，但只有 training 的 optimizer step 从 batch gradient 执行学习更新。',
         ),
       ],
       [
@@ -466,9 +494,12 @@ optimizer = torch.optim.AdamW(
     targets: torch.Tensor,
     device: torch.device,
     max_grad_norm: float = 1.0,
-) -> tuple[torch.Tensor, torch.Tensor]:
+    completed_updates: int = 0,
+) -> tuple[torch.Tensor, torch.Tensor, int]:
     if not math.isfinite(max_grad_norm) or max_grad_norm <= 0:
         raise ValueError("max_grad_norm must be positive")
+    if type(completed_updates) is not int or completed_updates < 0:
+        raise ValueError("completed_updates must be a non-negative integer")
 
     model.train()
     inputs = inputs.to(device)
@@ -483,7 +514,8 @@ optimizer = torch.optim.AdamW(
         max_norm=max_grad_norm,
     )
     optimizer.step()
-    return loss.detach(), grad_norm.detach()`,
+    completed_updates += 1  # only after optimizer.step succeeds
+    return loss.detach(), grad_norm.detach(), completed_updates`,
           'week11_training_and_generation.py',
         ),
         table(
@@ -521,7 +553,7 @@ optimizer = torch.optim.AdamW(
             ],
             [
               'optimizer.step()',
-              '改变 parameter values、AdamW moments 与 counters',
+              '改变 parameter values、AdamW moments/counters；成功返回后 caller count 加 1',
               '这是唯一真正学习的一行',
             ],
             [
@@ -583,11 +615,14 @@ optimizer = torch.optim.AdamW(
     train_batches,
     device: torch.device,
     accumulation_steps: int = 1,
+    completed_updates: int = 0,
 ) -> tuple[int, float]:
     if type(accumulation_steps) is not int or accumulation_steps < 1:
         raise ValueError("accumulation_steps must be a positive integer")
+    if type(completed_updates) is not int or completed_updates < 0:
+        raise ValueError("completed_updates must be a non-negative integer")
 
-    # Materialize first: reject empty/partial windows before touching model state.
+    # Validate all batches before touching model mode, gradients, or optimizer.
     batches = list(train_batches)
     if not batches:
         raise ValueError("train_batches must not be empty")
@@ -596,9 +631,52 @@ optimizer = torch.optim.AdamW(
             "train_batches must form complete accumulation windows"
         )
 
+    reference_shape = None
+    reference_target_count = None
+    for batch_number, batch in enumerate(batches, start=1):
+        if not isinstance(batch, (tuple, list)) or len(batch) != 2:
+            raise TypeError(f"batch {batch_number} must be (inputs, targets)")
+        inputs, targets = batch
+        if not isinstance(inputs, torch.Tensor) or not isinstance(
+            targets,
+            torch.Tensor,
+        ):
+            raise TypeError(f"batch {batch_number} values must be tensors")
+        if inputs.ndim != 2 or targets.shape != inputs.shape:
+            raise ValueError(
+                f"batch {batch_number} inputs/targets must share [B,T]"
+            )
+        if inputs.dtype != torch.long or targets.dtype != torch.long:
+            raise TypeError(
+                f"batch {batch_number} inputs/targets must be torch.long"
+            )
+        target_count = targets.numel()
+        if target_count <= 0:
+            raise ValueError(f"batch {batch_number} has no target tokens")
+        if not 1 <= inputs.size(1) <= model.config.block_size:
+            raise ValueError(f"batch {batch_number} has invalid T")
+        for name, token_ids in (("inputs", inputs), ("targets", targets)):
+            if (
+                int(token_ids.min().item()) < 0
+                or int(token_ids.max().item()) >= model.config.vocab_size
+            ):
+                raise ValueError(
+                    f"batch {batch_number} {name} IDs are outside vocabulary"
+                )
+
+        if reference_shape is None:
+            reference_shape = inputs.shape
+            reference_target_count = target_count
+        elif (
+            inputs.shape != reference_shape
+            or target_count != reference_target_count
+        ):
+            raise ValueError(
+                "this teaching helper requires equal-token microbatches"
+            )
+
     model.train()
     optimizer.zero_grad(set_to_none=True)
-    update_count = 0
     detached_loss_sum = 0.0
 
     for window_start in range(0, len(batches), accumulation_steps):
@@ -619,15 +697,18 @@ optimizer = torch.optim.AdamW(
             max_norm=1.0,
         )
         optimizer.step()
+        completed_updates += 1  # only after optimizer.step succeeds
         optimizer.zero_grad(set_to_none=True)
-        update_count += 1
 
     mean_microbatch_loss = detached_loss_sum / len(batches)
-    return update_count, mean_microbatch_loss`,
+    return completed_updates, mean_microbatch_loss`,
           'week11_training_and_generation.py',
         ),
         paragraph(
-          '这个教学实现选择“先 materialize，再拒绝 partial window”：空 iterator 会在 model.train() 和 zero_grad() 之前得到清晰错误；7 个 microbatches 配 accumulation_steps=4 也会在任何 mutation 前拒绝，因此不会残留三份未使用 gradients。大型或无限 stream 不适合整份 materialize，production caller 可改用已知长度的 sampler/drop_last，或正确按 final-window token 数重新缩放并执行最后 step。',
+          '这个教学 helper 明确只支持 equal-token microbatches。它先 materialize 全部输入，并在 model.train() 或 zero_grad() 之前验证：非空、完整 accumulation windows、每项确实是 input/target tensors、两者 shape 相同且所有 batches 共享同一 [B,T] shape、dtype 都是 torch.long、target count 相同且大于零、T 与 IDs 合法。于是 loss/accumulation_steps 的 gradient 与 mean_microbatch_loss 都恰好是按 tokens 等权的结果。',
+        ),
+        paragraph(
+          '空 iterator 会得到清晰错误；7 个 microbatches 配 accumulation_steps=4，或混入较短/较小 batch，也会在任何 model/mode/gradient/optimizer mutation 前拒绝，不会残留 partial gradients。大型、无限或 variable-token stream 不适合这个教学 helper；production code 应按 window 的 token-loss sum 除以 valid-token 总数，或使用已知长度且等大小的 sampler/drop_last。',
         ),
         callout(
           '固定例子：四个等大小 microbatches',
@@ -650,6 +731,11 @@ optimizer = torch.optim.AdamW(
             ['第 4 次 backward + clip 后', '完整且可能已缩放', '仍不变'],
             ['optimizer.step 后', '仍存在，直到下一行清除', '两者更新一次'],
             [
+              'step 成功返回后',
+              '同一完整 window 已消费',
+              'completed_updates 才加 1',
+            ],
+            [
               '随后 zero_grad 后',
               'None，下一窗口干净开始',
               '保留刚更新的长期 state',
@@ -663,10 +749,11 @@ optimizer = torch.optim.AdamW(
         '在最后一次 intended backward 之前 clipping 只限制了不完整 gradients。',
         '不能在循环之后读取可能从未赋值的 micro_step；空 iterator 必须有显式 guard。',
         '不能先积累 partial window 再 raise；本实现先检查整除性，尚未触碰 model 或 optimizer。',
+        '不能把 unequal-token microbatch means 等权累加；本 helper 会在任何 mutation 前拒绝这种输入。',
       ],
       check('为什么 accumulation loop 在 optimizer.step() 后才 zero_grad？', [
         paragraph(
-          '窗口内所有 microbatches 必须共享并累加 gradients；step 读完完整窗口后才清除，使下一个 update window 从干净的 .grad 开始。',
+          '窗口内所有 equal-token microbatches 必须共享并累加 gradients；step 读完完整窗口后，completed_updates 才加 1，再清除 .grad，使下一窗口干净开始。',
         ),
       ]),
     ),
@@ -955,13 +1042,27 @@ optimizer = torch.optim.AdamW(
         ),
         code(
           'python',
-          `# Correct location inside one update window:
-loss.backward()  # or the final backward of an accumulation window
-grad_norm = torch.nn.utils.clip_grad_norm_(
-    model.parameters(),
-    max_norm=1.0,
-)
-optimizer.step()`,
+          `def backward_and_clip_mini_gpt(
+    model: MiniGPT,
+    loss: torch.Tensor,
+    max_grad_norm: float = 1.0,
+) -> torch.Tensor:
+    if loss.ndim != 0:
+        raise ValueError("loss must be a scalar tensor")
+    if not math.isfinite(max_grad_norm) or max_grad_norm <= 0:
+        raise ValueError("max_grad_norm must be finite and positive")
+
+    loss.backward()
+    grad_norm = torch.nn.utils.clip_grad_norm_(
+        model.parameters(),
+        max_norm=max_grad_norm,
+    )
+    return grad_norm.detach()
+
+
+# Caller order inside one update window:
+# optimizer.zero_grad(...) -> forward creates loss -> helper above
+# -> optimizer.step() -> increment completed_updates`,
           'week11_training_and_generation.py',
         ),
       ],
@@ -1064,9 +1165,12 @@ optimizer.step()`,
     targets: torch.Tensor,
     device: torch.device,
     updates: int = 200,
-) -> list[float]:
+    completed_updates: int = 0,
+) -> tuple[list[float], int]:
     if type(updates) is not int or updates < 1:
         raise ValueError("updates must be a positive integer")
+    if type(completed_updates) is not int or completed_updates < 0:
+        raise ValueError("completed_updates must be a non-negative integer")
 
     model.train()
     inputs = inputs.to(device)
@@ -1079,8 +1183,9 @@ optimizer.step()`,
         assert loss is not None and torch.isfinite(loss)
         loss.backward()
         optimizer.step()
+        completed_updates += 1  # only after optimizer.step succeeds
         history.append(loss.detach().item())
-    return history`,
+    return history, completed_updates`,
           'week11_training_and_generation.py',
         ),
         table(
@@ -1120,7 +1225,7 @@ optimizer.step()`,
           'inspect [我,喜欢] versus [猫,喜欢] final logits to confirm context can create different predictions',
         ]),
         paragraph(
-          '实际诊断应记录 first/last loss、finite values 与 gradients，并比较 logits.argmax(dim=-1) [3,2] 时承认冲突位置最多选中其中一个。更有信息量的 context check 是让 [我,喜欢] 与 [猫,喜欢] 在 t=1 产生可不同 distributions；它们的 visible prefixes 确实不同。',
+          '实际诊断应记录 first/last loss、finite values 与 gradients，并比较 logits.argmax(dim=-1) [3,2] 时承认冲突位置最多选中其中一个。Helper 接受已有 completed_updates，只在每次 optimizer.step() 成功返回后加 1，并把 cumulative count 与 history 一起交还 caller；它不会用 loop 上限冒充已完成进度。更有信息量的 context check 是让 [我,喜欢] 与 [猫,喜欢] 在 t=1 产生可不同 distributions；它们的 visible prefixes 确实不同。',
         ),
       ],
       [
@@ -1145,6 +1250,7 @@ optimizer.step()`,
       '只保存 model.state_dict() 也许能在外部条件恰好一致时 inference，却不能证明 tokenizer meanings、architecture policy 或 AdamW history 匹配，更不能 faithful resume。',
       [
         '直接调用 Week 10 的 canonical saver/inference loader，不重定义或削弱其 schema、config、tokenizer hash 与 untied policy。',
+        '由成功的 optimizer.step() 推进 completed_updates，并在 save/resume 时把它与 AdamW per-parameter step state 交叉验证。',
         '为 training resume 增加一个调用端 loader：先验证全部 identity 与 optimizer metadata，再构造和使用模型。',
       ],
       [
@@ -1182,17 +1288,96 @@ optimizer.step()`,
         ),
         code(
           'python',
-          `# Save through the canonical Week 10 API; do not invent new keys.
-completed_updates = 200
-save_mini_gpt_training_checkpoint(
-    "mini_gpt_training.pt",
-    model=model,
-    optimizer=optimizer,
-    completed_updates=completed_updates,
-    ordered_tokens=CANONICAL_ORDERED_TOKENS,
-    tokenizer_policy=CANONICAL_TOKENIZER_POLICY,
-    tokenizer_version=CANONICAL_TOKENIZER_VERSION,
-)`,
+          `def validate_mini_gpt_adamw_completed_updates(
+    optimizer: torch.optim.Optimizer,
+    completed_updates: int,
+) -> None:
+    if type(optimizer) is not torch.optim.AdamW:
+        raise TypeError("faithful resume requires exactly torch.optim.AdamW")
+    if type(completed_updates) is not int or completed_updates < 0:
+        raise ValueError("completed_updates must be a non-negative integer")
+
+    optimizer_state = optimizer.state_dict()
+    state = optimizer_state.get("state")
+    param_groups = optimizer_state.get("param_groups")
+    if not isinstance(state, dict) or not isinstance(param_groups, list):
+        raise ValueError("malformed AdamW state_dict")
+
+    parameter_ids: list[int] = []
+    for group in param_groups:
+        if not isinstance(group, dict) or not isinstance(group.get("params"), list):
+            raise ValueError("malformed AdamW param_groups")
+        parameter_ids.extend(group["params"])
+    if not parameter_ids or len(set(parameter_ids)) != len(parameter_ids):
+        raise ValueError("AdamW parameter IDs must be non-empty and unique")
+    expected_ids = set(parameter_ids)
+
+    # A newly constructed AdamW has no per-parameter state before its first step.
+    if completed_updates == 0:
+        if state:
+            raise ValueError("zero completed updates require a fresh empty AdamW state")
+        return
+
+    if set(state) != expected_ids:
+        raise ValueError("nonzero progress requires AdamW state for every parameter")
+
+    observed_steps: set[int] = set()
+    for parameter_id in parameter_ids:
+        parameter_state = state[parameter_id]
+        if not isinstance(parameter_state, dict) or "step" not in parameter_state:
+            raise ValueError("every AdamW parameter state must contain step")
+        raw_step = parameter_state["step"]
+        if torch.is_tensor(raw_step):
+            if raw_step.numel() != 1:
+                raise ValueError("AdamW step must be scalar")
+            raw_step = raw_step.detach().cpu().item()
+        if isinstance(raw_step, bool) or not isinstance(raw_step, (int, float)):
+            raise ValueError("AdamW step must be a finite integer")
+        numeric_step = float(raw_step)
+        if not math.isfinite(numeric_step) or not numeric_step.is_integer():
+            raise ValueError("AdamW step must be a finite integer")
+        observed_steps.add(int(numeric_step))
+
+    if observed_steps != {completed_updates}:
+        raise ValueError("completed_updates disagrees with AdamW step state")
+
+
+def train_and_save_week11_one_batch(
+    path: str,
+    *,
+    model: MiniGPT,
+    optimizer: torch.optim.AdamW,
+    inputs: torch.Tensor,
+    targets: torch.Tensor,
+    device: torch.device,
+    requested_updates: int = 200,
+    completed_updates: int = 0,
+) -> tuple[list[float], int]:
+    # Check resume progress before training, then derive new progress from
+    # successful optimizer.step calls rather than from requested_updates.
+    validate_mini_gpt_adamw_completed_updates(optimizer, completed_updates)
+    history, completed_updates = overfit_mini_gpt_one_batch(
+        model,
+        optimizer,
+        inputs,
+        targets,
+        device,
+        updates=requested_updates,
+        completed_updates=completed_updates,
+    )
+    validate_mini_gpt_adamw_completed_updates(optimizer, completed_updates)
+
+    # Save through the canonical Week 10 API; do not invent new keys.
+    save_mini_gpt_training_checkpoint(
+        path,
+        model=model,
+        optimizer=optimizer,
+        completed_updates=completed_updates,
+        ordered_tokens=CANONICAL_ORDERED_TOKENS,
+        tokenizer_policy=CANONICAL_TOKENIZER_POLICY,
+        tokenizer_version=CANONICAL_TOKENIZER_VERSION,
+    )
+    return history, completed_updates`,
           'week11_training_and_generation.py',
         ),
         code(
@@ -1274,20 +1459,27 @@ def load_mini_gpt_training_resume(
         raise ValueError("restored model must keep canonical untied weights")
     optimizer = torch.optim.AdamW(model.parameters())
     optimizer.load_state_dict(optimizer_payload["state"])
+    validate_mini_gpt_adamw_completed_updates(optimizer, completed_updates)
     return model, optimizer, completed_updates`,
           'week11_training_and_generation.py',
         ),
         code(
           'python',
-          `# Inference-only restore uses the frozen Week 10 loader.
-inference_model = load_mini_gpt_for_inference(
-    "mini_gpt_training.pt",
-    expected_ordered_tokens=CANONICAL_ORDERED_TOKENS,
-    expected_tokenizer_policy=CANONICAL_TOKENIZER_POLICY,
-    expected_tokenizer_version=CANONICAL_TOKENIZER_VERSION,
-    map_location=device,
-)
-inference_model.eval()`,
+          `def load_week11_mini_gpt_for_inference(
+    path: str,
+    *,
+    device: torch.device,
+) -> MiniGPT:
+    # Inference-only restore delegates to the frozen Week 10 loader.
+    inference_model = load_mini_gpt_for_inference(
+        path,
+        expected_ordered_tokens=CANONICAL_ORDERED_TOKENS,
+        expected_tokenizer_policy=CANONICAL_TOKENIZER_POLICY,
+        expected_tokenizer_version=CANONICAL_TOKENIZER_VERSION,
+        map_location=device,
+    )
+    inference_model.eval()
+    return inference_model`,
           'week11_training_and_generation.py',
         ),
         table(
@@ -1311,7 +1503,7 @@ inference_model.eval()`,
           ],
         ),
         paragraph(
-          'map_location 决定 serialized tensors 映射到哪个 CPU/CUDA/MPS device；model、后续 inputs 与 targets 仍必须共置。SHA-256 绑定已记录的 canonical bytes、用于发现 identity mismatch 或损坏，但不是来源签名；只 load trusted files。',
+          'map_location 决定 serialized tensors 映射到哪个 CPU/CUDA/MPS device；model、后续 inputs 与 targets 仍必须共置。Fresh optimizer 的合法起点是 completed_updates=0 且 AdamW per-parameter state 为空；非零 progress 则要求每个 canonical parameter 都有 step，并且所有 step 恰好等于 completed_updates。Save 前和 resume load 后都执行这项交叉检查。SHA-256 绑定已记录的 canonical bytes、用于发现 identity mismatch 或损坏，但不是来源签名；只 load trusted files。',
         ),
       ],
       [
@@ -1320,6 +1512,7 @@ inference_model.eval()`,
         '不要把 Week 10 member names 改成另一套缩写；strict state loading 依赖 exact keys。',
         'Inference-only restore 与 faithful resume 的承诺不同；前者不需要 optimizer，后者不能省略。',
         'completed_updates 是已完成 update 的 count，不是 zero-based loop index。',
+        '不要把 requested update 数直接写进 completed_updates；只有 optimizer.step() 成功后才递增，并与 AdamW step state 核对。',
         '加载不可信 torch.save 文件有安全风险；digest 通过也不等于来源可信。',
       ],
       check(
