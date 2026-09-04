@@ -634,6 +634,9 @@
     top: 0.75rem !important;
     max-height: calc(100dvh - 1.5rem);
   }
+  .search-palette [data-slot='command-input'] {
+    font-size: 1rem;
+  }
 }
 
 @media print {
