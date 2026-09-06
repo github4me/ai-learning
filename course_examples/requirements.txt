@@ -1,0 +1,4 @@
+# CPU examples were verified with Python 3.12 and PyTorch 2.14.0.
+# For a GPU-specific build, follow the official PyTorch installation selector.
+torch==2.14.0
+

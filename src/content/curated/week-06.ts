@@ -453,14 +453,275 @@ Output logits              [B,T,V] = [3,2,5]  每格是对 5 个 Token 的分数
     section(
       'o0230-5-embedding',
       '5. 先看完整路线：六个位置怎样走到一个 Loss',
-      '如果在理解模型输出和 Loss 之前就讨论 Embedding 更新，Gradient 会像凭空出现；先建立整条数据路线，后面再逐段计算。',
+      '上一节解释了 Batch 与 `[B,T,C]`，但还没有回答“每个位置怎样变成一道有分数的题”。这一节先追踪一道题，再把同样过程扩展到六道题和一个平均 Loss。',
       [
-        '知道每一阶段解决什么问题，以及主要 Shape 怎样变化。',
-        '暂时只追踪数据流，不要求提前掌握 Softmax、Cross Entropy 或 Backpropagation 的细节。',
+        '能指出一道 next-token 题的输入位置、五个候选分数、正确 Target 和单题 Loss。',
+        '理解 `[3,2,5] → [6,5]` 只是重新排列六道题，没有把不同句子的上下文混合。',
+        '理解六个单题 Loss 为什么要汇总为一个 Scalar Mean Loss。',
       ],
       [
         paragraph(
-          '当前 batch 包含三句话，每句话提供两个 next-token 位置，因此模型一次要完成六道题。下面先像看地图一样看完整路线；后续章节会逐项解释每一条箭头。',
+          '上一节已经得到 inputs `[3,2]` 和 Embeddings `[3,2,4]`。其中每个 `[b,t]` 都是一道独立的 next-token 题：b 选择哪条样本，t 选择这条样本的哪个位置。模型必须在 Vocabulary 的五个候选中，为这道题的正确 Target 给出更高概率。',
+        ),
+        callout('先只追踪一道题：`[b=0,t=0]`', [
+          paragraph(
+            '第 0 条样本是“我 喜欢 AI”。在第 0 个位置，输入是“我”，正确答案是“喜欢”。前面已经把“我”查成四个数；模型接着整理当前可见信息，并为五个候选分别打分。',
+          ),
+          table(
+            ['阶段', '这道题里的具体对象', '它现在表示什么'],
+            [
+              ['Input ID', '`inputs[0,0]=0`', '当前读到 Token“我”'],
+              [
+                'Embedding',
+                '`x[0,0,:]=[0.20,-0.10,0.70,0.30]`',
+                '“我”在模型内部的四个输入特征',
+              ],
+              [
+                'Context Representation',
+                '`h[0,0,:]`，仍有 C=4 个数',
+                '结合当前位置允许看到的内容后，整理出的内部证据',
+              ],
+              [
+                'Logits',
+                '`z[0,0,:]=[0,2,1,-1,0]`',
+                '按 `[我,喜欢,AI,学习,猫]` 顺序给五个候选的原始分',
+              ],
+              [
+                'Target',
+                '`targets[0,0]=1`',
+                '正确答案 ID=1，也就是“喜欢”',
+              ],
+              [
+                'Probability',
+                '“喜欢”约为 0.5923',
+                'Softmax 后，模型给正确答案约 59.23% 的概率',
+              ],
+              [
+                'Single-position Loss',
+                '`−ln(0.5923)≈0.5237`',
+                '只衡量这一道题；正确答案概率越高，它越小',
+              ],
+            ],
+            '下面会把这一题完整算一遍；第 9–11 节再分别深入解释 Logit、Softmax 和 Cross Entropy。',
+          ),
+          paragraph(
+            '现在把这条路线真正算一遍。先看最容易混淆的 Context Representation。Embedding `x[0,0,:]` 是输入 Token“我”的初始表示；Context Representation `h[0,0,:]` 则是模型为了回答“下一个 Token 是什么”而整理好的工作向量。它们的 Shape 都是 `[C]=[4]`，但职责不同：x 是刚查表得到的起点，h 是上下文模型处理后的结果。',
+          ),
+          callout('本节怎样计算 Context Representation？', [
+            paragraph(
+              '为了先把评分和概率算清楚，本节对第一个位置使用最简单的 identity context rule：上下文模型暂时不改变向量，所以 `h=x`。第一个位置只能看到“我”，因此这里直接得到 h=[0.20,−0.10,0.70,0.30]。这不是说所有语言模型都只复制 Embedding；它只是一个可手算的最小上下文模型。',
+            ),
+            code(
+              'text',
+              `x[0,0,:] = [0.20,-0.10,0.70,0.30]   # “我”的 Input Embedding
+
+identity context rule:
+h[0,0,:] = x[0,0,:]
+         = [0.20,-0.10,0.70,0.30]   # 当前题目的 Context Representation`,
+            ),
+            paragraph(
+              '如果当前位置是“我 喜欢”中的第二个位置，真正的 Transformer 会让 h 同时吸收“我”和“喜欢”的信息。Week 7 会用 Attention 计算“各读多少”，Week 8 再用 FFN、Residual 和 LayerNorm 继续加工。无论内部过程多复杂，最后都要为当前位置交出一个长度 C 的 h，供 Output Head 打分。',
+            ),
+          ]),
+          callout('Output Head 是什么？', [
+            callout('这里的 h 到底指什么？', [
+              paragraph(
+                '大写 H 表示整个 Batch 所有位置的 Context Representations，Shape 是 [B,T,C]=[3,2,4]。小写 h 表示从 H 中取出的某一个位置：h=H[b,t,:]，Shape 是 [C]=[4]。所以 h 不是 Token ID、不是 Probability，也不是一组固定不变的模型参数；它是模型针对当前样本、当前位置临时计算出的内部状态。',
+              ),
+              code(
+                'text',
+                `H.shape = [3,2,4]             # 六个位置各有一个长度 4 的上下文向量
+
+h = H[0,0,:]                   # 只取第 0 条样本、第 0 个位置
+  = [0.20,-0.10,0.70,0.30]    # 当前题“我 → 喜欢”的 h
+
+H[0,1,:]                       # “我 喜欢 → AI”会有另一个 h
+H[1,1,:]                       # “猫 喜欢 → 我”也会有另一个 h`,
+              ),
+              paragraph(
+                'h 的来源始终是当前输入，而不是 Output Head 自己生成：Token ID 先通过 Embedding 变成 x；Context Model 再处理当前位置允许看到的 x，产生 h。完整 Transformer 中，Context Model 包含 Attention、Residual、LayerNorm 和 FFN。Attention 负责从同一条样本的可见位置读取信息，后续层再加工，最终留下一个长度仍为 C 的向量。',
+              ),
+              chain([
+                '当前位置及其可见的 Token IDs',
+                'Embedding 得到输入向量 x',
+                'Context Model 读取并整理允许看到的上下文',
+                '得到该位置的 h=H[b,t,:]',
+                'Output Head 使用 h 给全部候选打分',
+              ]),
+              paragraph(
+                '本节为了专注评分计算，在 [0,0] 使用 identity context rule，所以 h 恰好等于“我”的 Input Embedding。这只是本例的简化。到了第二个位置，模型面对“我 喜欢”；真实 Transformer 产生的 h 通常已经包含两个可见 Token 的信息，不再等于“喜欢”的原始 Embedding。',
+              ),
+            ]),
+            paragraph(
+              'Transformer 前面的层负责把当前可见内容整理成 Context Representation h；Output Head 是接在这些内部表示最后面的“输出评分层”。这里的 Head 可以理解成“为某个最终任务接上的输出接口”。语言模型的任务是预测下一个 Token，所以它的 Output Head 必须把长度 C 的 h 转换成长度 V 的候选分数。',
+            ),
+            chain([
+              '模型内部表示 h：[C]=[4]',
+              'Output Head 读取同一组四项证据',
+              '分别套用 V=5 套候选评分规则',
+              '输出五个 Logits：[V]=[5]',
+            ]),
+            paragraph(
+              '可以把它想成五位评分员：对于当前这一道 [b,t] 预测题，五位评分员看到的是同一个 h=H[b,t,:]，因为要比较的上下文必须保持一致；不同的是每位评分员各自的 Weight 和 Bias。“喜欢”评分员可能重视 h 的第 2、3 项，“AI”评分员可能采用另一组权重。五位评分员各给一个原始分，合起来才是五个 Logits。换到下一道题时，模型会改用那个位置自己的 h，再让同一组五位评分员重新打分。',
+            ),
+            table(
+              ['Output Head 内部参数', '本例 Shape', '意义'],
+              [
+                [
+                  'Output Weight Matrix W_out',
+                  '[V,C]=[5,4]',
+                  '五行对应五个候选；每行四个数说明该候选怎样读取 h 的四项证据',
+                ],
+                [
+                  'Output Bias b_out',
+                  '[V]=[5]',
+                  '每个候选各有一个基础评分偏移',
+                ],
+                [
+                  '输入 h',
+                  '[C]=[4]',
+                  '当前位置整理好的上下文证据',
+                ],
+                [
+                  '输出 z',
+                  '[V]=[5]',
+                  '五个候选的原始 Logits',
+                ],
+              ],
+            ),
+            formula(
+              String.raw`z=W_{\mathrm{out}}h+b_{\mathrm{out}}`,
+              '[5,4] 的 Output Weight Matrix 乘 [4] 的 h，再加 [5] Bias，得到 [5] Logits。',
+            ),
+            callout('Output Head 不负责什么？', [
+              list([
+                '它不直接选择最终 Token；它只产生 Logits，Softmax 和 sampling/argmax 才处理后续选择。',
+                '它不把文字直接变成向量；输入侧的 Embedding 负责用 Token ID 查出初始表示。',
+                '它不是人工编写的语言规则；W_out 和 b_out 是训练时通过 Gradient 学到的 Parameters。',
+              ]),
+            ]),
+            paragraph(
+              'Embedding Matrix 和 Output Weight Matrix 在本例中都是 [V,C]=[5,4]，但方向相反：Embedding 用一个 ID 从 V 行中选一行，得到 C 个输入特征；Output Head 接收 C 个上下文特征，同时计算 V 个候选分数。某些大模型会让二者共享参数，称为 weight tying；本课程的主例先保持它们独立，避免混淆两条职责。',
+            ),
+            formula(
+              String.raw`H:[B,T,C]\xrightarrow{\text{Output Head}}Z:[B,T,V]`,
+              '同一套 Output Head 会重复应用于 Batch 中每一个 [b,t] 位置；它不会让不同位置互相读取。',
+            ),
+          ]),
+          paragraph(
+            '接着计算 Logit。Logit 是候选 Token 的原始评分，不是概率。对于当前 [0,0] 这一道题，先固定它的 h=[0.20,−0.10,0.70,0.30]；Vocabulary 中每个候选再用自己的一组四个 Output Weights 和一个 Bias，与这个 h 做点积。这里“同一个 h”只限定在当前这一道题内，意思是五个候选在同一份上下文证据上公平比较。',
+          ),
+          formula(
+            String.raw`z_i=w_i\cdot h+b_i=\sum_{c=0}^{3}w_{i,c}h_c+b_i`,
+            '候选 i 的四个 weights 分别乘 h 的四个 features，全部相加后再加该候选的 bias。',
+          ),
+          table(
+            ['候选 i', 'wᵢ', 'bᵢ', '完整计算', 'Logit zᵢ'],
+            [
+              ['我', '[1,0,0,0]', '−0.2', '1×0.20−0.20', '0'],
+              [
+                '喜欢',
+                '[0,1,2,2]',
+                '0.1',
+                '0×0.20+1×(−0.10)+2×0.70+2×0.30+0.10',
+                '2',
+              ],
+              ['AI', '[0,0,1,1]', '0', '1×0.70+1×0.30', '1'],
+              ['学习', '[0,3,−1,0]', '0', '3×(−0.10)−1×0.70', '−1'],
+              ['猫', '[1,2,0,0]', '0', '1×0.20+2×(−0.10)', '0'],
+            ],
+            '五套评分规则使用同一个 h，最终按固定 Vocabulary 顺序得到 [0,2,1,−1,0]。',
+          ),
+          paragraph(
+            '为什么不能把 Logit=2 直接读成 200%？因为 Logit 可以是任意实数，也可以为负，而且五个 Logits 不会自动相加为 1。它们只表示候选之间的相对支持程度。Softmax 才负责把这五个分数一起转换成合法 Probability。',
+          ),
+          formula(
+            String.raw`p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}`,
+            '每个候选先计算自己的指数权重，再除以五个候选指数权重的总和。',
+          ),
+          table(
+            ['候选', 'Logit zᵢ', '指数权重 eᶻⁱ', '除以共同总和 12.475', 'Probability'],
+            [
+              ['我', '0', 'e⁰=1.000', '1.000÷12.475', '0.0802'],
+              ['喜欢', '2', 'e²≈7.389', '7.389÷12.475', '0.5923'],
+              ['AI', '1', 'e¹≈2.718', '2.718÷12.475', '0.2179'],
+              ['学习', '−1', 'e⁻¹≈0.368', '0.368÷12.475', '0.0295'],
+              ['猫', '0', 'e⁰=1.000', '1.000÷12.475', '0.0802'],
+            ],
+            '共同分母：1.000+7.389+2.718+0.368+1.000=12.475。概率因四舍五入相加约为 1。',
+          ),
+          paragraph(
+            '这一题的 Target ID 是 1，也就是“喜欢”，所以计算 Loss 时只读取正确候选的概率 0.5923。Cross Entropy 使用 `−ln(p_correct)`：概率越接近 1，Loss 越接近 0；正确答案概率越小，惩罚越大。',
+          ),
+          code(
+            'text',
+            `正确 Target = 喜欢 / ID 1
+p_correct   = 0.5923
+
+single-position loss
+= -ln(0.5923)
+≈ 0.5237`,
+          ),
+          callout('这一道题的完整因果链', [
+            chain([
+              '输入“我”的 ID 0',
+              '查到 Embedding [0.20,−0.10,0.70,0.30]',
+              '最小 context rule 得到 h=[0.20,−0.10,0.70,0.30]',
+              '五套评分参数得到 Logits [0,2,1,−1,0]',
+              'Softmax 得到 Probabilities [0.0802,0.5923,0.2179,0.0295,0.0802]',
+              '读取正确候选“喜欢”的 0.5923',
+              '得到这一位置的 Loss≈0.5237',
+            ]),
+          ]),
+        ]),
+        paragraph(
+          '另外五个 `[b,t]` 位置也执行完全相同的过程，只是输入、可见上下文和 Target 不同。因此“六个位置”不是六个 Feature，也不是一句六词长句，而是同一次 Batch 中的六道分类题。',
+        ),
+        table(
+          ['题号', '原坐标 [b,t]', '当前输入', '正确 Target ID / Token'],
+          [
+            ['0', '[0,0]', '我', '1 / 喜欢'],
+            ['1', '[0,1]', '喜欢', '2 / AI'],
+            ['2', '[1,0]', '猫', '1 / 喜欢'],
+            ['3', '[1,1]', '喜欢', '0 / 我'],
+            ['4', '[2,0]', '我', '3 / 学习'],
+            ['5', '[2,1]', '学习', '2 / AI'],
+          ],
+          '`B×T=3×2=6`；每一行都有五个候选分数，但只有一个本课硬标签 Target。',
+        ),
+        callout('Flatten 只是把题目排成六行', [
+          paragraph(
+            '`[3,2,5]` 可以想成“三组，每组两道题，每道题五个分数”。Cross Entropy 更方便接收“六道题，每道五个分数”，所以把前两个轴排成一列，得到 `[6,5]`。Targets 同样从 `[3,2]` 排成 `[6]`。数值和题目对应关系都没有改变，更没有让不同句子互相读取。',
+          ),
+          code(
+            'text',
+            `Logits [3,2,5]                 Logits [6,5]
+
+[0,0,:] 第 0 题的五个分数  ───────→ row 0
+[0,1,:] 第 1 题的五个分数  ───────→ row 1
+[1,0,:] 第 2 题的五个分数  ───────→ row 2
+[1,1,:] 第 3 题的五个分数  ───────→ row 3
+[2,0,:] 第 4 题的五个分数  ───────→ row 4
+[2,1,:] 第 5 题的五个分数  ───────→ row 5
+
+Targets [3,2] = [[1,2],[1,0],[3,2]]
+Targets [6]   = [1,2,1,0,3,2]`,
+          ),
+        ]),
+        callout('为什么最后只留下一个 Loss？', [
+          paragraph(
+            'Cross Entropy 先为六道题分别计算 Loss，再取平均。假设六个单题 Loss 依次是 0.52、0.80、0.65、1.10、0.90、0.60，那么总和是 4.57，Mean Loss 就是 4.57÷6≈0.762。这里的数字只用于演示“怎样汇总”，不是本模型六个位置的实际输出。',
+          ),
+          formula(
+            String.raw`L_{\text{batch}}=\frac{L_0+L_1+L_2+L_3+L_4+L_5}{6}`,
+            '一个 Scalar Mean Loss 同时代表这一步六道题的平均表现；每道题仍保留自己的计算路径。',
+          ),
+          paragraph(
+            '训练需要一个明确的共同目标，Backward 才能计算“哪些参数的变化会让这个平均值下降”。取平均也让 Loss 的尺度不会仅仅因为 Batch 放入更多题目就成倍增大。它不会把六道题的答案平均成一个 Token。',
+          ),
+        ]),
+        paragraph(
+          '现在再看完整路线，应该把它读成：先准备六道题，为每道题产生五个候选分数，各自对照正确 Target 得到一个 Loss，最后才把六个 Loss 平均成训练目标。后续章节会逐项推导中间数值。',
         ),
         chain([
           '文字按 Tokenizer 编码为 raw IDs [3,3]',
@@ -509,158 +770,339 @@ Cross Entropy 把正确答案的概率变成 Loss`,
         ]),
       ],
       [
+        '一个 `[b,t]` 对应一道 next-token 题；B×T=6，所以本次共有六道题。',
+        '每道题有 V=5 个 Logits 和一个正确 Target，不是五个 Targets。',
+        'Flatten 只改变排列方式，不改变题目、上下文或数值。',
         '不要把 [3,2,4] 中的 C=4 与 [3,2,5] 中的 V=5 混为一谈。',
         'Logit 还不是 Probability；Softmax 之后才得到总和为 1 的分布。',
-        'Loss 是整个 batch 的一个训练目标，不是模型生成的新 Token。',
+        'Mean Loss 是六个单题 Loss 的平均训练目标，不是模型生成的新 Token。',
       ],
-      check('为什么现在先不讨论 Embedding Row 怎样更新？', [
+      check('`[3,2,5]` 为什么可以变成 `[6,5]`？最终 Scalar Loss 又来自哪里？', [
         paragraph(
-          '因为更新需要先知道 Loss 怎样产生以及 Gradient 怎样从 Loss 传回参数。先理解完整数据路线，之后的更新过程才有因果来源。',
+          '因为前三个维度表示 3 条样本、每条 2 道题、每题 5 个候选分数。把前两个轴依次排开，就得到 6 行、每行 5 个分数；Targets 也按相同顺序排成 6 个正确 ID。Cross Entropy 先得到六个单题 Loss，再取平均形成一个 Scalar Loss。',
         ),
       ]),
     ),
     section(
       'o0232-6-language-model',
-      '6. Language Model：先表示上下文，再给所有候选打分',
-      '有了 Token Embedding 仍不能直接得到下一词概率；模型需要先整理当前上下文，再说明每个候选依据什么获得原始分数。',
+      '6. Language Model：这五个 Probability 到底在回答什么？',
+      '上一节已经算出 p=Softmax(z)。这一节只解释它在语言上的含义：模型不是给整句话一个分数，而是在每个位置回答一个“下一个 Token 会是什么”的条件概率问题。',
       [
-        '把“理解当前上下文”和“给 Vocabulary candidates 打分”分成两个可追踪步骤。',
-        '理解 Context Representation h、每个候选的 Output Weight、Bias 与 Logit 各自负责什么。',
+        '区分 P、pᵢ、Logit z 与 Context Representation h：它们分别表示什么，而不是只会背公式。',
+        '把一个 Batch 中的六个位置读成六道具体的 next-token 概率题。',
+        '区分 Transformer 使用完整左侧上下文的预测，与 Bigram 只看当前 Token 的简化预测。',
       ],
       [
         paragraph(
-          'Language Model 最终回答：在已经看到左侧内容后，Vocabulary 中每个候选成为下一个 Token 的可能性有多大。它不会从字符串一步跳到概率，而是先整理上下文特征，再为每个候选计算原始分数。',
+          '上一节追踪了 [0,0] 的一题：可见文字是“我”，正确下一 Token 是“喜欢”。该位置先有一个上下文表示 h，再经过 Output Head 得到 Logits z=[0,2,1,−1,0]，最后经过 Softmax 得到 p=[0.0802,0.5923,0.2179,0.0295,0.0802]。这一节不重复计算点积或指数；现在要回答的是：这五个数字在语言上各自是什么意思？',
         ),
+        callout('先把 P 与 pᵢ 分开读', [
+          table(
+            ['符号', '读法', '在本例中表示什么'],
+            [
+              ['P(…)', '“某事件的概率”这一种写法', '模型对“下一个 Token 是什么”的条件概率规则。'],
+              ['p', '一个完整的概率分布向量', '五个候选按 Vocabulary 顺序的概率：[0.0802,0.5923,0.2179,0.0295,0.0802]。'],
+              ['pᵢ', 'p 的第 i 个数', '候选 i 单独成为下一个 Token 的概率。'],
+              ['z', 'Logits 向量', 'Softmax 之前的五个原始分数；它们不是概率。'],
+              ['h', '当前位置的 Context Representation', '模型从允许看到的文字整理出的内部证据；它不是 Token ID，也不是概率。'],
+            ],
+          ),
+          formula(
+            String.raw`p=\operatorname{Softmax}(z),\qquad p_i=P(\text{next token}=i\mid\text{visible context})`,
+            'p 是 Softmax 计算出的整组概率；pᵢ 是其中一个候选的概率。右边的 P(…) 是同一件事的语言模型写法。',
+          ),
+          paragraph(
+            '例如 Vocabulary 的 ID 1 是“喜欢”，本例就可以写成 p_喜欢=P(下一个 Token=喜欢｜已经看到“我”)=0.5923。它不是“喜欢这个词有 59.23% 的普遍概率”，而是在这一份可见上下文下，五个候选之间的相对可能性。',
+          ),
+        ]),
         formula(
           String.raw`P(x_{t+1}\mid x_{\le t})`,
-          '给定到位置 t 为止的左侧 token，预测下一 token 的条件概率。',
-        ),
-        chain([
-          'Token IDs 查成 Input Embeddings',
-          'Context Model 整理允许看到的上下文',
-          '得到当前位置的 Context Representation h',
-          'Output Head 分别给五个候选计算 Logits',
-          'Softmax 把五个相对分数转换成 Probability Distribution',
-        ]),
-        table(
-          ['输入位置', '当前可见上下文（一般语言模型）', 'Target'],
-          [
-            ['[0,0]', '我', '喜欢'],
-            ['[0,1]', '我 喜欢', 'AI'],
-            ['[1,0]', '猫', '喜欢'],
-            ['[1,1]', '猫 喜欢', '我'],
-            ['[2,0]', '我', '学习'],
-            ['[2,1]', '我 学习', 'AI'],
-          ],
-          'B×T=3×2 的六道 next-token 分类题',
-        ),
-        paragraph(
-          'Context Model 在每个位置产生一个内部向量 h。可以把 h 理解成模型从当前可见上下文整理出的证据。例如 h 的 Shape 是 [C]=[4]，表示这个位置当前有四个内部特征；它不是 Probability，也不是 Token ID。',
-        ),
-        paragraph(
-          'Vocabulary 中的每个候选都有自己的一组 Output Weights 和一个 Bias。候选 i 的评分规则是 z_i = w_i · h + b_i：h 描述当前上下文包含的证据，w_i 描述该候选怎样重视这些证据，b_i 提供该候选的基础偏移，结果 z_i 就是该候选的 Logit。',
-        ),
-        formula(
-          String.raw`z_i=w_i\cdot h+b_i=\sum_{c=0}^{C-1}w_{i,c}h_c+b_i`,
-          '候选 i 的四个 learned weights 与上下文的四个 features 对应相乘、求和，再加该候选的 bias。',
+          '给定从开头到当前位置 t 的所有允许可见 Token，预测紧接着的下一 Token。',
         ),
         table(
-          ['quantity', '本例 Shape', '负责回答'],
+          ['公式部分', '这里的意思', '用“我 喜欢 AI”举例'],
           [
-            ['h', '[C]=[4]', '当前上下文整理出了哪些内部证据？'],
-            ['wᵢ', '[C]=[4]', '候选 i 怎样给每项证据加权？'],
-            ['bᵢ', 'scalar', '候选 i 的基础评分偏移是多少？'],
-            ['zᵢ', 'scalar', '候选 i 最终得到多少原始分？'],
-            ['z', '[V]=[5]', '五个候选的 Logits 按 Vocabulary 顺序排成什么？'],
+            ['x', '一串 Token（实现时通常是一串 Token IDs）', '“我”“喜欢”“AI”依次是 x₀、x₁、x₂。'],
+            ['t', '当前正在给哪一个位置出题', '若 t=1，模型已经看到了位置 0 和 1。'],
+            ['x≤t', '从开始到 t 的可见前缀', 'x≤1 就是“我 喜欢”。'],
+            ['｜', '“在已知……的条件下”', '不是除法；读成“已知我喜欢之后”。'],
+            ['P', '模型输出的概率规则', 'P(AI｜我喜欢) 是模型给“AI”作为下一 Token 的概率。'],
           ],
+          '这里默认 causal language model：当前位置只能使用左侧（含当前位置）信息，不能偷看右侧的 Target。',
         ),
-        callout('这些评分参数来自训练', [
+        paragraph(
+          '所以 P(xₜ₊₁｜x≤ₜ) 读成：“已经看过前缀 x≤ₜ 后，下一个 Token xₜ₊₁ 的概率是多少？”模型实际一次不会只返回一个数字；它会返回对整个 Vocabulary 的分布 p。我们只从这个分布中取出正确 Target 对应的 pᵢ，交给 Cross Entropy 打分。',
+        ),
+        callout('同一个 Batch 的六道概率题', [
           paragraph(
-            'Output Weights 和 Biases 不是程序员写好的语言规则。模型刚创建时通常接近随机；Cross Entropy、Backward 与 Optimizer 会逐步调整它们，也会继续调整负责产生 h 的前面参数。',
+            '本例 Batch 有 3 条样本、每条取 2 个预测位置，所以 B×T=3×2=6。每个 [b,t] 都有自己的可见上下文、自己的 p 向量和自己的正确 Target。为了把“取正确概率再算 Loss”看清楚，下表为六题固定了一组教学用 Logits；第 0 行与第 5 节完全相同，其余行是用于练习流程的示意数值，并非宣称来自一个已训练模型。',
+          ),
+          table(
+            ['位置 [b,t]', '可见上下文', '正确 Target', '这一题询问的概率', '本行具体计算'],
+            [
+              [
+                '[0,0]',
+                '我',
+                '喜欢 / ID 1',
+                'P(喜欢｜我)',
+                'z=[0,2,1,−1,0] → p₁=0.5923 → −ln(0.5923)=0.5237',
+              ],
+              [
+                '[0,1]',
+                '我 喜欢',
+                'AI / ID 2',
+                'P(AI｜我 喜欢)',
+                'z=[0,1,2,−1,0] → p₂=0.5923 → −ln(0.5923)=0.5237',
+              ],
+              [
+                '[1,0]',
+                '猫',
+                '喜欢 / ID 1',
+                'P(喜欢｜猫)',
+                'z=[0,1.5,0.5,−0.5,0] → p₁=0.5130 → −ln(0.5130)=0.6676',
+              ],
+              [
+                '[1,1]',
+                '猫 喜欢',
+                '我 / ID 0',
+                'P(我｜猫 喜欢)',
+                'z=[2,0.5,0,−1,0] → p₀=0.6478 → −ln(0.6478)=0.4341',
+              ],
+              [
+                '[2,0]',
+                '我',
+                '学习 / ID 3',
+                'P(学习｜我)',
+                'z=[0,0,0,1,0] → p₃=0.4046 → −ln(0.4046)=0.9048',
+              ],
+              [
+                '[2,1]',
+                '我 学习',
+                'AI / ID 2',
+                'P(AI｜我 学习)',
+                'z=[0,0,2,0,−1] → p₂=0.6869 → −ln(0.6869)=0.3756',
+              ],
+            ],
+            '每行先对五个 Logits 做 Softmax，得到五个概率；Cross Entropy 只按 Target ID 取 pᵢ，再计算 −ln(pᵢ)。例如 [2,0] 的正确 ID 是 3，所以即使其它候选也有概率，Loss 只读取 p₃=0.4046。',
+          ),
+        ]),
+        callout('h 通常不是“当前 Token 的原始 Embedding”', [
+          paragraph(
+            '原始 Embedding xₜ 只是当前 Token ID 查表得到的起点。例如“喜欢”的 ID 查到一个 [C] 向量，这个向量还没有读取左侧文字。Context Model 再把当前可见前缀处理成 hₜ：在 Transformer 中，Attention 让位置 t 读取允许看到的前缀，Residual、LayerNorm 和 FFN 继续改造表示，最终得到 hₜ。于是更准确的关系是 hₜ=f(x≤ₜ)，而不是 hₜ=xₜ。',
+          ),
+          paragraph(
+            '第 5 节为了把一题算完，特意在第一个位置使用最小规则 h=x；那是教学简化，不是完整 Transformer 的通用结论。这个区别很重要：两个位置都出现“喜欢”时，原始 Embedding 一样，但“我 喜欢”和“猫 喜欢”给出的 h 可以不同，后面的 Logits 与概率也就可以不同。',
+          ),
+        ]),
+        callout('Transformer 与 Bigram 分别记住多少上下文？', [
+          table(
+            ['模型', '先得到什么', '它实际表达的条件概率'],
+            [
+              ['Transformer Language Model', 'hₜ=f(x≤ₜ)，由完整可见前缀产生 Context Representation', 'P(next｜完整可见前缀)'],
+              ['本课 Bigram', '直接用当前 Token ID 查一行 next-token Logits，不显式构造丰富的 h', 'P(next｜当前 Token)'],
+            ],
+          ),
+          paragraph(
+            '因此 Bigram 遇到两个“喜欢”时，会查到同一行分数，无法根据前面是“我”还是“猫”改变预测；它是故意缩小的入门模型。Transformer 的价值正是让 h 携带更长的、与当前位置有关的上下文。',
           ),
         ]),
         paragraph(
-          '一般语言模型可以让 h 使用全部可见左侧上下文；第 13 节的 Bigram 是刻意简化的 shortcut，它不显式构造这样的 h，而是只根据当前 Token ID 直接查出一行下一词 Logits。',
+          '现在可以把主链严格地读成：先由 Context Model 得到 h；再由 Output Head 计算 z=W_out h+b_out；最后由 p=Softmax(z) 得到每个候选的条件概率。h 是“根据上下文整理出的证据”，z 是“尚未归一化的候选分数”，p 才是“可用于回答下一 Token 概率”的分布。',
         ),
       ],
       [
-        'Context Representation、Logit 和 Probability 是三个不同阶段的量。',
-        '每个候选使用自己的评分 Weight；不是所有候选共享同一个 scalar score。',
-        'Logit 只表示相对原始分数，Softmax 之后才得到总和为 1 的分布。',
-        '高 Probability 表示更符合模型学到的模式，不保证内容真实。',
+        'P(…｜…) 描述“在已知可见上下文时”的条件概率；｜不是除法。',
+        'p=Softmax(z) 是完整分布，pᵢ 是其中一个候选的概率；Logit z 本身不是概率。',
+        '完整 Transformer 中 hₜ=f(x≤ₜ)，通常不是当前 Token 的原始 Embedding xₜ。',
+        '每个 [b,t] 是一题独立的 next-token 分类题；高 Probability 只表示更符合模型学到的模式，不保证内容真实。',
       ],
-      check('候选“喜欢”的 Logit 是由哪些量计算出来的？', [
+      check('P(AI｜我 喜欢) 在问什么？它与 p、z、h 分别怎样相连？', [
         paragraph(
-          '由当前 Context Representation h、“喜欢”自己的 Output Weight w_喜欢 和 Bias b_喜欢 计算：z_喜欢 = w_喜欢 · h + b_喜欢。',
+          '它问：“已经看到‘我 喜欢’时，下一 Token 是 AI 的概率是多少？”模型先把可见前缀处理为 h，再由 Output Head 算出全部 Logits z=W_out h+b_out，随后 p=Softmax(z)。p 中 ID 为 AI 的那一项就是 P(AI｜我 喜欢)。其中 h 是上下文表示，z 是原始分数，p 才是概率。',
         ),
       ]),
     ),
     section(
       'o0234-7-autoregressive',
-      '7. Autoregressive：把一次预测重复成生成',
-      '模型每次只给出一个 next-token distribution，却需要生成更长的 continuation。',
+      '7. Autoregressive：选一个 Token，把它追加后再预测',
+      '模型一次只能回答“下一个 Token 是什么”。要生成一句更长的话，必须把本轮选出的 Token 放回输入末尾，再让模型面对这个更新后的上下文。',
       [
-        '理解生成把同一“上下文 → 分布 → 选择 → 追加”过程逐轮重复。',
-        '区分 teacher-forced parallel training 与 iterative autoregressive generation。',
+        '准确说明 append（追加）的是哪个数、追加到哪里，以及为什么不追加就无法连续生成。',
+        '用“我 → 喜欢 → AI”走完两轮真实的“输入 → 概率 → 选择 → 追加”过程。',
+        '区分 argmax 和 sampling：它们都使用同一组概率，但选 Token 的规则不同。',
+        '理解训练为何可以并行给所有位置打分，而生成必须一轮接一轮。',
       ],
       [
-        chain([
-          '已有 prompt IDs',
-          '模型输出 logits [B,T,V]',
-          '只取 logits[:, -1, :]',
-          'Softmax / 选择 next_id [B,1]',
-          '追加到 prompt',
-          '重复',
+        paragraph(
+          '先把生成理解成一个很小的循环：模型看当前的 prompt，给 Vocabulary 中每个候选一个概率；生成器从中选出一个 Token；再把这个 Token 放到 prompt 的末尾。因为下一轮 prompt 变了，模型也必须重新计算下一轮的 h、Logits 和概率。这个“自己的输出成为下一轮输入”的过程叫 autoregressive（自回归）。',
+        ),
+        callout('先定义 prompt、next_id 与 append', [
+          table(
+            ['词', '它是什么', '本例'],
+            [
+              ['prompt / history', '已经给模型看的 Token IDs；也就是目前的文字历史', '“我”的 history 是 [0]。'],
+              ['next_id', '本轮从概率分布中选出的一个整数 Token ID', '若选“喜欢”，next_id 是 [1]。'],
+              ['append（追加）', '把 next_id 放在 history 的末尾，形成下一轮的新输入', '[0] 追加 [1] 后变成 [0,1]，也就是“我 喜欢”。'],
+            ],
+          ),
+          code(
+            'text',
+            `Vocabulary: 我=0, 喜欢=1, AI=2, 学习=3, 猫=4
+
+before: history = [[0]]       # shape [B,T]=[1,1]，文字：我
+chosen: next_id = [[1]]       # 本轮选择“喜欢”
+after:  history = [[0,1]]     # shape [1,2]，文字：我 喜欢`,
+          ),
+          paragraph(
+            '追加的是一个选出的整数 ID，不是把 Probability、Logits、h 或模型 Weights 接到输入后面。模型下一轮会根据新的 IDs 自己重新 lookup Embedding 并计算新的 h。追加也不是训练：它不会改变任何 Parameter。',
+          ),
         ]),
+        callout('完整走两轮：我 → 喜欢 → AI', [
+          paragraph(
+            '下面沿用 Vocabulary 顺序 [我, 喜欢, AI, 学习, 猫]。这些是固定教学分数，用来展示生成控制流；不要把它们当成某个已训练模型的真实输出。',
+          ),
+          table(
+            ['轮次', '本轮输入 history', '模型最后位置的 Probability', '选择与 append 后的新 history'],
+            [
+              [
+                '第 1 轮',
+                '[0] / 我',
+                '[0.0802, 0.5923, 0.2179, 0.0295, 0.0802]',
+                'argmax 选 ID 1“喜欢”；[0] → [0,1] / 我 喜欢',
+              ],
+              [
+                '第 2 轮',
+                '[0,1] / 我 喜欢',
+                '[0.0802, 0.2179, 0.5923, 0.0295, 0.0802]',
+                'argmax 选 ID 2“AI”；[0,1] → [0,1,2] / 我 喜欢 AI',
+              ],
+            ],
+            '第二行是重新运行模型后的新分布，不是把第一行的五个概率向右移动或重复使用。',
+          ),
+          paragraph(
+            '为什么必须 append？如果选出“喜欢”后仍把旧的 [0] / “我”交给模型，下一轮模型仍只知道“我”，会再次给出同一类分布；它既不知道刚刚生成了“喜欢”，也不能让后续词依赖“我 喜欢”。追加让新 Token 成为下一步可见上下文的一部分。',
+          ),
+          chain([
+            'history IDs [B,T] 作为本轮输入',
+            '模型为每个已有位置输出 Logits [B,T,V]',
+            '只取最后位置 logits[:,−1,:]，shape [B,V]：它回答“紧接 history 的下一个 Token”',
+            'Softmax 得到最后位置的 probabilities [B,V]',
+            '按一种选择规则得到 next_id [B,1]',
+            '把 next_id append 到 history，shape 变为 [B,T+1]',
+            '用更长的 history 开始下一轮',
+          ]),
+        ]),
+        callout('argmax 和 sampling：都基于 p，但选择规则不同', [
+          table(
+            ['方法', '规则', '面对第 1 轮概率时的结果'],
+            [
+              ['argmax', '总是选 Probability 最大的 Token；不随机', '最大值是 0.5923，所以选“喜欢”。'],
+              ['sampling', '把 p 当作抽签权重随机抽一个 Token；高概率更常抽到，但不保证', '“喜欢”在大量重复抽样中约占 59.23%；“AI”约占 21.79%，一次也可能被抽到。'],
+            ],
+          ),
+          paragraph(
+            '模型负责给候选打分并产生 p；argmax 或 sampling 负责从 p 选出一个实际 next_id。argmax 适合看最确定的选择，但容易反复选相同模式；sampling 可以产生不同续写，因为低一些的候选仍有机会被选中。后面会再讨论 Temperature 和 top-k 如何调整 sampling。',
+          ),
+        ]),
+        callout('两步路径的概率为什么要相乘？', [
+          paragraph(
+            '为专门看懂连乘，暂时使用更好算的独立数字：已知 prompt 是“我”，假设第一次 P(喜欢｜我)=0.5；选出“喜欢”并 append 后，第二次模型重新计算，得到 P(AI｜我 喜欢)=0.6。要得到完整续写“喜欢 AI”，两个事件都必须发生，因此把两个“在各自上下文下发生”的概率相乘。',
+          ),
+          formula(
+            String.raw`P(\text{续写恰好为「喜欢 AI」}\mid\text{我})=P(\text{喜欢}\mid\text{我})\times P(\text{AI}\mid\text{我 喜欢})=0.5\times0.6=0.3`,
+            '0.3 是模型给这一条完整两步路径的概率；它不是第二步单独选 AI 的概率。',
+          ),
+          paragraph(
+            '换一条路径，第二步必须重新换条件：例如 P(学习｜我)=0.25 且 P(AI｜我 学习)=0.8 时，“学习 AI”的路径概率是 0.25×0.8=0.20。不能复用 0.6，因为 0.6 只回答“上下文是我 喜欢时”的问题。若使用 sampling，路径概率表示反复生成时走到这条路径的理论机会；若使用 argmax，每轮直接选最大项，但模型仍可用同一乘法规则给任何完整路径打分。',
+          ),
+        ]),
+        paragraph(
+          '现在才看训练与生成的区别。训练文本已经给出真实后续 Token，所以可以一次准备好许多 Input/Target 位置并行打分；生成时并没有真实的下一 Token，必须先选出第 1 个 next_id、append，才能知道第 2 轮要输入什么。',
+        ),
         table(
           ['对比项', '训练（teacher forcing）', '生成（autoregressive）'],
           [
             [
-              '已知内容',
-              '真实 inputs 与真实 targets',
-              '只有当前 prompt，之后包含模型刚选出的 token',
+              '下一 Token 从哪里来',
+              '原始训练文本已经给出正确 Target',
+              '由 argmax 或 sampling 从本轮 p 中选出 next_id',
+            ],
+            [
+              '下一轮输入',
+              '所有右移 inputs 一开始就可构造好',
+              '必须先 append 本轮 chosen next_id 才产生',
             ],
             [
               '一次处理的位置',
-              '并行处理全部 B×T 个位置',
-              '当前轮只从最后位置选择一个 token',
+              '并行处理全部 B×T 个已知位置',
+              '当前轮只从最后位置选择一个 Token',
             ],
             [
-              'loss / backward / step',
-              '计算并更新参数',
-              '不计算或反传，不更新参数',
+              'Parameters 会改变吗',
+              'Loss → backward → optimizer.step 会更新它们',
+              '不会；这里只是在固定模型下选择并追加 IDs',
             ],
-            ['序列长度', '固定训练窗口 [3,2]', '每轮增长一个 token'],
           ],
-        ),
-        formula(
-          String.raw`P(x_{1:T})=\prod_{t=1}^{T}P(x_t\mid x_{<t})`,
-          '一段序列的概率是每一步条件概率的连乘，而不是彼此独立的概率。',
-        ),
-        paragraph(
-          'auto 指模型刚选出的输出会成为下一轮输入之一，并不表示“自动训练”。若前一步选错，后续分布也会在该生成历史上继续计算。',
         ),
       ],
       [
-        '生成不是一次 forward 就产生任意长文本。',
-        '训练可以并行所有位置，生成仍有逐 token 的顺序依赖。',
-        '生成时不会调用 backward() 或 optimizer.step()。',
+        'append 是把选出的 next_id 加到 history 末尾，不是追加概率、Embedding、h、Logits 或更新模型参数。',
+        '每次 append 后上下文改变，因此下一轮要重新算 h、Logits 与 Probability Distribution。',
+        'argmax 选最大概率项；sampling 按整组概率随机选择。两者都不等于训练。',
+        '生成不能一次 forward 产生任意长文本：下一输入依赖本轮刚选出的 next_id。',
       ],
-      check('为什么训练可并行而生成要逐个 token？', [
+      check('从“我”生成出“喜欢”后，下一轮模型的输入是什么？为什么不能仍用“我”？', [
         paragraph(
-          '训练时真实右移 inputs 已经给齐每个位置；生成的下一输入依赖本轮刚选出的 next_id，必须先确定它。',
+          '下一轮 history 是 [0,1]，也就是“我 喜欢”。因为“喜欢”已经是模型刚生成的历史，后续预测必须能利用它；若仍输入 [0] / “我”，模型不会知道刚才生成了什么，只会重复回答“我”之后可能是什么。',
         ),
       ]),
     ),
     section(
       'o0235-8-input-target',
-      '8. Input 和 Target 为什么错开一位',
-      'next-token prediction 需要模型看到当前 token，却不能在当前位置先看到正确的下一 token。',
+      '8. Input 与 Target：用同一段文字自动出题，答案右移一位',
+      '“我 喜欢 AI”不需要人工标注：它本身就包含两道 next-token 题。关键是让每个位置看到当前与左侧 Token，却把右边紧接的 Token 当作答案。',
       [
-        '由同一序列自动构造 input 与正确标签，说明自监督答案来自原始文本。',
-        '说明 shift 定义标签，causal mask 则在可用的上下文模型中阻止未来泄漏。',
+        '从一条三个 Token 的原始序列，亲手构造两道 Input → Target 预测题。',
+        '解释为什么 N 个原始 Token 在一个窗口中只能提供 T=N−1 个 next-token Targets。',
+        '区分 right shift 决定“答案是什么”，causal mask 限制“模型能看什么”。',
+        '把 `[B,N]`、`[B,T]`、`[B,T,V]` 与每一题具体对应起来。',
       ],
       [
+        paragraph(
+          'Language Model 的训练任务不是“把输入原样复读”，而是“看到到目前为止的文字，猜紧接着的下一 Token”。因此一段原始文字既提供题目，也提供标准答案：每个 Token 左边的位置负责预测它。这个做法叫 self-supervised，因为答案来自文本本身，而不是人工逐句标注。',
+        ),
+        callout('先只看一条序列：我 喜欢 AI', [
+          table(
+            ['原始位置', 'raw Token', 'ID', '它能成为哪一道题的答案？'],
+            [
+              ['0', '我', '0', '在这个窗口中没有左侧位置预测它；它是第一道题的输入起点。'],
+              ['1', '喜欢', '1', '上一位置“我”要预测的 Target。'],
+              ['2', 'AI', '2', '上一位置“我 喜欢”要预测的 Target。'],
+            ],
+          ),
+          code(
+            'text',
+            `raw IDs R = [0, 1, 2]             # 我  喜欢  AI
+
+inputs  X = R[:-1] = [0, 1]       # 我  喜欢
+targets Y = R[1:]  = [1, 2]       # 喜欢  AI
+
+第 0 题：看到“我”       → Target 是“喜欢” / ID 1
+第 1 题：看到“我 喜欢”  → Target 是“AI”   / ID 2`,
+          ),
+          paragraph(
+            '这就是“错开一位”：`inputs` 去掉最后一个 Token，`targets` 去掉第一个 Token。两个数组长度相同，索引也对齐，但同一索引保存的不是同一个 Token。`inputs[0]=我` 对应 `targets[0]=喜欢`；`inputs[1]=喜欢` 对应 `targets[1]=AI`。',
+          ),
+        ]),
+        formula(
+          String.raw`X=R[:,0:N-1],\qquad Y=R[:,1:N],\qquad T=N-1`,
+          'R 是原始 IDs `[B,N]`；沿 sequence 轴切出 X 与 Y 后，两者都是 `[B,T]`。最后一个原始 Token 在这个窗口右侧没有答案，因此不作为 Input 位置。',
+        ),
+        callout('为什么最后一个 AI 不再出一道题？', [
+          paragraph(
+            '要让“AI”出题，模型需要一个紧接在它右侧的正确 Token。例如原始文字还包含“AI 学习”，才可额外构造“我 喜欢 AI → 学习”。在当前窗口 `[我, 喜欢, AI]` 中，AI 后面没有提供答案，所以只能产生两题，而不是三题。训练会从长文本中不断截取窗口，AI 在下一个重叠窗口里可以成为 Input。',
+          ),
+        ]),
         code(
           'text',
           `raw IDs [B,N] = [[0,1,2], [4,1,0], [0,3,2]]  # [3,3]
@@ -669,36 +1111,65 @@ targets [B,T] = [[1,2],   [1,0],   [3,2]]    # [3,2]
 
 T = N - 1 = 2`,
         ),
+        paragraph(
+          '现在才把三条独立原始序列放进 Batch：第 0 条是“我 喜欢 AI”，第 1 条是“猫 喜欢 我”，第 2 条是“我 学习 AI”。B=3 只表示一次并行处理三条样本；它们不会彼此拼接，也不会互相提供上下文。每条有 T=2 个预测位置，所以本次一共是 3×2=6 道题。',
+        ),
         table(
           [
-            'batch, position',
-            'input token',
-            'target token',
-            '一般 causal LM 此处可见的左侧',
+            '题目位置 [b,t]',
+            '该条原始文字',
+            '一般 causal LM 此处可见的上下文',
+            '正确 Target',
+            'Cross Entropy 会读取哪一项？',
           ],
           [
-            ['[0,0]', '我', '喜欢', '我'],
-            ['[0,1]', '喜欢', 'AI', '我 喜欢'],
-            ['[1,0]', '猫', '喜欢', '猫'],
-            ['[1,1]', '喜欢', '我', '猫 喜欢'],
-            ['[2,0]', '我', '学习', '我'],
-            ['[2,1]', '学习', 'AI', '我 学习'],
+            ['[0,0]', '我 喜欢 AI', '我', '喜欢 / ID 1', 'p[0,0,1]'],
+            ['[0,1]', '我 喜欢 AI', '我 喜欢', 'AI / ID 2', 'p[0,1,2]'],
+            ['[1,0]', '猫 喜欢 我', '猫', '喜欢 / ID 1', 'p[1,0,1]'],
+            ['[1,1]', '猫 喜欢 我', '猫 喜欢', '我 / ID 0', 'p[1,1,0]'],
+            ['[2,0]', '我 学习 AI', '我', '学习 / ID 3', 'p[2,0,3]'],
+            ['[2,1]', '我 学习 AI', '我 学习', 'AI / ID 2', 'p[2,1,2]'],
           ],
+          '模型输出 p 的 shape 是 `[B,T,V]=[3,2,5]`：每一题都有五个候选概率，Target ID 指出该从最后一轴取哪一个。',
         ),
-        callout('shift 和 causal mask 分工不同', [
+        callout('为什么 Target 不能和 Input 相同？', [
           paragraph(
-            'right shift 规定每个位置的“正确下一 token”。一般 Transformer 一次读入整行时还必须用 causal mask 禁止位置 t 看右侧 future token；Bigram 每个位置只查当前 token，本身没有跨位置读取。',
+            '若把 `[我, 喜欢]` 同时当 Input 和 Target，第 0 题会变成“看到我，预测我”，第 1 题会变成“看到喜欢，预测喜欢”。模型在当前位置本来就收到当前 Token，自然可以学会复制，而没有学到 next-token prediction。right shift 强迫每一题去预测右边尚未作为该位置答案出现的 Token。',
           ),
+        ]),
+        callout('right shift 与 causal mask：两道不同的安全门', [
+          table(
+            ['机制', '它决定什么', '没有它会怎样？'],
+            [
+              ['right shift', '哪一个 Token 是当前位置的正确 Target', '会把“复读当前 Input”错当成训练目标。'],
+              ['causal mask', 'Transformer 在算位置 t 的 hₜ 时，可以读取输入序列中的哪些位置', '它可能偷看右侧 Input，而右侧 Input 恰好含有该位置的 Target。'],
+            ],
+          ),
+          paragraph(
+            '看第 0 条序列的第 0 题：Input 整行其实是 `[我, 喜欢]`，而此位置的 Target 是“喜欢”。如果没有 causal mask，Attention 在位置 0 可以看见右侧位置 1 的“喜欢”，等于提前看到了答案；这叫 future leakage。mask 规定位置 0 只能看“我”，位置 1 才能看“我 喜欢”。right shift 负责出题，mask 负责防止偷看答案，两者缺一不可。',
+          ),
+          paragraph(
+            'Bigram 模型只用当前位置 ID 查一行分数，没有跨位置 Attention，因此它本身不会读取右侧；但它仍需要 right shift 来知道每行分数应该对哪一个下一 Token 计算 Loss。',
+          ),
+        ]),
+        chain([
+          '长文本切出 raw IDs R [B,N]',
+          '右移形成 inputs X [B,T] 与 targets Y [B,T]，其中 T=N−1',
+          'Transformer 用 causal mask 计算每个位置仅依赖左侧的 h [B,T,C]',
+          'Output Head 得到每题五个 Logits / Probabilities [B,T,V]',
+          'Target ID 指向每题正确概率 p[b,t,target_id]',
+          'Cross Entropy 对全部 B×T 道题计算并平均 Loss',
         ]),
       ],
       [
-        'target 与 input shape 相同，不表示内容相同。',
-        '把 input 和 target 完全相同会让模型复制已见答案，形成信息泄漏。',
-        'shift 不是移动 Embedding，而是移动监督关系。',
+        'right shift 是切分原始 Token IDs 来定义监督关系，不是移动 Embedding，也不是改变 Token ID。',
+        'N 个原始 Token 在当前窗口只产生 N−1 道 next-token 题；最后一个 Token 缺少右侧 Target。',
+        'Target 与 Input 都是 `[B,T]`，但同一 [b,t] 的内容相差一位：Target 是 Input 右边的下一个 Token。',
+        'right shift 定义答案；causal mask 防止 Transformer 偷看右侧输入。Bigram 虽无需 mask，仍需 shift。',
       ],
-      check('target[1,1] 是什么？它对应哪个预测问题？', [
+      check('原始序列“我 喜欢 AI”为什么只产生两题？第 0 题的 Target 与可见上下文各是什么？', [
         paragraph(
-          'target[1,1]=0，即 我；在一般 causal LM 中它是“猫 喜欢 → 我”的监督，在 Bigram 中简化为“喜欢 → 我”。',
+          '它有 N=3 个原始 Token，但最后的 AI 在这个窗口右边没有给出下一 Token，因此 T=N−1=2。第 0 题的 Input/可见上下文是“我”，Target 是它右边紧接的“喜欢” / ID 1；Cross Entropy 读取 p[0,0,1]。',
         ),
       ]),
     ),
@@ -924,12 +1395,13 @@ print(probabilities.sum())
     ),
     section(
       'o0241-11-cross-entropy-probability',
-      '11. Cross Entropy：把正确答案的概率变成 Loss',
-      '一张概率表不能直接让 optimizer 判断更新方向；训练需要一个可最小化的标量错误分数。',
+      '11. Cross Entropy：从正确答案概率到 Loss，再到 Gradient',
+      '概率表告诉我们模型目前相信什么；Cross Entropy 把“正确答案得到多少概率”压成一个 Loss，并给每个 Logit 一个明确的升降方向。',
       [
         '从“正确答案概率越高，Loss 应越低”推导单题 L=−ln(p_correct)。',
         '解释负号和对数各自解决什么问题，再连接完整 One-hot Cross Entropy。',
-        '用一次数值更新看到正确 Logit、Probability 与 Loss 怎样改变。',
+        '从 L=−ln(p_y) 推到每个 Logit 的 Gradient gᵢ=pᵢ−yᵢ，并逐项解释正负号。',
+        '追踪 Gradient 如何从 Logits 回传到 Output Head 的 Weight、Bias 与 Context Representation h。',
       ],
       [
         paragraph(
@@ -986,6 +1458,66 @@ L = -Σ yᵢ ln(pᵢ)
           String.raw`L=-\sum_{i=0}^{V-1}y_i\ln(p_i)=-\ln(p_{\mathrm{correct}})`,
           'One-hot label 只有正确 Token 的位置为 1，所以完整求和会简化为正确答案的 Negative Log Probability。',
         ),
+        callout('yᵢ 到底是什么？它不是 Probability', [
+          paragraph(
+            '为避免符号混淆，本课把训练数据给出的整数标签写成 `target_id`。本题正确 Token 是“喜欢”，所以 `target_id=1`。公式中的 yᵢ 则不是整数 1 本身，也不是模型预测出来的概率；它是 one-hot target vector 在候选 i 位置的值：只有正确 ID 的位置放 1，其余全部放 0。',
+          ),
+          formula(
+            String.raw`y_i=\begin{cases}1,&i=\mathrm{target\_id}\\0,&i\ne\mathrm{target\_id}\end{cases}\qquad\text{本题：target\_id=1，}\ y=[0,1,0,0,0]`,
+            'pᵢ 是模型对候选 i 给出的 Probability；yᵢ 是训练数据给出的 0 或 1 标签。两者来源不同，不能混为一谈。',
+          ),
+          table(
+            ['候选 i', 'Token', '模型预测 pᵢ', '标签 yᵢ', '在 Cross Entropy 中的作用'],
+            [
+              ['0', '我', '0.0802', '0', '不是正确答案，不计入 −ln(p_correct)。'],
+              ['1', '喜欢', '0.5923', '1', '正确答案；读取这一项作为 p_correct。'],
+              ['2', 'AI', '0.2179', '0', '不是正确答案。'],
+              ['3', '学习', '0.0295', '0', '不是正确答案。'],
+              ['4', '猫', '0.0802', '0', '不是正确答案。'],
+            ],
+          ),
+          paragraph(
+            '因此在 Gradient 公式 gᵢ=pᵢ−yᵢ 中，正确“喜欢”的 g₁=0.5923−1=−0.4077；“AI”的 g₂=0.2179−0=+0.2179。负号会让正确候选的相对 Logit 被推高，正号会让错误候选的相对 Logit 被压低。',
+          ),
+        ]),
+        callout('Loss 这个数怎样告诉模型“该往哪边改”？', [
+          paragraph(
+            'Loss 本身只有一个数，例如 0.5237；Optimizer 还需要知道：把每个 Logit 稍微调大一点，会让 Loss 上升还是下降、变化多少。这个局部变化率就是 Gradient。先把五个 Logits 想成五个可微调旋钮，下一步再追踪真正被更新的 Weights。',
+          ),
+          formula(
+            String.raw`L=-\ln\left(\frac{e^{z_y}}{\sum_j e^{z_j}}\right)=-z_y+\ln\left(\sum_j e^{z_j}\right)`,
+            '把 Softmax 代入 Loss：−z_y 专门奖励正确 Logit 变大；后面的 Log-Sum-Exp 来自所有候选共同竞争的 Softmax 分母。',
+          ),
+          formula(
+            String.raw`g_i=\frac{\partial L}{\partial z_i}=p_i-y_i`,
+            'yᵢ 是 one-hot Target：正确候选 yᵢ=1，其它候选 yᵢ=0。Softmax 与 Negative Log 组合后，Gradient 恰好简化成“预测 Probability 减标签”。',
+          ),
+          paragraph(
+            'gᵢ 的读法是：若把 zᵢ 增加很小的 Δzᵢ，Loss 大约改变 gᵢ×Δzᵢ。负数表示调高该 Logit 会降低 Loss；正数表示调高它会增加 Loss。Gradient Descent 会执行“减去学习率乘 Gradient”，所以它会把负 Gradient 对应的 Logit 推高，把正 Gradient 对应的 Logit 推低。',
+          ),
+        ]),
+        table(
+          ['候选', 'pᵢ', 'Target yᵢ', 'gᵢ=pᵢ−yᵢ', 'Gradient Descent 的方向'],
+          [
+            ['我', '0.0802', '0', '+0.0802', 'z_我 向下调一点'],
+            ['喜欢（正确）', '0.5923', '1', '−0.4077', 'z_喜欢 向上调一点'],
+            ['AI', '0.2179', '0', '+0.2179', 'z_AI 向下调一点'],
+            ['学习', '0.0295', '0', '+0.0295', 'z_学习 向下调一点'],
+            ['猫', '0.0802', '0', '+0.0802', 'z_猫 向下调一点'],
+          ],
+          '候选顺序为 [我, 喜欢, AI, 学习, 猫]；显示值经四舍五入。五个 Gradient 相加约为 0，说明 Softmax 主要重新分配候选之间的相对分数。',
+        ),
+        callout('用很小的改动核对正负号', [
+          table(
+            ['只改变一项', '新的 p(喜欢)', '新的 Loss', '说明'],
+            [
+              ['不改 z=[0,2,1,−1,0]', '0.592299', '0.523744', '基准。'],
+              ['把正确 z_喜欢 从 2 增至 2.01', '0.594711', '0.519679', 'Loss 下降，符合 g_喜欢<0。'],
+              ['把错误 z_AI 从 1 增至 1.01', '0.591005', '0.525932', 'Loss 上升，符合 g_AI>0。'],
+            ],
+            '固定 Logits 的数值微调，只用于验证 Gradient 方向；它不是训练日志。',
+          ),
+        ]),
         formula(
           String.raw`\frac{\partial L}{\partial z_i}=p_i-\mathrm{one\_hot}(y)_i`,
           'Softmax 与 Cross Entropy 组合后，logit gradient 等于 probability 减去正确 target 的 one-hot vector。',
@@ -1020,19 +1552,64 @@ Loss     0.524 → 0.501`,
             '这一步闭合了学习因果链：正确答案的相对 Logit 上升 → Softmax Probability 提高 → Cross Entropy Loss 降低。',
           ),
         ]),
+        callout('Logit 的 Gradient 怎样回传到真正的 Parameters？', [
+          paragraph(
+            'Logits 不是模型长期保存的参数；每次 forward 都会重新算出它们。真正要更新的是 Output Head 的 W_out、b_out，以及前面负责产生 h 的 Parameters。已知 z=W_out h+b_out 和 g=dL/dz 后，Chain Rule 的下一站如下。这里 W_out 的 shape 是 `[V,C]=[5,4]`，每一行对应一个候选 Token 的评分规则。',
+          ),
+          formula(
+            String.raw`\frac{\partial L}{\partial b_{\mathrm{out}}}=g,\qquad \frac{\partial L}{\partial W_{\mathrm{out}}}=g\,h^{\mathsf T},\qquad \frac{\partial L}{\partial h}=W_{\mathrm{out}}^{\mathsf T}g`,
+            'Bias 的每一项直接收到对应 gᵢ；第 i 行 Output Weight 的 Gradient 是 gᵢ×h；h 则收集全部候选评分规则传回的影响。',
+          ),
+          table(
+            ['量', 'shape', '本例的含义'],
+            [
+              ['g=dL/dz', '[V]=[5]', '[0.0802,−0.4077,0.2179,0.0295,0.0802]：五个候选 Logit 的方向。'],
+              ['dL/db_喜欢', 'scalar', 'g_喜欢=−0.4077；执行减法更新时，喜欢的 Bias 会上升。'],
+              ['dL/dw_喜欢', '[C]=[4]', 'g_喜欢×h=−0.4077×[0.20,−0.10,0.70,0.30]≈[−0.0815,0.0408,−0.2854,−0.1223]。'],
+              ['dL/dh', '[C]=[4]', 'W_outᵀg：把五个候选的反馈汇总，交给产生 h 的 Context Model。'],
+            ],
+          ),
+          code(
+            'text',
+            `本例“喜欢”的 Output Head 参数：
+old w_喜欢 = [0, 1, 2, 2]
+old b_喜欢 = 0.1
+
+dL/dw_喜欢 ≈ [-0.0815, 0.0408, -0.2854, -0.1223]
+dL/db_喜欢 ≈ -0.4077
+
+若只观察这一行、learning rate η=0.1：
+new w_喜欢 = old w_喜欢 - η × dL/dw_喜欢
+           ≈ [0.0082, 0.9959, 2.0285, 2.0122]
+new b_喜欢 ≈ 0.1408`,
+          ),
+          paragraph(
+            '真实的一步会同时更新全部五行 W_out、全部 Bias，以及产生 h 的 Embedding、Attention、FFN 等前面参数。h 收到的 Gradient 继续沿 Context Model 反传；这就是 Backpropagation 把一个最终 Loss 分配给许多 Parameters 的过程。',
+          ),
+        ]),
+        callout('Batch Mean Loss 会怎样改变 Gradient？', [
+          paragraph(
+            '前面 g=p−y 是单题 Loss 的 Gradient。本例一次有 B×T=3×2=6 道题，默认 mean reduction 会先把六个单题 Loss 平均。因此每一道题传回自己 Logits 的 Gradient 还要除以 6；这样 Batch 放入更多题目时，Loss 与更新步幅不会只因题目数量变大而成倍放大。',
+          ),
+          formula(
+            String.raw`L_{\mathrm{batch}}=\frac{1}{BT}\sum_{b,t}L_{b,t},\qquad \frac{\partial L_{\mathrm{batch}}}{\partial z_{b,t,i}}=\frac{p_{b,t,i}-y_{b,t,i}}{BT}`,
+            '本例的除数是 BT=6。若明确使用 sum reduction，则不除以 6；必须在代码与解释中写清 reduction。',
+          ),
+        ]),
       ],
       [
         'loss 不是 accuracy 或百分比；越低越好，理论下界为 0。',
         'loss 直接读正确 token 的 probability，但 Softmax 让全部 logits 相互竞争，所以全部都会收到梯度。',
         'Cross Entropy 不是只判断 Argmax 对错；即使最大候选已正确，提高其 Probability 仍会降低 Loss。',
-        '直接更新 Logits 只是教学演示；真实训练更新产生 Logits 的 Parameters。',
-        '训练通常平均全部位置，不只看最后一个 token。',
+        'gᵢ=pᵢ−yᵢ 表示把 Logit zᵢ 增大一点会怎样改变 Loss：正确项为负、错误项为正。',
+        '直接更新 Logits 只是教学显微镜；真实训练更新 W_out、b_out 和产生 h 的前面 Parameters。',
+        'mean reduction 时，每个位置的 Logit Gradient 还要除以有效题目数；训练通常平均全部位置，不只看最后一个 Token。',
       ],
       check(
-        '为什么正确答案概率从 0.10 降到 0.01 时，Cross Entropy 会明显增大？',
+        'Target 是“喜欢”且 p_喜欢=0.5923 时，g_喜欢 与 g_AI 分别是多少？它们告诉 Gradient Descent 做什么？',
         [
           paragraph(
-            'L=−ln(p_correct)。概率 0.10 对应约 2.303，0.01 对应约 4.605；Negative Log 会强烈惩罚模型非常自信地把概率放在错误候选上。',
+            'g_喜欢=0.5923−1=−0.4077，g_AI=0.2179−0=+0.2179。Gradient Descent 执行“参数减去学习率乘 Gradient”；在直接看 Logit 的教学镜头下，这会让 z_喜欢 上升、z_AI 下降。真实网络中同一方向会经由 Chain Rule 变成对对应 Output Weight、Bias 和产生 h 的 Parameters 的更新。',
           ),
         ],
       ),

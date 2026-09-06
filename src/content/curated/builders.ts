@@ -85,6 +85,19 @@ function materializeBodyBlock(
   }
 }
 
+// Editorial additions retain the existing section anchors and block identifiers.
+export function materializeBodyBlocks(
+  blocks: readonly CuratedBodyBlock[],
+  source: SourceRef,
+  idPrefix: string,
+): ContentBlock[] {
+  let sequence = 0;
+  const nextId: BlockIdFactory = (role) => `${idPrefix}-${role}-${++sequence}`;
+  return blocks.map((block) =>
+    materializeBodyBlock(block, source, nextId, block.type),
+  );
+}
+
 export function materializeTeachingSection(
   weekSlug: string,
   revision: TeachingSectionRevision,

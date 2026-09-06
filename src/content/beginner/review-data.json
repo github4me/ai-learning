@@ -1,0 +1,3039 @@
+[
+  {
+    "sectionId": "o0006-2-scalar",
+    "rationale": "纠正“只有标量输出才能求导”的说法，解释为什么本课先汇总成一个优化目标。",
+    "replacements": [
+      {
+        "from": "以后你会经常看到一个训练batch 最后产生一个scalar loss。因为只有一个最终Loss，才能方便地从它开始向后计算所有参数的gradient。",
+        "to": "以后一个训练 batch 通常会汇总成一个 scalar loss。这样我们先选定一个明确的优化目标，再计算它对参数的梯度。多元素输出也能求导，但需要说明怎样组合各输出；Week 5 再解释，当前先用平均损失。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0197-17-vanishing-exploding-gradient",
+    "rationale": "梯度大小取决于沿路径局部乘数的绝对值，而不是带符号的大小比较。",
+    "replacements": [
+      {
+        "from": "如果很多局部导数都小于1",
+        "to": "如果沿路径很多局部导数的绝对值都小于 1"
+      },
+      {
+        "from": "如果很多局部导数都大于1",
+        "to": "如果沿路径很多局部导数的绝对值都大于 1"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0003-week-1",
+    "rationale": "建立零基础起点和读公式约定，避免把记符号当成入门门槛。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "开始前：你需要会什么？",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "不要求学过微积分或线性代数。先会加减乘除、负数、按顺序读一列数就可以开始。遇到不熟悉的符号，先用旁边的数字例子算一次，再回看公式；公式只是把同样的步骤写短。"
+          },
+          {
+            "type": "paragraph",
+            "text": "Python 部分需要能运行文件、读列表、for 循环和函数。第一次可以先做纸笔例子；Week 1 第 15 节有最小代码准备，Week 5 再安装 PyTorch。12 周表示先后顺序，不要求每章一周内读完。"
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "headers": [
+          "写法",
+          "先这样读",
+          "小例子"
+        ],
+        "rows": [
+          [
+            "= / ≈",
+            "完全相等 / 四舍五入后接近",
+            "1/3≈0.333；不要把近似数当精确值"
+          ],
+          [
+            "x₁、x₂",
+            "同一组数的第 1、2 项；下标不是乘方",
+            "x=[3,5] 时 x₂=5；Python x[1]=5"
+          ],
+          [
+            "x²",
+            "x 乘自己",
+            "(-3)²=9；Python 用 x ** 2"
+          ],
+          [
+            "Σ",
+            "把指定几项加起来",
+            "Σᵢ xᵢ=3+5=8"
+          ],
+          [
+            "∈ ℝ",
+            "属于实数；可以有小数或负数",
+            "x∈ℝ³ 表示三个实数"
+          ],
+          [
+            "←",
+            "用右边结果替换旧值",
+            "w←w−0.1：把 w 减去 0.1"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "本书符号会随局部任务出现：η（eta）是训练步长，θ（theta）是所有参数的统称，τ（tau）是后期生成的温度。现在不用背，第一次使用时会再说明。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0005-1-ai",
+    "rationale": "把数字表示与数据来源、单位联系起来。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "把图片特征写成 [0.8,0.6,0.2] 是为了手算；这些分数假定已由某个处理步骤产生，不是原始图片自己附带的答案。房价例子中的面积也会改成 1、2、3、4 等教学数字。换单位或换特征时，要同时说明含义，不能直接把玩具输出当现实价格。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0007-3-vector",
+    "rationale": "先区分一维向量与显式行列，建立后续统一方向。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "同样三个数",
+          "Shape",
+          "意义"
+        ],
+        "rows": [
+          [
+            "[0.8,0.6,0.2]",
+            "[3]",
+            "一维向量，只有一个轴"
+          ],
+          [
+            "[[0.8,0.6,0.2]]",
+            "[1,3]",
+            "一行三列"
+          ],
+          [
+            "[[0.8],[0.6],[0.2]]",
+            "[3,1]",
+            "三行一列"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "正文把每个样本放在一行，批量输入写 X:[B,D]。手写竖排向量是另一种排版约定；代码里的 [3] 并不自带“行”或“列”。真正相乘前要写出 shape。"
+      }
+    ],
+    "check": {
+      "prompt": "把三个特征写成一行和一列，元素数一样，shape 也一样吗？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "元素数都是 3；shape 分别为 [1,3] 与 [3,1]。它们能接的矩阵不同，所以不能只数元素。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0011-5-weight",
+    "rationale": "限制权重解释，避免把局部系数当成因果重要性。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "权重的符号先告诉我们：固定其他输入时，这一项会把当前线性分数往上推还是往下拉。权重大小只有在输入单位和尺度可比较时才便于比较。把面积从“平方米”改成“百平方米”，等价模型的权重也要变；权重大不自动证明现实因果关系更强。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0013-6-dot-product",
+    "rationale": "把负号和平均/加权和变成可手算步骤。",
+    "after": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "先乘，再把正负贡献相加",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "0.8×0.7=0.56；0.6×0.5=0.30；0.2×(-0.4)=-0.08。总分是 0.56+0.30−0.08=0.78。负权重这一项是在扣分，并不是计算错误。"
+          },
+          {
+            "type": "paragraph",
+            "text": "普通平均先相加再除以个数：(2+4)/2=3。若权重为 0.25、0.75，加权平均是 0.25×2+0.75×4=3.5。只有权重非负且和为 1 时，才有这种“分配比例”的解释；本节任意正负权重的点积不一定是平均。"
+          }
+        ]
+      }
+    ],
+    "check": {
+      "prompt": "输入 [2,3]，权重 [0.5,-1]，点积是多少？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "2×0.5+3×(-1)=1−3=−2。注意先乘再加，不能先把所有输入和权重分别加起来。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0024-11-matrix-multiplication",
+    "rationale": "用同一组特征算出两个输出，并解释数学权重和 PyTorch 存储的转置关系。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "同一个输入 x=[0.8,0.6,0.2]",
+          "三项乘积",
+          "加偏置后"
+        ],
+        "rows": [
+          [
+            "第 1 个输出；权重 [0.7,0.5,-0.4]",
+            "0.56+0.30−0.08=0.78",
+            "0.78+0.1=0.88"
+          ],
+          [
+            "第 2 个输出；权重 [0.2,-0.1,0.8]",
+            "0.16−0.06+0.16=0.26",
+            "0.26−0.2=0.06"
+          ]
+        ]
+      },
+      {
+        "type": "formula",
+        "latex": "x=[0.8,0.6,0.2],\\quad W=\\begin{bmatrix}0.7&0.2\\\\0.5&-0.1\\\\-0.4&0.8\\end{bmatrix},\\quad b=[0.1,-0.2],\\quad xW+b=[0.88,0.06]",
+        "accessibleText": "一行三个输入乘三行两列权重，得到一行两个输出，再分别加偏置。"
+      },
+      {
+        "type": "paragraph",
+        "text": "W 的每一列负责一个输出，shape=[输入数,输出数]=[3,2]。转置 Wᵀ 只交换行列，把同一份数重新排成 [2,3]；不是求逆，也不是改变权重值。Week 5 的 nn.Linear 把每个输出的权重存成一行，记作 W_store=Wᵀ，因此代码计算 X @ W_store.T + b。两种写法做的是相同点积。"
+      }
+    ],
+    "check": {
+      "prompt": "X:[4,3]、W:[3,2]、b:[2]，输出是什么 shape？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "[4,2]：四个样本各有两个输出。中间的 3 对齐，bias 的两个数分别加到每行的两个输出。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0026-12",
+    "rationale": "把求和的范围与 Python 索引对齐。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "Σ 读“求和”。下面 i=1 到 3 是依次取第 1、2、3 项，不是在求一个神秘变量。先展开 x₁w₁+x₂w₂+x₃w₃，再执行三次乘法和两次加法。数学常从 1 编号；Python 列表从 0 编号，同一个 x₁ 在代码里是 x[0]。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0027-13",
+    "rationale": "补齐概率和指数前的最低限度算术。",
+    "before": [
+      {
+        "type": "table",
+        "headers": [
+          "算术工具",
+          "例子",
+          "后面用在哪里"
+        ],
+        "rows": [
+          [
+            "括号与负号",
+            "(-2)²=4；-2²=-(2²)=-4",
+            "平方误差"
+          ],
+          [
+            "分数与除法",
+            "1/4=0.25=25%",
+            "平均和概率"
+          ],
+          [
+            "零次方与负指数",
+            "e⁰=1；e⁻¹=1/e≈0.368",
+            "Softmax"
+          ],
+          [
+            "概率检查",
+            "0.2+0.3+0.5=1",
+            "几个互斥候选的完整分布"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "e≈2.718 是一个固定常数，就像圆周率 π 一样；此处先用计算器或 math.exp 算 e 的幂。自然对数 ln 是指数的反向问题：“e 的几次方等于这个数？”例如 e⁰=1，所以 ln(1)=0。Week 6 会用 −ln(p) 把概率变成损失。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0035-15-week-1-python",
+    "rationale": "补上可运行代码的最小 Python 入口。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "代码准备：先读懂这六件事",
+        "blocks": [
+          {
+            "type": "table",
+            "headers": [
+              "Python 写法",
+              "含义"
+            ],
+            "rows": [
+              [
+                "x = [1,2]",
+                "保存一个有顺序的列表"
+              ],
+              [
+                "x[0]",
+                "取第一项，得到 1"
+              ],
+              [
+                "for value in x:",
+                "依次处理列表各项；缩进属于循环"
+              ],
+              [
+                "zip(inputs, weights)",
+                "依次配对；本课先确保长度相同"
+              ],
+              [
+                "def score(...): / return ...",
+                "定义计算规则 / 返回结果"
+              ],
+              [
+                "print(value)",
+                "把结果显示出来"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "把完整小实验保存为 .py 文件，在终端用 python 文件名.py 运行。有些系统命令是 python3。后面的代码片段若使用上文变量，需在同一文件中按节顺序执行；可直接运行的完整文件已集中放在 course_examples。Python 的 ** 是乘方，@ 是矩阵乘法，* 对普通数字是乘法。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0036-16-week-1-6",
+    "rationale": "统一第一周总结的行向量记号。",
+    "replacements": [
+      {
+        "from": "Wx+b 是后续neuron、layer、Transformer 的基础计算。",
+        "to": "行样本约定下的 XW+b，是后续 neuron、layer、Transformer 中线性变换的基础；nn.Linear 存储权重时使用等价的 XW_storeᵀ+b。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0040-1-linear-regression",
+    "rationale": "预先声明本周几个独立实验，避免初始值跳变。",
+    "before": [
+      {
+        "type": "table",
+        "headers": [
+          "阅读范围",
+          "固定数据与起点",
+          "为什么这样安排"
+        ],
+        "rows": [
+          [
+            "第 1–10 节",
+            "单点示意：只看模型、误差与坡度",
+            "先分清三个对象"
+          ],
+          [
+            "第 11 节",
+            "x=2,y=5,w=1；暂时固定 b=0",
+            "只更新一个旋钮"
+          ],
+          [
+            "第 13–14 节",
+            "同一单点，加入可学习 b",
+            "多参数偏导；本例重新开始"
+          ],
+          [
+            "第 17 节代码",
+            "x=[1,2,3,4]，y=[3,5,7,9]；w=b=0",
+            "四个样本的平均损失；不是接着第 14 节跑"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "本周 y=2x+1 是我们人为生成的教学规律。训练程序只能看到配对数据，不能直接读取“答案参数”。你将观察它如何靠误差逐步靠近这条规律。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0043-4-error-loss",
+    "rationale": "用数值区分带符号误差、非负损失和单位。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "预测 / 真值",
+          "error=预测−真值",
+          "平方误差"
+        ],
+        "rows": [
+          [
+            "3 / 5",
+            "−2：预测偏低",
+            "4"
+          ],
+          [
+            "7 / 5",
+            "+2：预测偏高",
+            "4"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "误差的正负告诉你偏高还是偏低；平方损失表示本次偏差有多大。相反方向的误差不会在平方后抵消。若原目标单位是元，平方误差单位就是元²；要回到原单位可以取均方根 RMSE，但训练本周仍用 MSE。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0044-5-mse",
+    "rationale": "澄清均方误差的平均范围和任务限制。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "MSE 就是“先逐个平方，再求平均”。两项误差 1、3 的 MSE=(1²+3²)/2=5，不是先平均后平方得到的 4。只有一个样本时，平均不改变它，所以平方误差与 MSE 相同。平方会放大大误差；有明显离群值时，MSE 未必是最合适的目标。分类常用交叉熵，原因留到 Week 6。"
+      }
+    ],
+    "check": {
+      "prompt": "两次预测误差为 -1 和 3，MSE 是多少？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "((-1)²+3²)/2=(1+9)/2=5；不能先把两个误差相加抵消。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0046-7-derivative",
+    "rationale": "先用有限变化看见斜率，再给出导数缩写。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "不用先背求导规则：把 x 轻轻挪一下",
+        "blocks": [
+          {
+            "type": "table",
+            "headers": [
+              "f(x)=x²，起点 x=2",
+              "函数增加量",
+              "增加量÷x 的改变量"
+            ],
+            "rows": [
+              [
+                "从 2 到 2.1",
+                "4.41−4=0.41",
+                "0.41/0.1=4.1"
+              ],
+              [
+                "从 2 到 2.01",
+                "4.0401−4=0.0401",
+                "0.0401/0.01=4.01"
+              ],
+              [
+                "从 2 到 2.001",
+                "4.004001−4=0.004001",
+                "约 4.001"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "改变量越小，这个比值越接近 4。导数就是把这种“当前附近，每走一点，输出会变多少”写成一个数。它不是 f(2)=4 这个函数值，虽然这个例子碰巧同为 4。"
+          }
+        ]
+      }
+    ],
+    "after": [
+      {
+        "type": "formula",
+        "latex": "\\frac{(x+\\delta)^2-x^2}{\\delta}=\\frac{2x\\delta+\\delta^2}{\\delta}=2x+\\delta\\ \\longrightarrow\\ 2x",
+        "accessibleText": "delta 表示一个非零小改变量；展开括号，消掉相同项，除以 delta；delta 越接近零，比值越接近二乘 x。"
+      },
+      {
+        "type": "paragraph",
+        "text": "若代 x=3，函数值是 9，导数是 6，就能看见二者的区别。这个极限记法只用来解释 2x 从哪里来；不要求你先学完一门微积分。"
+      }
+    ],
+    "check": {
+      "prompt": "f(x)=x²，在 x=3 附近把 x 增加 0.01，f 大约增加多少？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "导数约为 6，所以变化约 6×0.01=0.06；实际增加 0.0601。差别来自我们使用了局部近似。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0048-9-gradient-descent",
+    "rationale": "解释减负数和局部下降的适用范围。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "旧参数 w=1，步长 η=0.1",
+          "更新",
+          "方向"
+        ],
+        "rows": [
+          [
+            "gradient=3",
+            "1−0.1×3=0.7",
+            "减小 w"
+          ],
+          [
+            "gradient=−3",
+            "1−0.1×(-3)=1.3",
+            "增大 w"
+          ],
+          [
+            "gradient=0",
+            "1−0=1",
+            "该步没有一阶方向信号"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "减去梯度，是沿当前局部下降方向尝试一步。步子太大可能跨过谷底；多参数复杂损失也不保证每次都下降，更不保证找到全局最低点。梯度为零只表示一阶变化为零，可能是最低点、最高点或其他驻点。"
+      }
+    ],
+    "check": {
+      "prompt": "w=2，gradient=-4，η=0.05，下一步 w 是多少？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "2−0.05×(-4)=2.2。负梯度被减去，相当于加上正数。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0056-13-bias-b-partial-derivative",
+    "rationale": "用两个旋钮说明偏导和共同旧状态。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "偏导的“偏”表示暂时只动一个参数：求 ∂L/∂w 时，把 b 和数据固定；求 ∂L/∂b 时，把 w 和数据固定。梯度把这些局部斜率排成与参数对应的一组数。求导阶段还不更新任何参数。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0057-14-w-b",
+    "rationale": "保证所有梯度来自同一次 forward。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "先用同一组旧 w、旧 b 算出 dw 和 db，再同时写回新值。不能先改 w，再拿新的 w 和旧的 b 重算 db，却还称作这次标准梯度下降；那是另一种更新顺序。保存中间值，是 Week 4 反向传播能够一致计算的原因。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0058-15-second-derivative",
+    "rationale": "把二阶导数列为可回看的拓展。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "选读：这一节可以第二遍再读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "第一遍只需掌握函数值回答“多高”、一阶导数回答“当前往哪边变”。二阶导数回答“坡度自己怎样变”。后面的普通梯度下降、PyTorch backward 和 MiniGPT 不要求你手算二阶导数。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0060-17-python",
+    "rationale": "加入四样本第一步的逐项账单，衔接后续 PyTorch 同值验证。",
+    "before": [
+      {
+        "type": "table",
+        "headers": [
+          "x / y，起点 w=b=0",
+          "预测",
+          "误差",
+          "误差平方",
+          "2×误差×x",
+          "2×误差"
+        ],
+        "rows": [
+          [
+            "1 / 3",
+            "0",
+            "−3",
+            "9",
+            "−6",
+            "−6"
+          ],
+          [
+            "2 / 5",
+            "0",
+            "−5",
+            "25",
+            "−20",
+            "−10"
+          ],
+          [
+            "3 / 7",
+            "0",
+            "−7",
+            "49",
+            "−42",
+            "−14"
+          ],
+          [
+            "4 / 9",
+            "0",
+            "−9",
+            "81",
+            "−72",
+            "−18"
+          ],
+          [
+            "四项平均",
+            "—",
+            "—",
+            "41",
+            "dw=−35",
+            "db=−12"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "用 η=0.01 同时更新，得到 w=0.35、b=0.12。重新预测四项得到 [0.47,0.82,1.17,1.52]，新 MSE=28.45315，比 41 小。这是第一次更新的结果，不是已经学完；后面的循环继续从这里前进。"
+      }
+    ],
+    "check": {
+      "prompt": "第一步为什么要用 -140/4=-35，而不是直接用 -140 更新 w？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "本课目标是四个样本的平均平方误差，求导也需要除以 4。用总和可以定义另一种损失，但步长与解释必须跟着调整。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0087-9-linear-layer-linear",
+    "rationale": "说明堆叠仿射层的表达限制而不夸大为任何意义都没有。 消除对纯线性堆叠的绝对化说法，并标注这里 W/B 为标量。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "这里的准确结论是：连续的线性/仿射层在输入输出关系上，仍可合并成一层，因此没有增加非线性表达能力。把它拆成多层可能改变参数化和优化过程，但还不能靠层数画出需要拐弯的决策边界。"
+      },
+      {
+        "type": "paragraph",
+        "text": "这一段只有一个输入和一个输出，合并后的 W、B 都是标量，不是后面的权重矩阵 W 或 batch 大小 B。标量乘法 Wx=xW；进入多特征矩阵时，乘法方向才必须按 shape 区分。"
+      }
+    ],
+    "replacements": [
+      {
+        "from": "所以仅仅堆wx+b 没意义。",
+        "to": "所以仅仅堆 wx+b 不会增加非线性表达能力。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0090-11-activation-function",
+    "rationale": "用四行 XOR 数字显示非线性究竟解决什么。",
+    "after": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "四行就能看懂的拐弯：XOR",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "另开一个小实验：两项输入只取 0 或 1；只有其中恰好一个为 1 时，答案才是 1。我们手工设置 h₁=ReLU(x₁+x₂)，h₂=ReLU(x₁+x₂−1)，最后输出 h₁−2h₂。这里只验证表达能力，还没有训练。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "x₁,x₂",
+              "h₁",
+              "h₂",
+              "输出 h₁−2h₂ / 答案"
+            ],
+            "rows": [
+              [
+                "0,0",
+                "0",
+                "0",
+                "0 / 0"
+              ],
+              [
+                "0,1",
+                "1",
+                "0",
+                "1 / 1"
+              ],
+              [
+                "1,0",
+                "1",
+                "0",
+                "1 / 1"
+              ],
+              [
+                "1,1",
+                "2",
+                "1",
+                "0 / 0"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "若去掉这两个 ReLU，输出会变成 (x₁+x₂)−2(x₁+x₂−1)=2−x₁−x₂，四行变成 2、1、1、0，第一行错了。非线性让一组直线组合后具有分段行为。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0100-18-layer",
+    "rationale": "将 neuron 列表的权重方向与数学矩阵联系起来。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "这里为了按神经元逐个计算，Python weights 的一行存一个输出神经元的所有输入权重，方向是 [输出数,输入数]。Week 1 的 XW+b 把同一组数放在 W 的列中，方向是 [输入数,输出数]。后面展示 nn.Linear 时仍会使用前一种存储，两者互为转置。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0103-21-feature-learning",
+    "rationale": "避免将隐藏单元的直觉类比误读为可保证的解释。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "“这个神经元可能检测耳朵”是在帮助想象组合特征，不是训练后每个单元都会有一个清楚的中文名字。实际表示常由许多单元共同承担，单个权重或激活值不能直接证明模型学到了某个现实概念。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0112-27-output-layer",
+    "rationale": "在第一次接输出层时说明为什么不再套 ReLU。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "输出层先看任务需要",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "本例做回归，输出需要能取任意实数，所以最后一层保留加权和加偏置，不再经过 ReLU。隐藏层用 ReLU，是为了加入非线性；这两层的职责不同。多类别分类通常最后输出原始 logits，再交给交叉熵；不要机械地给每层都套同一种激活。"
+          }
+        ]
+      }
+    ],
+    "check": {
+      "prompt": "若目标允许 -2，最后一层使用 ReLU 会有什么限制？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "ReLU 的输出不小于 0，永远无法预测 -2。回归任务需要负值时，可使用不带激活的线性输出层。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0128-37-python-neuron",
+    "rationale": "为神经元显式提供激活选择，拒绝长度不匹配的静默截断。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "activation=relu 表示省略这个参数时仍用 ReLU；activation=None 表示直接返回线性分数。这里函数参数只是控制计算规则，和要学习的 weights、bias 不同。1.4000000000000001 是浮点近似，手算写成 1.4 即可。"
+      }
+    ],
+    "blockOverrides": [
+      {
+        "blockId": "body-01328",
+        "block": {
+          "type": "code",
+          "language": "python",
+          "code": "def relu(x):\n    return max(0, x)\n\n\ndef neuron(inputs, weights, bias, activation=relu):\n    if len(inputs) != len(weights):\n        raise ValueError(\"每项输入必须有一个对应权重\")\n    total = sum(x * w for x, w in zip(inputs, weights)) + bias\n    return total if activation is None else activation(total)\n\ninputs = [1, 2]\nweights = [0.5, 0.4]\nbias = 0.1\noutput = neuron(inputs, weights, bias)\nprint(output)"
+        }
+      }
+    ]
+  },
+  {
+    "sectionId": "o0129-38-layer",
+    "rationale": "让整层把激活选择传给每个神经元。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "本节完整定义可独立复制；后一段 hidden 的例子接在这些函数下面运行。每个输出 neuron 共享同一组 inputs，但拥有自己的权重行与偏置。"
+      }
+    ],
+    "blockOverrides": [
+      {
+        "blockId": "body-01345",
+        "block": {
+          "type": "code",
+          "language": "python",
+          "code": "def relu(x):\n    return max(0, x)\n\n\ndef neuron(inputs, weights, bias, activation=relu):\n    if len(inputs) != len(weights):\n        raise ValueError(\"每项输入必须有一个对应权重\")\n    total = sum(x * w for x, w in zip(inputs, weights)) + bias\n    return total if activation is None else activation(total)\n\n\ndef layer(inputs, weights, biases, activation=relu):\n    if len(weights) != len(biases):\n        raise ValueError(\"每个输出神经元必须有一个偏置\")\n    return [neuron(inputs, row, bias, activation)\n            for row, bias in zip(weights, biases)]"
+        }
+      }
+    ]
+  },
+  {
+    "sectionId": "o0130-39-output-layer",
+    "rationale": "修正回归输出层实际代码，让文字与程序都保留负值。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "第一组参数给出 1.4×0.7+1.1×0.2+0.1=1.3；因为是正数，错误地套 ReLU 也看不出问题。第二组参数特意产生 −1.4，才能检查输出层是否错误地截成 0。完整版本见 course_examples/week03_neuron.py。"
+      }
+    ],
+    "blockOverrides": [
+      {
+        "blockId": "body-01382",
+        "block": {
+          "type": "code",
+          "language": "python",
+          "code": "# 接在第 38 节之后；hidden 约为 [1.4, 1.1]。\noutput_weights = [[0.7, 0.2]]\noutput_biases = [0.1]\nprediction = layer(hidden, output_weights, output_biases, activation=None)\nprint(prediction)  # 约 [1.3]\n\n# 反例：线性回归输出必须保留负值。\nnegative_prediction = layer(hidden, [[-1.0, 0.0]], [0.0], activation=None)\nprint(negative_prediction)  # 约 [-1.4]，不是 [0]"
+        }
+      }
+    ]
+  },
+  {
+    "sectionId": "o0140-45",
+    "rationale": "在公式旁固定行向量方向，并给旧子标题的列向量写法明确翻译。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "本课统一把多个样本放成行，因此这一层写 a=f(xW+b)，W 的 shape 是 [输入数,输出数]。原子标题 Wx+b 使用列向量约定；读到它时，理解为同一仿射操作的转置排版，不要把列向量公式直接套到行样本代码。"
+      }
+    ],
+    "replacements": [
+      {
+        "from": "a=f(Wx+b)",
+        "to": "a=f(xW+b)"
+      },
+      {
+        "from": "a = f(Wx + b)",
+        "to": "a = f(xW + b)"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0153-48-classification-regression",
+    "rationale": "补充从输出范围选择任务接口。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "任务",
+          "最后一层输出",
+          "本课接的损失"
+        ],
+        "rows": [
+          [
+            "预测任意实数",
+            "一个不经 ReLU 的实数",
+            "MSE"
+          ],
+          [
+            "从 V 个互斥类别选一个",
+            "V 个原始 logits",
+            "交叉熵，Week 6 展开"
+          ],
+          [
+            "看概率用于展示/抽样",
+            "对 logits 做 Softmax",
+            "这是读取输出的步骤，不要重复送入 logits 接口"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "本课先讲单标签分类。多个标签可以同时成立是另一种任务，不要直接照抄互斥类别的 Softmax 规则。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0183-3-forward-pass",
+    "rationale": "把反向使用的四个旧参数和中间量锁定。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "本周另开一个更小的网络：只有一个隐藏神经元，方便沿每条边反传。不要沿用 Week 3 的两个隐藏单元。先在纸上记录本节 x、w₁、b₁、w₂、b₂，以及 z₁、a₁、预测、loss；后面直到第 11 节更新前，都使用这张旧状态记录。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0185-5-chain-rule",
+    "rationale": "标注链式法则局部演示与主实验的区别。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "本节为了单独展示“沿路径相乘”，可以临时更换某个局部系数；这不表示第 3 节保存的主实验参数已经更新。回到第 6 节时继续使用主实验旧状态。链式法则先解决怎样计算影响，optimizer 才决定什么时候改参数。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0194-14-parameter",
+    "rationale": "纠正多路径梯度只会低估的错误说法，并解释正负抵消。",
+    "after": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "两条路径可以抵消",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "取 L=(w−1)²+(w+1)²。w=0 时，第一条路径给梯度 2(w−1)=−2，第二条给 2(w+1)=+2，总梯度为 0。漏掉任一条都会得到错误方向，而不是“总会低估”。梯度是带符号的局部变化，不是责任百分比。"
+          }
+        ]
+      }
+    ],
+    "replacements": [
+      {
+        "from": "忽略任何一条，就会低估该变量对Loss 的总责任。",
+        "to": "忽略一条就可能算错总影响；各路径可以同向，也可以因正负号不同而抵消。"
+      }
+    ],
+    "check": {
+      "prompt": "两个分支分别给同一参数梯度 -3 和 +1，总梯度是多少？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "-3+1=-2。共享参数要把所有路径贡献相加，再交给一次更新。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0193-13",
+    "rationale": "加入独立数值检查，帮助判断手算梯度是否接错。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "可以不用另一套求导规则来验算：只把某个参数增加/减少一个很小的 ε，其余参数固定，各算一次 loss。中央差分 [L(θ+ε)−L(θ−ε)]/(2ε) 应接近手算梯度。它用于检查，不是训练时逐参数执行的高效方法；ReLU 在零点不可导，检查点应避开该折点。完整可运行例子见 course_examples/week04_gradient_check.py。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0202-week-5",
+    "rationale": "给有限编程经验读者提供 CPU 起步与运行顺序。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "运行准备：先在 CPU 上完成一次",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "使用支持所选 PyTorch 版本的 Python。本课程配套代码采用 Python 3.10 及以上语法；验证环境为 Python 3.12、PyTorch 2.14.0 CPU。先创建独立环境，安装 PyTorch，再运行 course_examples 中的脚本；不需要先购买 GPU。具体安装命令以 PyTorch 官方安装页按系统生成的指令为准。"
+          },
+          {
+            "type": "paragraph",
+            "text": "Python 知识若还不熟，只需先补 list、索引/切片、for、函数、import 和 class 的基本读法。nn.Module 的 __init__ 建立长期参数，forward 使用这些参数算一次输出；第一次不用掌握整个面向对象体系。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0205-3-dtype-device",
+    "rationale": "补齐科学计数法和浮点近似。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "代码读法",
+          "普通数字/含义"
+        ],
+        "rows": [
+          [
+            "1e-3",
+            "0.001；e 在科学计数法里表示乘 10 的幂"
+          ],
+          [
+            "1e-8",
+            "0.00000001"
+          ],
+          [
+            "float32",
+            "每个元素用 32 位浮点格式近似存储"
+          ],
+          [
+            "torch.long",
+            "本课用于整数类别 ID，不是“更精确的小数”"
+          ],
+          [
+            "NaN / Inf",
+            "不是可用的有限数：可能来自非法运算或溢出"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "这里的 1e-3 与 math.exp(-3) 完全不同：前者是 10⁻³，后者是自然指数 e⁻³。检查计算结果时用允许小误差的 assert_close；不要要求不同计算顺序的浮点结果逐位相同。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0207-5-broadcasting-2-4-2",
+    "rationale": "展示广播形状合法但监督错位的具体反例。",
+    "after": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "最危险的广播：没有报错，却算错题",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "预测 [[1],[2]] 的 shape 是 [2,1]，标签 [1,2] 的 shape 是 [2]。直接相减会扩成 [2,2]，得到 [[0,-1],[1,0]]，让每个预测同时和两个标签比较。我们本来要的是 [[1],[2]]−[[1],[2]]=[[0],[0]]，shape=[2,1]。"
+          },
+          {
+            "type": "paragraph",
+            "text": "回归计算 loss 之前，先确认 prediction.shape == target.shape。需要保留单输出列时，让标签也是 [B,1]。广播只能保证算术有定义，不能替你保证每个预测对上了自己的答案。"
+          }
+        ]
+      }
+    ],
+    "check": {
+      "prompt": "prediction:[4,1]，target:[4]，相减结果为什么不是你想要的四个误差？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "广播结果为 [4,4]，出现交叉比较。把 target 明确整理成 [4,1] 后再计算。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0208-6-tensor-week-2",
+    "rationale": "把 Week 2 四样本实验带入 Tensor 版本。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "现在回到 Week 2 第 17 节的四个样本：x=[1,2,3,4]、y=[3,5,7,9]，w=b=0，MSE 取平均，η=0.01。不改变这些条件，就应得到同样的第一步：loss=41，dw=−35，db=−12，更新后 w=0.35、b=0.12。Tensor 只是把四项同时算，不是另一种学习规律。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0210-8-backward",
+    "rationale": "说明标量 backward 与多元素输出需要明确汇总。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "loss.backward() 不传额外参数时，通常要求 loss 只有一个元素。若你保留了每个样本的 loss 向量，可以先 .mean() 或 .sum() 明确你要优化什么，再 backward。向量本身也能求导，但必须指定各输出如何贡献反向信号；不是“只有标量才能求导”。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0211-9-gradient",
+    "rationale": "区分单次图内分支求和和跨 backward 调用的缓冲区累加。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "两种相加",
+          "为什么发生",
+          "如何处理"
+        ],
+        "rows": [
+          [
+            "同一次计算图中多个分支",
+            "同一参数确实影响多个位置",
+            "反向传播必须汇总，不能删掉分支"
+          ],
+          [
+            "前后两次 backward 调用",
+            ".grad 默认继续累加",
+            "普通独立 step 先 zero_grad；有意积累则另定窗口"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "在第一次 backward 前，parameter.grad 通常是 None，不能无条件调用 parameter.grad.zero_()。使用 optimizer.zero_grad(set_to_none=True) 可以清理已有梯度；None 表示当前没有存储梯度，与数值全零是不同状态。Week 11 再讲有意的梯度累积。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0214-12-nn-module-parameters-forward",
+    "rationale": "把 nn.Linear 的默认随机初始化和存储方向解释清楚。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "nn.Linear(1,1) 默认随机初始化，因此直接运行未必和手算第一步相同。若要公平对照 Week 2，先在 no_grad 中把 weight 与 bias 都设为 0。它的 weight shape=[1,1]，一般规则是 [输出数,输入数]；forward 对行样本做 X @ weight.T + bias。完整三版本对照见 course_examples/week05_three_ways.py。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0217-15-shape-debugging",
+    "rationale": "加入向语言模型过渡的轴阅读练习。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "看到的对象",
+          "先问什么",
+          "后面典型 shape"
+        ],
+        "rows": [
+          [
+            "整数输入",
+            "有几行，每行几个 token？",
+            "[B,T]"
+          ],
+          [
+            "浮点表示",
+            "每个 token 有几个特征？",
+            "[B,T,C]"
+          ],
+          [
+            "候选分数",
+            "每个位置有几个可选答案？",
+            "[B,T,V]"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "B、T、C、V 是轴的名字，不是四种新数学。先把 [2,3,4] 读成“两行、每行三个位置、每个位置四个数”，再看后面的层改变了哪一项。"
+      }
+    ],
+    "check": {
+      "prompt": "从 [2,3] 的 token IDs 查一张 [5,4] 表，为什么结果是 [2,3,4]？",
+      "answer": [
+        {
+          "type": "paragraph",
+          "text": "六个位置各查到一个长度 4 的向量；原来的两行三个位置仍在，只新增特征轴。"
+        }
+      ]
+    }
+  },
+  {
+    "sectionId": "o0222-week-6",
+    "rationale": "先声明本周任务单位，再提示后续独立参数示例。",
+    "after": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周的三种数字不要混在一起",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "① Token ID 是固定编号；② 为手算指定的 embedding / 输出权重是演示参数；③ 训练代码里的随机初始参数会被 optimizer 改变。后文展示的概率表是指定参数下的算术结果，不是运行任意随机模型都应得到的结果。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0232-6-language-model",
+    "rationale": "补齐条件概率和序列乘积的读法。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "概率记号先翻成一句话",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "P(AI | 我 喜欢) 读“已经知道前面是我喜欢，下一词为 AI 的概率”。竖线 | 左侧是要预测的事，右侧是已经给定的信息；不是除号。x≤t 表示截至位置 t 的全部输入，x<t 表示位置 t 之前。"
+          },
+          {
+            "type": "paragraph",
+            "text": "若给定起始词“我”，模型给 喜欢 的概率为 0.5，接着给 AI 的概率为 0.6，那么这条两步续写路径的条件概率为 0.5×0.6=0.3。另一条续写路径要用它自己的前缀分别计算，不能随意重复同一个概率。"
+          },
+          {
+            "type": "formula",
+            "latex": "p(x_2,x_3\\mid x_1)=p(x_2\\mid x_1)\\,p(x_3\\mid x_1,x_2)",
+            "accessibleText": "给定第一个 token，两步续写概率等于第二个 token 的条件概率乘第三个 token 在新前缀下的条件概率。"
+          },
+          {
+            "type": "paragraph",
+            "text": "以后 Π 是“把这些项依次乘起来”，就像 Σ 是“把这些项加起来”。本模型需要一个非空 prompt，没有 BOS，所以不要把一般的完整序列分解误读成它实现了从空输入生成首词。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0239-10-softmax-logits-probability",
+    "rationale": "用简单指数先解释 Softmax 为什么比较相对差。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "可以先只看两个候选分数 [0,1]：指数后变成 [1,2.718]，总和为 3.718，除以总和得到约 [0.269,0.731]。每一项都非负，并且加总为 1。再回到五候选表，只是同样的计算多做三项。"
+      }
+    ],
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "把所有分数同加 100 得到 [100,101]，概率不变，因为候选之间仍差 1。实际计算常先减最大分数，例如 [0,1] 变 [-1,0]，避免指数过大。Softmax 需要的是分数之间的差距，不是分数的绝对零点。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0241-11-cross-entropy-probability",
+    "rationale": "补充自然对数、one-hot 名称切换与可跳过的梯度推导。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "先把 ln 当成指数的反向查表",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "e⁰=1，所以 ln(1)=0；exp(-0.693)≈0.5，所以 ln(0.5)≈−0.693。正确答案只有一半概率时，−ln(0.5)≈0.693。先会用 math.log(p) 计算并解释“大概率、小损失”，不需要先背对数求导。"
+          },
+          {
+            "type": "paragraph",
+            "text": "两个位置的正确概率为 0.5 和 0.6：总路径概率为 0.3，总负对数为 −ln(0.3)≈1.204；分别计分再相加也是 0.693+0.511≈1.204。若报告每个 token 的平均 loss，再除以 2，约为 0.602。"
+          }
+        ]
+      }
+    ],
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "记号提醒：y=1 表示正确类别的一个整数 ID；公式里的 yᵢ 表示该 ID 对应 one-hot 向量的第 i 项：只有 i=1 时为 1，其余为 0。它们不是把整数 1 拆成许多个 1。"
+      },
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "选读：为什么 logits 的梯度是 p−one-hot？",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "把单题 loss 写成 L=−z_y+ln(Σⱼe^{zⱼ})。第一项对正确类的斜率是 −1，对其他类是 0；第二项对第 i 个 logit 的斜率是 e^{zᵢ}/Σⱼe^{zⱼ}=pᵢ。相加就是 pᵢ−one_hot(y)ᵢ。若尚不熟对数求导，先观察结果：正确类约 0.592−1=−0.408，减去负梯度会抬高它；其他类的正梯度会压低它们。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0243-12-pytorch-crossentropyloss-logits",
+    "rationale": "把 hard-label 教学约定与 PyTorch 也支持概率目标的 API 能力分开。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "API 边界补充：PyTorch 的交叉熵也支持与 logits 同 shape 的浮点类别概率作为 targets，例如软标签；所以“交叉熵永远不接受 one-hot”并不准确。本课只采用整数硬标签，便于看清六道题和六个答案的对应关系；所有示例继续使用 [BT,V] logits 与 [BT] long targets。"
+      }
+    ],
+    "replacements": [
+      {
+        "from": "targets 是范围 0 到 V−1 的 torch.long IDs，而不是 one-hot vectors。",
+        "to": "本课使用硬标签：targets 是范围 0 到 V−1 的 torch.long IDs，每题一个正确类别。"
+      },
+      {
+        "from": "targets 是 torch.long 的 IDs，不是 one-hot vectors。",
+        "to": "本课 targets 使用 torch.long IDs；不要把它与另一种概率标签接口混用。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0250-16-bigram-model",
+    "rationale": "补上 Bigram 标签冲突的非零损失参照，并与 Transformer 区分。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "Bigram 只看最后一个词",
+          "六道题中的答案",
+          "最优概率分配"
+        ],
+        "rows": [
+          [
+            "我，出现两次",
+            "喜欢 / 学习",
+            "各 1/2"
+          ],
+          [
+            "喜欢，出现两次",
+            "AI / 我",
+            "各 1/2"
+          ],
+          [
+            "猫，出现一次",
+            "喜欢",
+            "可趋近 1"
+          ],
+          [
+            "学习，出现一次",
+            "AI",
+            "可趋近 1"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "因此理想 Bigram 在这六道题上的平均损失下确界是 4×ln(2)/6≈0.462，而不是 0。有限 logits 只能接近确定概率 1。Week 11 的 causal MiniGPT 能区分 [我,喜欢] 与 [猫,喜欢]，所以只剩两个相同 [我] 前缀的冲突，理想下界降为 2×ln(2)/6≈0.231。这是模型可见上下文不同造成的差别，不是算术不一致，也不保证小模型一定训练到下界。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0251-17-perplexity",
+    "rationale": "说明困惑度可比较条件和几何平均意义。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "PPL=exp(平均 token loss)，可以读成“正确词概率的几何平均倒数”。两题概率 0.5、0.125：平均 loss=[ln2+ln8]/2=ln4，所以 PPL=4；不是把倒数 2 和 8 算术平均成 5。它不是“模型真的在四个同概率词中犹豫”。换 tokenizer 后 token 单位会变，不能仅凭两个 PPL 数值比较不同分词系统的语言能力。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0255-week-7",
+    "rationale": "显式标注 Week 7 使用便于手算的新浮点输入。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "这一周保留词语“我、猫、喜欢”及 [B,T,C] 的含义，但为了让 Q/K/V 每项都能手算，改用本章指定的简单浮点 X 和固定投影。它不是把 Week 6 训练到某一步的 embedding 原样搬来。Week 8 会另给 token+position 的演示值；Weeks 10–12 则使用同一套可学习 MiniGPT。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0265-7-scaled-dot-product-attention",
+    "rationale": "纠正把 V 的梯度画成必须经过 scores 的串行链。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "两条路在同一个输入 X 处要汇总梯度，和 Week 4 的共享变量一样。V 不参与 QKᵀ 的 score 计算，因此它的直接梯度不需要绕过 S。先能指出分支，再看完整矩阵求导。"
+      }
+    ],
+    "blockOverrides": [
+      {
+        "blockId": "curated-w07-o0265-7-scaled-dot-product-attention-worked-5-9",
+        "block": {
+          "type": "table",
+          "headers": [
+            "从输出 O=PV 回传",
+            "经过哪些中间量",
+            "最后影响"
+          ],
+          "rows": [
+            [
+              "内容这条路",
+              "O → V",
+              "W_V 以及输入 X"
+            ],
+            [
+              "读取比例这条路",
+              "O → P → Softmax → S → Q、K",
+              "W_Q、W_K 以及输入 X"
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "sectionId": "o0266-8-sqrt-d-k",
+    "rationale": "在方差证明前补上统计直觉，并修正分数绝对值误解。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "先补三个词：均值、方差、标准差",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "均值表示中心。例如 [1,3] 的均值是 2；减去中心得到 [-1,1]；平方再平均，方差为 (1+1)/2=1；方差开平方，标准差为 1。平方根 √4=2，因为 2×2=4。标准差用原来数字的单位描述“通常离中心多远”。"
+          },
+          {
+            "type": "paragraph",
+            "text": "下面“方差随 d_k 增长”的推导是选读，依赖分量近似独立/不强相关、中心接近 0、尺度接近 1 的假设，不是对任意 Q/K 都成立。第一遍先会做 S/√d_k，并知道它缓和分数差距；它不是 mask。"
+          }
+        ]
+      }
+    ],
+    "replacements": [
+      {
+        "from": "如果分数绝对值过大，Softmax 容易过早接近 One-Hot，较小候选获得接近零的梯度。",
+        "to": "如果同一行分数差距过大，Softmax 容易过早接近 One-Hot，使部分注意力权重对分数的局部变化不敏感。所有分数同加一个大常数不改变 Softmax；也不能把这里的局部斜率简单等同于所有最终参数的梯度。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0279-15-multi-head-attention",
+    "rationale": "纠正多头图的串行错觉，强调同一输入上的并行计算。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "Head 2 接收的是同一个 X，不是 Head 1 的输出。可以把两个结果想成同一行的两份两维记录，先并排拼成四维，再由输出投影学习怎样组合。堆叠两个 Transformer blocks 才是前一块输出进入后一块的顺序计算。"
+      }
+    ],
+    "blockOverrides": [
+      {
+        "blockId": "curated-w07-o0279-15-multi-head-attention-worked-3-7",
+        "block": {
+          "type": "conceptChain",
+          "steps": [
+            "X [B,T,C]=[2,2,4]",
+            "并行：Head 1(X) 与 Head 2(X)，各 [2,2,2]",
+            "沿特征轴拼接为 [2,2,4]",
+            "乘 W_O:[4,4]，输出 [2,2,4]"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "sectionId": "o0268-9-self-attention-shape",
+    "rationale": "增加不相等维度的检查，防止全是 2 掩盖轴错误。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "额外形状检查，另取 B=1,T=3,C=4,H=2",
+          "预期 shape"
+        ],
+        "rows": [
+          [
+            "输入",
+            "[1,3,4]"
+          ],
+          [
+            "分 head 后 Q/K/V",
+            "[1,2,3,2]"
+          ],
+          [
+            "scores：每个 query 对每个 key",
+            "[1,2,3,3]"
+          ],
+          [
+            "拼回通道",
+            "[1,3,4]"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "这只是检验轴的独立例子，不改变前面的两词手算。数字不全相同时，误把 head 轴当时间轴更容易暴露。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0286-week-8",
+    "rationale": "翻译高密度工程词并给出每类公式的阅读层次。",
+    "before": [
+      {
+        "type": "table",
+        "headers": [
+          "后文简称",
+          "先用中文理解"
+        ],
+        "rows": [
+          [
+            "Block",
+            "可反复堆叠的一块计算"
+          ],
+          [
+            "per-token / per position",
+            "对每个位置分别做同一个操作"
+          ],
+          [
+            "residual",
+            "原表示保留，再加上本次修改量"
+          ],
+          [
+            "pre-norm",
+            "先规范分支输入，再计算并加回原表示"
+          ],
+          [
+            "didactic weights",
+            "为了手算指定的教学权重"
+          ],
+          [
+            "identity / I",
+            "保持输入不变的恒等变换，不是 token 身份"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "第一遍追踪“输入 → 本次新增信息 → 输出”以及 shape；GELU 的误差函数、残差的矩阵导数可以第二遍再读。先会解释组件为什么存在，比同时背下所有公式更有用。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0295-5-feed-forward-network",
+    "rationale": "解释玩具 FFN 中的恒等矩阵与输出范围。 避免把 FFN 的必要性误读成 Attention 整体是线性的。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "若看到 I₄，把它想成一个四通道的直通开关：主对角线为 1，其余为 0，xI₄=x。用它构造 FFN 只是为了能手算每个数，不表示真实网络应该把权重固定成 I。FFN 第一层把 4 个特征变成 16 个中间特征，经过非线性，第二层再合成 4 个，才能与原表示相加。"
+      }
+    ],
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "准确地说，Attention 整体也可以是非线性的，因为读取权重由输入经过 Q/K 和 Softmax 决定。FFN 提供的是另一条明确的、逐位置的通道变换；“Attention 负责沟通、FFN 负责加工”是职责对照，不是说前者整体只有线性运算。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0297-6-gelu",
+    "rationale": "将 GELU 特殊函数推导移到理解优先的选读层。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "第一遍只需要知道 GELU 做什么",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "GELU 是平滑的非线性门：较大的正输入大致保留，负输入通常被压小，但不像 ReLU 那样一律变 0。例如 GELU(-1)≈-0.159，GELU(0)=0，GELU(1)≈0.841。隐藏层需要非线性，主线并不要求你实现 erf 或背下近似常数。"
+          },
+          {
+            "type": "paragraph",
+            "text": "下面的 Φ 表示标准正态分布的累计概率，erf 是另一种写同一平滑曲线的特殊函数；这些表达式属于选读。代码直接调用 nn.GELU()，先把输入输出含义与非线性角色弄清楚。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0299-7-residual-connection",
+    "rationale": "用标量旁路解释残差梯度，降低矩阵导数门槛。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "先只看一个数：输出 y=x+F(x)。若 F(x)=0.1x，那么 y=1.1x；输入多 0.01，输出多 0.011。反向影响来自两条路：直接的 x 给斜率 1，F 分支给斜率 0.1，合计 1.1。后面矩阵公式里的 I 就是多维版本的“直接这条路贡献 1”。残差提供路径，但不保证所有梯度永远稳定。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0302-9-layer-normalization",
+    "rationale": "在 LayerNorm 公式前逐项算均值方差，并解释 epsilon、gamma、beta。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "四个数做一遍，公式就不再抽象",
+        "blocks": [
+          {
+            "type": "table",
+            "headers": [
+              "一行 [1,2,3,4]",
+              "计算",
+              "结果"
+            ],
+            "rows": [
+              [
+                "找中心",
+                "(1+2+3+4)/4",
+                "μ=2.5"
+              ],
+              [
+                "每项减中心",
+                "[1,2,3,4]−2.5",
+                "[-1.5,-0.5,0.5,1.5]"
+              ],
+              [
+                "平方再平均",
+                "(2.25+0.25+0.25+2.25)/4",
+                "方差=1.25"
+              ],
+              [
+                "开平方得到尺度",
+                "√1.25",
+                "约 1.118"
+              ],
+              [
+                "各项除以尺度",
+                "暂忽略极小 ε",
+                "约 [-1.342,-0.447,0.447,1.342]"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "PyTorch LayerNorm 此处用四项总体方差，除以 4，不是统计估计里常见的除以 3。ε 是放在平方根内部的小正数，避免四项完全相同时除以零。γ、β 是之后可学习的缩放与偏移；初始化通常 γ=1、β=0。"
+          },
+          {
+            "type": "paragraph",
+            "text": "这是另一个纯算术练习，不是替换正文固定的 token 行。LayerNorm 对每个位置自己的 C 个通道算中心和尺度，不跨 batch，也不把某一列所有位置混起来。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0310-15-encoder-decoder-decoder-only",
+    "rationale": "给 encoder/decoder 术语加一个明确使用问题。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "先问这次任务允许看哪些输入：给整句话分类，可以让词互相看全句；逐词续写，只能看已经出现的前缀；翻译时，生成端可以看完整原文以及已经生成的译文。这三种可见范围帮助区分 encoder、decoder 与 decoder-only，而不是把“decoder”误当 tokenizer.decode。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0319-week-9",
+    "rationale": "在编码细节前先建立三件事的主线。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "先把本周压缩成三件事",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "① 同一段文字按固定规则变成一串编号；② 训练与生成始终使用同一份编号表；③ 连续编号右移一位，构成输入和答案。先掌握这三件事，再回看 UTF-8、BPE 每轮合并和特殊 token 的细节。"
+          },
+          {
+            "type": "paragraph",
+            "text": "本章有两套明确分开的演示：字节 BPE 说明规则怎样学出来；w09-readable-v1 用可读编号说明训练数据怎样排列。你不需要把十六进制转换练习当成进入 Week 10 的考试。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0333-5-unicode-utf-8",
+    "rationale": "在字节和数学集合符号前解释进制与单位。",
+    "before": [
+      {
+        "type": "table",
+        "headers": [
+          "单位或记号",
+          "人话说明",
+          "例子"
+        ],
+        "rows": [
+          [
+            "Unicode code point",
+            "给一个字符身份编号",
+            "“我”的编号写作 U+6211"
+          ],
+          [
+            "UTF-8 byte",
+            "把字符存储/传输成每项 0–255 的字节",
+            "“我”是三个字节 E6 88 91"
+          ],
+          [
+            "0x / 十六进制",
+            "一种写整数的方法；A–F 表示 10–15",
+            "0x41=65，不是第 41 个 token"
+          ],
+          [
+            "token ID",
+            "分词器自己分配的词表地址",
+            "具体数值只在那份词表内有意义"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "第一遍会区分“字符数、字节数、token 数”就够了。U+6211、0xE6 等可交给 Python ord、encode、hex 验证；不要求心算进制转换。后面的集合、映射箭头也只是把输入范围和输出范围写短。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0335-7-bpe",
+    "rationale": "用字符级三对数字先解释合并，再回到已有严格字节 BPE。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "进入字节表前，先做一个小合并",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "独立热身序列 [A,B,A,B,C] 有相邻对 AB、BA、AB、BC，所以 AB 出现两次。把 AB 替换为新符号 M，得到 [M,M,C]，长度从 5 变为 3。接下来应在新序列重新计数，不能沿用旧表。"
+          },
+          {
+            "type": "paragraph",
+            "text": "这只是说明动作，不声称 M 是正文 tokenizer 的某个 ID。现在回到下文 31 个字节、固定排序规则和两轮真实计数；原有手算表仍是本章精确例子。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0342-11-padding-attention-mask",
+    "rationale": "把三个 mask 翻成三个分别能回答的问题。",
+    "before": [
+      {
+        "type": "table",
+        "headers": [
+          "控制项",
+          "先问一句话"
+        ],
+        "rows": [
+          [
+            "causal mask",
+            "这个位置能否偷看后面的真实答案？"
+          ],
+          [
+            "padding mask",
+            "这个位置是不是为了凑矩形而填进去的？"
+          ],
+          [
+            "loss mask",
+            "这一次预测有没有有效答案，是否要计分？"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "三个控制可以同时存在，不能因名字里都有 mask 就交换用法。−100 只是本例“这题不计分”的记号，不属于词表，绝不能拿去查询 embedding。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0344-13-train-validation-split",
+    "rationale": "补上 validation 调参和最终 test 的区别。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "Validation 虽不参与 backward，却会通过选模型、调超参数影响你的决策。若反复针对同一 validation 改进，再把它当完全没见过的最终测验，会过度乐观。正式比较可另留 test split，最后才使用；本课三句玩具数据不足以支持这种质量结论。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0346-15-batch",
+    "rationale": "把 Python 切片排除上界与 T+1 直觉绑定。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "Python s[a:b] 包含位置 a，不包含 b，所以恰有 b−a 项。T=4 的一道训练序列需要连续五个源 ID：前四个给 input，后四个给 target，两段重叠三项。随机数的 high 也不包含上界；把最后合法起点先写出来，再决定 randint 的 high。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0352-1-configuration",
+    "rationale": "用表格解释 Python 类、配置、实例与参数。",
+    "before": [
+      {
+        "type": "table",
+        "headers": [
+          "读代码时遇到",
+          "先这样理解"
+        ],
+        "rows": [
+          [
+            "class GPTConfig",
+            "列出要建什么规格"
+          ],
+          [
+            "config = GPTConfig()",
+            "得到一份具体规格"
+          ],
+          [
+            "class MiniGPT(nn.Module)",
+            "定义按规格建模型以及如何计算"
+          ],
+          [
+            "model = MiniGPT(config)",
+            "创建一组实际参数"
+          ],
+          [
+            "self.xxx",
+            "这个模型自己保存的对象"
+          ],
+          [
+            "forward / model(idx)",
+            "用当前参数进行一次计算"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "dataclass 帮助少写配置样板代码；frozen=True 固定配置字段，不会阻止神经网络学习。类型标注如 idx: torch.Tensor 是给读者和检查工具的提示，真正的输入检查仍由函数内代码执行。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0358-5-heads-shape",
+    "rationale": "用不相等尺寸和元素数验证多头变形。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "调试时另建 GPTConfig(block_size=3)，保持 C=4、H=2，输入 B=1,T=3。应经过 [1,3,4]→[1,3,2,2]→[1,2,3,2]，score 为 [1,2,3,3]。不要拿 T=3 直接喂给本章默认 block_size=2 的模型；额外检查使用独立实例，不保存成 canonical checkpoint。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0360-6-feedforward-block",
+    "rationale": "修正 FFN 公式为与实际行样本及 nn.Linear 存储一致的方向。",
+    "replacements": [
+      {
+        "from": "\\operatorname{FFN}(u)=W_2\\,\\operatorname{GELU}(W_1u+b_1)+b_2",
+        "to": "\\operatorname{FFN}(u)=\\operatorname{GELU}(uW_1^{\\top}+b_1)W_2^{\\top}+b_2"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0361-7-gpt-model",
+    "rationale": "为长 class 提供从可观察输入输出到细节的两遍读法。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "长代码分两遍读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "第一遍只追 forward 中六步：检查 IDs → 查 token/position 表 → 相加 → 依次过 blocks → final_norm 和 lm_head → 可选 loss。把每步 shape 写在边上。第二遍再读 __init__ 的注册、_init_weights 的初始化以及每条异常分支。"
+          },
+          {
+            "type": "paragraph",
+            "text": "已经配好无导入副作用的完整文件 course_examples/mini_gpt_walkthrough.py。下载后可以直接 import，避免把演示里的顶层训练语句也复制进模块。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0374-14-architecture-state-dict",
+    "rationale": "把 checkpoint 工程合同与第一遍神经网络学习分层。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "第一遍学会保存什么；第二遍再实现验证器",
+        "blocks": [
+          {
+            "type": "table",
+            "headers": [
+              "需要恢复的事",
+              "最少理解的内容"
+            ],
+            "rows": [
+              [
+                "恢复预测",
+                "模型结构、参数和同一词表编号"
+              ],
+              [
+                "继续同一优化器历史",
+                "再加 optimizer 的历史状态和已完成次数"
+              ],
+              [
+                "下一步逐位相同",
+                "还需数据顺序、随机数状态及匹配运行环境"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "下面完整校验器用到 JSON、字典、哈希和异常处理。哈希可先理解为对一份内容生成可比较的指纹；现在无需背 SHA-256 算法。先运行已经提供的保存/加载函数并观察预测恢复一致，再回来看每个字段为什么不能丢。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0384-3-adamw",
+    "rationale": "在 AdamW 公式前给出移动平均的数值直觉与帽子含义。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "历史平均并不神秘",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "先拿 β=0.9、旧平均 m=0、当前梯度 g=2 举例：新 m=0.9×0+0.1×2=0.2。下一次 g=4，新 m=0.9×0.2+0.1×4=0.58。最近的值权重大，但更早的信息没有立即消失。这就是指数移动平均。"
+          },
+          {
+            "type": "paragraph",
+            "text": "v 对梯度的平方做同样的平均，帮助衡量尺度；带帽子的 m̂、v̂ 是修正从零起步造成的偏小。第 t 步分别除以 1−β₁ᵗ、1−β₂ᵗ。这里 t 是更新次数，和前面 token 的位置下标只是在不同公式中复用了字母。第一遍知道 optimizer 保存历史即可，推导可回读。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0389-5-training-loop",
+    "rationale": "保留严格累积实现，同时提供新手先运行单 batch 的路线。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "第一遍先使用上一节 train_mini_gpt_step，accumulation_steps=1，确认一次 forward/backward 对应一次更新。下面的 epoch helper 多了“先检查一组等大小小批次，再合成一次更新”的工程边界；这是第二遍扩展，不需要在第一次看到循环时同时掌握无限数据流、变长 batch 和梯度累积。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0394-9-gradient-clipping",
+    "rationale": "补 L2 范数的数值定义并限制对 AdamW 更新大小的承诺。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "L2 norm 可以先读成一组数的总长度：梯度 [3,4] 的长度是 √(3²+4²)=5。若上限为 1，就同乘 1/5，得到 [0.6,0.8]，长度为 1；方向比例仍是 3:4。"
+      },
+      {
+        "type": "paragraph",
+        "text": "裁剪直接限制的是梯度长度。对普通 SGD，更新长度随 η×梯度长度变化；AdamW 还要使用历史均值、平方均值与 weight decay，所以不能把“梯度上限 1”解释成“参数更新长度严格不超过 1”。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0396-11-overfit-one-batch-test",
+    "rationale": "解释 inf、非零下界和容量限制，避免高级符号阻挡主结论。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "下面 inf 读作“能无限接近的下界”。两个相同前缀必须使用同一分布，却被要求回答两个不同词，因此最好各给一半概率，不能同时给两个词概率 1。0.231 是仅按可见上下文和数据冲突推导的理想参照；有限大小的网络、训练步数与优化器不保证达到它。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0401-16-temperature",
+    "rationale": "区分抽样一次与概率本身，加入简单频率解释。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "若某词概率为 0.6，可以想象多次从同一分布独立抽样，大约六成会选到它；只抽一次可能选不到。实际生成每追加一个 token，前缀会变化，下一轮分布也通常变化，所以不能把整段续写当成反复从同一张表抽签。降低温度只是改变本轮选择的集中程度，不会让知识变多，也不保证事实更正确。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0415-1",
+    "rationale": "补齐真正可运行的三文件入口与阶段产物。 删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "实际文件",
+          "你可以观察到的产物"
+        ],
+        "rows": [
+          [
+            "course_examples/mini_gpt_walkthrough.py",
+            "520 参数、输入输出 shape、因果检查"
+          ],
+          [
+            "course_examples/week11_training_and_generation.py",
+            "可导入的训练/验证/恢复/生成函数"
+          ],
+          [
+            "course_examples/week12_end_to_end.py",
+            "100 次更新、前后概率、checkpoint 恢复一致、生成文本"
+          ],
+          [
+            "course_examples/verify_learning.py",
+            "数值及行为检查的结果，不是语言质量评测"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "先在 course_examples 目录运行 python week12_end_to_end.py。程序会在当前目录生成 mini-gpt-training.pt；它使用固定三句数据，不需要下载语料。完整依赖、环境创建和每个练习的运行顺序见同目录 README.md。"
+      }
+    ],
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0422-8-lm-head-logits",
+    "rationale": "修正省略 final_norm 的 LM head 数学式。 删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "Z=X^{(2)}W_{\\mathrm{head}}^{\\mathsf T}",
+        "to": "Z=\\operatorname{LN}_{\\mathrm{final}}(X^{(2)})W_{\\mathrm{head}}^{\\mathsf T}"
+      },
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0429-15",
+    "rationale": "解释复杂度增长的条件，避免把 KV cache 等价性套在滑窗位置重编号上。 删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "before": [
+      {
+        "type": "paragraph",
+        "text": "O(T²) 只是在描述增长速度：一个 head 的 T 个 query 各比较 T 个 key，有 T² 个分数。T 从 2 变 4，分数从 4 变 16。它不是“程序要运行 T² 秒”，也没有把 FFN、投影等全部成本都算进去。"
+      }
+    ],
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "计算情形",
+          "每轮 attention 分数工作",
+          "累计随生成长度的增长"
+        ],
+        "rows": [
+          [
+            "不裁剪，前缀持续增长",
+            "约 t²",
+            "求和后约 L³，只计分数工作"
+          ],
+          [
+            "本例固定最多看 2 个 token",
+            "每 head 最多 4 个分数",
+            "每轮有固定上限，累计随轮数近线性"
+          ]
+        ]
+      }
+    ],
+    "replacements": [
+      {
+        "from": "KV cache 是性能优化，不改变 causal condition 或抽样分布；本最小教学程序故意不实现，以免把 correctness trace 与 cache bookkeeping 混在一起。",
+        "to": "在前缀、位置编号和计算语义一致时，KV cache 可复用过去的 keys/values，并在数值误差范围内保持相同预测。这里不能直接套用：滑窗裁剪后位置编号从 0 重新开始，保留 token 的位置表示和可见前缀都可能改变，旧 cache 不再自动等价。本教学程序保持完整重算，缓存优化留作独立项目。"
+      },
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0434-17-corpus",
+    "rationale": "把更换数据拆成渐进练习，避免一步跳到不可控大项目。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "练习阶段",
+          "只改一件事",
+          "通过证据"
+        ],
+        "rows": [
+          [
+            "A：同词表加句子",
+            "只用五个已知词，保留每条三 token",
+            "打印输入/答案；ID 和 shape 合法"
+          ],
+          [
+            "B：增加真正独立资料",
+            "先按来源分 train/validation",
+            "数据来源可追溯；验证集未用于更新"
+          ],
+          [
+            "C：增加一个新词",
+            "新词表版本、新 V、新模型",
+            "embedding/head 同步扩展；旧 checkpoint 明确拒绝"
+          ],
+          [
+            "D：改长上下文",
+            "新 block_size 和长度处理",
+            "重新做 mask、shift 与因果检查"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "A 仍是机制练习；只有数据量和独立划分足够时，才开始讨论未见文本上的效果。新手先提交每阶段的观察记录，不需要一次把 tokenizer、模型容量和训练器全换掉。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0457-22-mental-model",
+    "rationale": "限制一般序列概率公式与非空 prompt 模型的关系。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "下面完整序列分解是一般语言模型记法。本文五词 MiniGPT 没有 BOS，forward 也拒绝空序列，因此实际运行总从一个非空 prompt 开始，只建模后续 token 在给定 prompt 下的条件概率；首词不是它从空输入预测出来的。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0380-1-batch",
+    "rationale": "限定交叉熵整数标签约定，避免与 API 的概率目标能力矛盾。",
+    "replacements": [
+      {
+        "from": "F.cross_entropy 的 target 应是 torch.long class IDs，不是 one-hot vectors。",
+        "to": "本课硬标签接口使用 torch.long class IDs；概率标签是另一种明确声明的用法。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0418-4-training-batch",
+    "rationale": "限定交叉熵整数标签约定，避免与 API 的概率目标能力矛盾。 删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "Cross-entropy targets 必须是 integer class IDs，不是 one-hot float vectors。",
+        "to": "本课 cross-entropy targets 使用 integer class IDs；不混用同 shape 的浮点概率标签接口。"
+      },
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0423-9-cross-entropy-loss",
+    "rationale": "限定交叉熵整数标签约定，避免与 API 的概率目标能力矛盾。 删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "Targets 必须是 long class IDs [6]，不是 float one-hot。",
+        "to": "本课硬标签 Targets 是 long class IDs [6]；不改用另一种概率目标接口。"
+      },
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0002-week-1-ai",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：只需加减乘除；陌生符号随用随学。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：把现实变成数",
+                "第 1–7 节：数字、向量、shape、权重、偏置"
+              ],
+              [
+                "第二段：把计算写短",
+                "第 8–14 节：函数、参数、矩阵、Σ、读公式"
+              ],
+              [
+                "第三段：亲手确认",
+                "第 15–18 节：运行点积与两输出实验，再做自测"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：能手算 0.78 和 0.88；说出 [B,D] 的两条轴；解释为什么 [4,3]@[3,2]→[4,2]。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：指数与概率先理解作用；详细 log/Softmax 计算等 Week 6。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：若负号或乘法顺序卡住，回第 6 节的三项贡献表。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0039-week-2-linear-regression-prediction-gradient-descent",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：能读 y=wx+b；知道预测和真实答案不是同一个数。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：怎样计错",
+                "第 1–5 节：prediction、error、MSE"
+              ],
+              [
+                "第二段：怎样决定方向",
+                "第 6–14 节：局部斜率、梯度、一步更新"
+              ],
+              [
+                "第三段：让程序重复",
+                "第 17–25 节：四样本代码、batch、复盘"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：用 w=b=0 算出 MSE=41、dw=-35、db=-12；一步后 w=0.35、b=0.12。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：第 15 节二阶导数、第 16 节解析解，以及末尾更深推导可第二遍。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：分不清 loss 和导数时，回第 7 节 x² 的小挪动表。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0077-week-3-neural-network-neuron",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：会解释线性模型、误差和梯度更新；本周先做 forward。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：为何需要非线性",
+                "第 1–17 节：单神经元、直线限制、ReLU"
+              ],
+              [
+                "第二段：多个单元怎样组合",
+                "第 18–33 节：两个隐藏单元、输出层、计算图"
+              ],
+              [
+                "第三段：从手算到代码",
+                "第 34–43 节：矩阵、纯 Python、参数计数"
+              ],
+              [
+                "第四段：任务与复盘",
+                "第 44–58 节：分类/回归、激活、总结"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：算出 hidden≈[1.4,1.1]、prediction≈1.3；能让回归输出得到 -1.4 而不被截成 0。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：Sigmoid 形状的深入讨论和章末补充可回读；58 个小节可分数次完成。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：矩阵方向不确定时回第 18、34 节；不要一边手算一边换初始权重。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0179-week-4-backpropagation",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：会记录一个小网络 forward 的中间值；理解导数是局部影响。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：保存计算",
+                "第 1–5 节：图、中间值、局部导数、链式法则"
+              ],
+              [
+                "第二段：一条路径反传",
+                "第 6–12 节：从 loss 到四个参数，再更新"
+              ],
+              [
+                "第三段：共享与程序",
+                "第 13–20 节：代码、分支求和、autograd、复盘"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：得到梯度 [-12,-6,-12,-6]；用同一旧状态更新；解释 backward 与 step 的区别。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：第 17 节梯度消失/爆炸先认症状，不必掌握深网稳定性证明。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：梯度符号错了，回第 14 节两分支抵消例子；计算值不对，用中央差分核对。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0201-week-5-tensor-pytorch",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：能运行 Python 文件并读列表、循环、函数；会四样本回归。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：数据怎么装",
+                "第 1–5 节：shape、dtype、device、广播"
+              ],
+              [
+                "第二段：把求导交出去",
+                "第 6–11 节：requires_grad、backward、zero_grad、手动更新"
+              ],
+              [
+                "第三段：组织成模型",
+                "第 12–18 节：nn.Module、optimizer、调试、模式"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：纯 Python、Tensor 手动更新、nn.Linear+SGD 在同初始值下第一步一致。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：GPU 性能、复杂模块设计不用提前学；CPU 足够跑配套例子。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：出现 loss 异常却不报错，先核 prediction 与 target 是否因广播变成了交叉比较。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0221-week-6-embedding-language-model",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：会读 [B,T] 和 [B,T,C]；知道 backward 算梯度、step 改参数。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：文字到表示",
+                "第 1–5 节：ID、lookup、embedding、六道题"
+              ],
+              [
+                "第二段：分数怎样计错",
+                "第 6–12 节：前缀、shift、logits、Softmax、CE"
+              ],
+              [
+                "第三段：最小可训练模型",
+                "第 13–19 节：Bigram、生成、局限、PPL"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：把三句变成六道题；算出 target 概率约 0.592、单题 CE 约 0.524；区分 score、概率与采样 ID。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：p−one-hot 的微分推导和 PPL 几何平均可第二遍；主线先会解释它们。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：log 卡住时回第 11 节指数反向查表；Bigram loss 不到 0，先看第 16 节标签冲突。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0254-week-7-attention-token",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：会点积、加权平均、Softmax；能看懂 key/query 两个位置轴。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：从问题到一次读取",
+                "第 1–7 节：Q/K/V、分数、比例、加权输出"
+              ],
+              [
+                "第二段：限制能看哪里",
+                "第 8–12 节：缩放、shape、causal mask、数值复现"
+              ],
+              [
+                "第三段：组装多个读取通道",
+                "第 13–19 节：可学习 head、多头、LM head、成本"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：解释 mask 为什么先于 Softmax；说出 [B,H,T,T] 两条 T 轴；多头是并行而 blocks 是串行。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：第 8 节方差论证可第二遍；第一遍用 √2 的具体除法理解缩放。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：把 V 放进 score 梯度路径时，回第 7 节分支表；轴全等于 2 时用第 9 节异尺寸检查。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0285-week-8-transformer-attention",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：能追踪一次 causal Attention；会均值和平方根，必要时看第 9 节补课。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：补上位置与非线性",
+                "第 1–6 节：position、Attention/FFN、GELU"
+              ],
+              [
+                "第二段：让多层容易训练",
+                "第 7–12 节：residual、LayerNorm、pre-norm、堆叠"
+              ],
+              [
+                "第三段：接到词表",
+                "第 13–19 节：LM head、完整 shape、不同架构、复盘"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：用 [1,2,3,4] 算均值 2.5、方差 1.25；指出 Attention 混位置、FFN 混通道、residual 做相加。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：GELU 的 erf、残差 Jacobian、位置方案扩展是选读；不要先背特殊函数。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：把 norm 跨 batch 计算时，回第 9 节；本章教学权重不是上一章训练的 checkpoint。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0318-week-9-tokenizer-gpt",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：会 ID lookup 与 input/target 右移；知道 token 不必等于词。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：固定切分与编号",
+                "第 1–4 节，再看第 8–9 节：encode/decode 与模型绑定"
+              ],
+              [
+                "第二段：变成合法训练题",
+                "第 10–15 节：special、mask、分文档、窗口、batch"
+              ],
+              [
+                "第三段：回看算法细节",
+                "第 5–7 节：Unicode、字节和两轮 BPE；第 16–18 节总结"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：写出一组 T=4 的 x/y；说明先分资料再切窗口；知道 w09-readable-v1 的 ID 不能喂给 V=5 模型。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：字节十六进制及 normalization 细节可第二遍，不能跳过模型与词表必须绑定的原则。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：从 31 bytes 跳到 11 IDs 看不懂时，回第 8 节“切换到新的可读 artifact”。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0350-week-10-gpt-architecture",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：能解释一个 pre-norm block；会读 nn.Module；知道 [B,T,C]→[B,T,V]。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：模型主线",
+                "第 1–7 节：规格、QKV、FFN、MiniGPT.forward"
+              ],
+              [
+                "第二段：证明模型接对了",
+                "第 8–10、12–13 节：注册、参数、520、shape、因果"
+              ],
+              [
+                "第三段：保存并交给训练器",
+                "第 14–17 节：checkpoint、线性层映射、下一周入口"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：运行完整模型得 [2,2,5]；数出 520 个参数；改变未来词不影响更早 logits。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：第 11 节 tying 是独立可选变体；第 14 节完整身份校验器可以第二遍逐行读。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：长 class 看不进去，回第 7 节六步路线；所有同名代码片段的完整组合已提供。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0378-week-11-training-inference-mini-gpt",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：已跑通 MiniGPT forward 与因果检查；能区分参数、梯度和 loss。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：完成一次真实学习",
+                "第 1–4、6 节：六道题、step、AdamW、训练、基线"
+              ],
+              [
+                "第二段：正确测量并保存",
+                "第 7–13 节：validation、clipping、诊断、checkpoint"
+              ],
+              [
+                "第三段：真正生成",
+                "第 14–22 节：最后位置、温度、top-k、crop 与 append"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：说明哪一行改参数；正确汇总不同 batch 的 token loss；生成时保留完整 history。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：第 5 节完整 accumulation 和第 12 节 optimizer 元数据逐项校验，先用配套函数，再第二遍读实现。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：same-batch loss 停在非零值时，先读第 11 节两个相同前缀的冲突。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0413-week-12-mini-gpt-text-training-generation",
+    "rationale": "新增本周起点、分段阅读路线、完成标准和补课入口；保留原编号。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "本周怎么读",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "开始条件：能导入 Week 10/11 三文件示例；理解训练、验证、保存、生成的用途。"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "分段",
+              "范围与任务"
+            ],
+            "rows": [
+              [
+                "第一段：逐步走完整数据链",
+                "第 1–12 节：按六道题跟踪 shape、loss、gradient、step"
+              ],
+              [
+                "第二段：跑通保存后恢复",
+                "第 13–16 节：完整程序、生成、重复计算、诊断"
+              ],
+              [
+                "第三段：做一次小扩展",
+                "第 17–24 节：换语料、变规模、清单与最终测试"
+              ]
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "完成标准：运行 100 次更新并恢复相同 logits；打印一次生成；明确这不是语言质量或泛化证明。"
+          },
+          {
+            "type": "paragraph",
+            "text": "可回读的深入内容：KV cache 是性能拓展；先完成不带缓存的正确端到端程序。"
+          },
+          {
+            "type": "paragraph",
+            "text": "卡住时：想加新词前回第 17 节阶段 C；新的 ID 映射默认需要新模型与 checkpoint。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0047-8-gradient",
+    "rationale": "给导数、偏导、梯度和符号一个可回查的对照。",
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "记号",
+          "读法",
+          "本课意义"
+        ],
+        "rows": [
+          [
+            "dL/dw",
+            "L 对 w 的导数",
+            "单变量情况下的局部斜率"
+          ],
+          [
+            "∂L/∂w",
+            "L 对 w 的偏导",
+            "还有别的参数时，暂时固定它们"
+          ],
+          [
+            "∇θL",
+            "L 对参数组 θ 的梯度",
+            "把各参数偏导排在一起"
+          ],
+          [
+            "η",
+            "eta，学习率",
+            "本次更新的步长，由我们选"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "sectionId": "o0139-neural-network",
+    "rationale": "统一后续复盘中的行向量公式，保持与 XW 和 PyTorch 转置约定一致。",
+    "replacements": [
+      {
+        "from": "h=\\operatorname{ReLU}(W_1x+b_1)",
+        "to": "h=\\operatorname{ReLU}(xW_1+b_1)"
+      },
+      {
+        "from": "\\hat y=W_2h+b_2",
+        "to": "\\hat y=hW_2+b_2"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0158-50-neuron-if",
+    "rationale": "统一后续复盘中的行向量公式，保持与 XW 和 PyTorch 转置约定一致。",
+    "replacements": [
+      {
+        "from": "a=f(Wx+b)",
+        "to": "a=f(xW+b)"
+      },
+      {
+        "from": "a = f(Wx + b)",
+        "to": "a = f(xW + b)"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0160-52-gpt-neuron",
+    "rationale": "统一后续复盘中的行向量公式，保持与 XW 和 PyTorch 转置约定一致。",
+    "replacements": [
+      {
+        "from": "Wx+b",
+        "to": "xW+b"
+      },
+      {
+        "from": "Wx + b",
+        "to": "xW + b"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0164-1-linear-calculation",
+    "rationale": "统一后续复盘中的行向量公式，保持与 XW 和 PyTorch 转置约定一致。",
+    "replacements": [
+      {
+        "from": "z = Wx + b",
+        "to": "z = xW + b"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0166-3-neuron",
+    "rationale": "统一后续复盘中的行向量公式，保持与 XW 和 PyTorch 转置约定一致。",
+    "replacements": [
+      {
+        "from": "a = f(Wx+b)",
+        "to": "a = f(xW+b)"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0173-2-weighted-sum-activation",
+    "rationale": "统一后续复盘中的行向量公式，保持与 XW 和 PyTorch 转置约定一致。",
+    "replacements": [
+      {
+        "from": "W_2(W_1x+b_1)+b_2",
+        "to": "(xW_1+b_1)W_2+b_2"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0387-4-training-step",
+    "rationale": "在 step 前拒绝非有限 loss/gradient；使 shape 检查依赖实际输入而不是硬编码 batch 大小。",
+    "after": [
+      {
+        "type": "paragraph",
+        "text": "可执行版本在 backward 前检查 loss 是否有限，裁剪时也要求梯度有限；遇到 NaN/Inf 就停止本次 step。不能等参数已经更新后，才从日志发现本应停止的数值问题。"
+      }
+    ],
+    "blockOverrides": [
+      {
+        "blockId": "curated-w11-o0387-4-training-step-worked-2-6",
+        "block": {
+          "type": "code",
+          "language": "python",
+          "code": "def train_mini_gpt_step(\n    model: MiniGPT,\n    optimizer: torch.optim.AdamW,\n    inputs: torch.Tensor,\n    targets: torch.Tensor,\n    device: torch.device,\n    max_grad_norm: float = 1.0,\n    completed_updates: int = 0,\n) -> tuple[torch.Tensor, torch.Tensor, int]:\n    if not math.isfinite(max_grad_norm) or max_grad_norm <= 0:\n        raise ValueError(\"max_grad_norm must be positive\")\n    if type(completed_updates) is not int or completed_updates < 0:\n        raise ValueError(\"completed_updates must be a non-negative integer\")\n    validate_mini_gpt_adamw_completed_updates(\n        model,\n        optimizer,\n        completed_updates,\n    )\n\n    model.train()\n    inputs = inputs.to(device)\n    targets = targets.to(device)\n    optimizer.zero_grad(set_to_none=True)\n    logits, loss = model(inputs, targets)\n    assert logits.shape == (*inputs.shape, model.config.vocab_size)\n    assert loss is not None\n    if not torch.isfinite(loss):\n        raise ValueError(\"训练 loss 非有限，停止本次更新\")\n    loss.backward()\n    grad_norm = torch.nn.utils.clip_grad_norm_(\n        model.parameters(),\n        max_norm=max_grad_norm,\n        error_if_nonfinite=True,\n    )\n    optimizer.step()\n    completed_updates += 1  # only after optimizer.step succeeds\n    return loss.detach(), grad_norm.detach(), completed_updates",
+          "filename": "week11_training_and_generation.py"
+        }
+      }
+    ]
+  },
+  {
+    "sectionId": "o0427-13-training",
+    "rationale": "让完整 runner 实际打印损失、成功更新数、恢复通过、生成 ID 与可读文字，并验证参数确有变化。",
+    "blockOverrides": [
+      {
+        "blockId": "curated-w12-o0427-13-training-worked-2-6",
+        "block": {
+          "type": "code",
+          "language": "python",
+          "code": "# week12_end_to_end.py\n# This file is a caller. It reuses, rather than redefines, Week 10/11 APIs.\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nimport torch\n\nfrom mini_gpt_walkthrough import (\n    GPTConfig,\n    MiniGPT,\n    save_mini_gpt_training_checkpoint,\n)\nfrom week11_training_and_generation import (\n    CANONICAL_ORDERED_TOKENS,\n    CANONICAL_TOKENIZER_POLICY,\n    CANONICAL_TOKENIZER_VERSION,\n    generate_mini_gpt_sampled,\n    load_mini_gpt_training_resume,\n    train_mini_gpt_step,\n    validate_mini_gpt_adamw_completed_updates,\n)\n\n\nRAW_TEXTS = (\n    \"我 喜欢 AI\",\n    \"猫 喜欢 我\",\n    \"我 学习 AI\",\n)\nEXPECTED_RAW_IDS = (\n    (0, 1, 2),  # 我 喜欢 AI\n    (4, 1, 0),  # 猫 喜欢 我\n    (0, 3, 2),  # 我 学习 AI\n)\nFROZEN_STOI = {\n    token: token_id\n    for token_id, token in enumerate(CANONICAL_ORDERED_TOKENS)\n}\nassert CANONICAL_ORDERED_TOKENS == (\"我\", \"喜欢\", \"AI\", \"学习\", \"猫\")\nassert CANONICAL_TOKENIZER_POLICY == (\n    \"whitespace-delimited;no-specials;no-pad;no-unk\"\n)\n\n\ndef encode_mini_gpt_v1(text: str) -> list[int]:\n    pieces = text.split()\n    if not pieces:\n        raise ValueError(\"mini-gpt-v1 text must contain a token\")\n    try:\n        return [FROZEN_STOI[piece] for piece in pieces]\n    except KeyError as error:\n        raise ValueError(\n            f\"mini-gpt-v1 has no unknown-token fallback: {error.args[0]}\"\n        ) from error\n\n\ndef make_fixed_batch(device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:\n    encoded_rows = [encode_mini_gpt_v1(text) for text in RAW_TEXTS]\n    assert tuple(tuple(row) for row in encoded_rows) == EXPECTED_RAW_IDS\n    raw = torch.tensor(encoded_rows, dtype=torch.long, device=device)  # [3,3]\n    inputs = raw[:, :-1]   # [3,2]\n    targets = raw[:, 1:]   # [3,2]\n    return inputs, targets\n\n\ndef main() -> None:\n    # 极小 CPU 教学模型用单线程，减少线程调度开销。\n    torch.set_num_threads(1)\n    seed = 7\n    torch.manual_seed(seed)\n    if torch.cuda.is_available():\n        torch.cuda.manual_seed_all(seed)\n    device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n\n    model = MiniGPT(GPTConfig()).to(device)\n    optimizer = torch.optim.AdamW(\n        model.parameters(),\n        lr=1e-3,\n        weight_decay=1e-2,\n    )\n    inputs, targets = make_fixed_batch(device)\n    assert inputs.shape == targets.shape == (3, 2)\n\n    # Observe the labelled [我,喜欢] -> AI row before any update.\n    model.eval()\n    with torch.no_grad():\n        before_logits, _ = model(inputs)\n        before_probs = torch.softmax(before_logits[0, 1, :], dim=-1)  # [5]\n\n    initial_parameters = [p.detach().clone() for p in model.parameters()]\n    with torch.no_grad():\n        _, initial_loss = model(inputs, targets)\n    completed_updates = 0\n    for _ in range(100):\n        loss, grad_norm, completed_updates = train_mini_gpt_step(\n            model,\n            optimizer,\n            inputs,\n            targets,\n            device,\n            completed_updates=completed_updates,\n        )\n        assert torch.isfinite(loss) and torch.isfinite(grad_norm)\n    assert completed_updates == 100\n    assert any(not torch.equal(old, new)\n               for old, new in zip(initial_parameters, model.parameters()))\n    validate_mini_gpt_adamw_completed_updates(\n        model,\n        optimizer,\n        completed_updates,\n    )\n\n    model.eval()\n    with torch.no_grad():\n        reference_logits, reference_loss = model(inputs, targets)\n    assert reference_logits.shape == (3, 2, 5)\n    assert reference_loss is not None and reference_loss.ndim == 0\n    after_probs = torch.softmax(reference_logits[0, 1, :], dim=-1)  # [5]\n    print(\"parameters=\", sum(p.numel() for p in model.parameters()))\n    print(\"completed_updates=\", completed_updates)\n    print(\"same_batch_loss_before=\", initial_loss.item())\n    print(\"same_batch_loss_after=\", reference_loss.item())\n    print(\"observed context=[我,喜欢], target=AI\")\n    print(\"vocabulary_order=\", CANONICAL_ORDERED_TOKENS)\n    print(\"before_probs=\", before_probs.detach().cpu().tolist())\n    print(\"after_probs=\", after_probs.detach().cpu().tolist())\n\n    path = Path(\"mini-gpt-training.pt\")\n    save_mini_gpt_training_checkpoint(\n        str(path),\n        model=model,\n        optimizer=optimizer,\n        completed_updates=completed_updates,\n        ordered_tokens=CANONICAL_ORDERED_TOKENS,\n        tokenizer_policy=CANONICAL_TOKENIZER_POLICY,\n        tokenizer_version=CANONICAL_TOKENIZER_VERSION,\n    )\n    restored, restored_optimizer, restored_updates = (\n        load_mini_gpt_training_resume(str(path), device=device)\n    )\n    assert restored_updates == completed_updates\n    validate_mini_gpt_adamw_completed_updates(\n        restored,\n        restored_optimizer,\n        restored_updates,\n    )\n\n    restored.eval()\n    with torch.no_grad():\n        restored_logits, _ = restored(inputs)\n    torch.testing.assert_close(restored_logits, reference_logits)\n    print(\"checkpoint_round_trip=PASS\")\n\n    prompt = torch.tensor(\n        [[FROZEN_STOI[\"我\"], FROZEN_STOI[\"喜欢\"]]],\n        dtype=torch.long,\n        device=device,\n    )\n    generated_history = generate_mini_gpt_sampled(\n        restored,\n        prompt,\n        max_new_tokens=3,\n        temperature=0.8,\n        top_k=3,\n    )\n    assert generated_history.shape == (1, 5)\n    print(\"generated_ids=\", generated_history[0].tolist())\n    print(\"generated_text=\", \" \".join(\n        CANONICAL_ORDERED_TOKENS[i] for i in generated_history[0].tolist()))\n    print(\"以上是固定三句数据的机制演示，不是 held-out 泛化评测。\")\n\n\nif __name__ == \"__main__\":\n    main()",
+          "filename": "week12_end_to_end.py"
+        }
+      }
+    ]
+  },
+  {
+    "sectionId": "o0379-week-11",
+    "rationale": "用已经提供的无副作用模块代替要求新手手工拼接文件。",
+    "replacements": [
+      {
+        "from": "本章以下代码假定已完成这个无 API 变化的整理。",
+        "to": "配套 course_examples/mini_gpt_walkthrough.py 已完成这个无 API 变化的整理；可以直接导入。正文片段用于分步讲解，不要求你自行猜测拼接顺序。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0460-a-mini-gpt",
+    "rationale": "替换与主线不兼容的字符级 tied/dropout 附录，提供同一 canonical 三文件包的完整入口。",
+    "before": [
+      {
+        "type": "callout",
+        "tone": "concept",
+        "title": "先下载配套代码，再运行完整入口",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "解压 course-examples.zip，将 mini_gpt_walkthrough.py、week11_training_and_generation.py、week12_end_to_end.py 保持在同一目录。安装 PyTorch 后，运行 python week12_end_to_end.py。模型定义和训练函数分别对应 Week 10 与 Week 11，不再切换成另一套 tokenizer 或 checkpoint。"
+          }
+        ]
+      }
+    ],
+    "after": [
+      {
+        "type": "table",
+        "headers": [
+          "文件",
+          "作用"
+        ],
+        "rows": [
+          [
+            "mini_gpt_walkthrough.py",
+            "完整 GPTConfig、Attention、Block、MiniGPT 与 checkpoint 基础接口"
+          ],
+          [
+            "week11_training_and_generation.py",
+            "完整训练、验证、恢复与采样函数"
+          ],
+          [
+            "week12_end_to_end.py",
+            "上面显示的完整组装入口，执行 100 次更新后保存、恢复、生成"
+          ]
+        ]
+      },
+      {
+        "type": "paragraph",
+        "text": "原上传包中的字符级参考实现保留在修改前 Git tag 及原始来源 PDF 中。它有不同的词表、dropout、weight tying 和 checkpoint 格式，不再作为当前课程的可直接替换入口。"
+      }
+    ],
+    "blockOverrides": [
+      {
+        "blockId": "code-appendix-a-mini-gpt",
+        "block": {
+          "type": "code",
+          "language": "python",
+          "code": "# week12_end_to_end.py\n# This file is a caller. It reuses, rather than redefines, Week 10/11 APIs.\nfrom __future__ import annotations\n\nfrom pathlib import Path\n\nimport torch\n\nfrom mini_gpt_walkthrough import (\n    GPTConfig,\n    MiniGPT,\n    save_mini_gpt_training_checkpoint,\n)\nfrom week11_training_and_generation import (\n    CANONICAL_ORDERED_TOKENS,\n    CANONICAL_TOKENIZER_POLICY,\n    CANONICAL_TOKENIZER_VERSION,\n    generate_mini_gpt_sampled,\n    load_mini_gpt_training_resume,\n    train_mini_gpt_step,\n    validate_mini_gpt_adamw_completed_updates,\n)\n\n\nRAW_TEXTS = (\n    \"我 喜欢 AI\",\n    \"猫 喜欢 我\",\n    \"我 学习 AI\",\n)\nEXPECTED_RAW_IDS = (\n    (0, 1, 2),  # 我 喜欢 AI\n    (4, 1, 0),  # 猫 喜欢 我\n    (0, 3, 2),  # 我 学习 AI\n)\nFROZEN_STOI = {\n    token: token_id\n    for token_id, token in enumerate(CANONICAL_ORDERED_TOKENS)\n}\nassert CANONICAL_ORDERED_TOKENS == (\"我\", \"喜欢\", \"AI\", \"学习\", \"猫\")\nassert CANONICAL_TOKENIZER_POLICY == (\n    \"whitespace-delimited;no-specials;no-pad;no-unk\"\n)\n\n\ndef encode_mini_gpt_v1(text: str) -> list[int]:\n    pieces = text.split()\n    if not pieces:\n        raise ValueError(\"mini-gpt-v1 text must contain a token\")\n    try:\n        return [FROZEN_STOI[piece] for piece in pieces]\n    except KeyError as error:\n        raise ValueError(\n            f\"mini-gpt-v1 has no unknown-token fallback: {error.args[0]}\"\n        ) from error\n\n\ndef make_fixed_batch(device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:\n    encoded_rows = [encode_mini_gpt_v1(text) for text in RAW_TEXTS]\n    assert tuple(tuple(row) for row in encoded_rows) == EXPECTED_RAW_IDS\n    raw = torch.tensor(encoded_rows, dtype=torch.long, device=device)  # [3,3]\n    inputs = raw[:, :-1]   # [3,2]\n    targets = raw[:, 1:]   # [3,2]\n    return inputs, targets\n\n\ndef main() -> None:\n    # 极小 CPU 教学模型用单线程，减少线程调度开销。\n    torch.set_num_threads(1)\n    seed = 7\n    torch.manual_seed(seed)\n    if torch.cuda.is_available():\n        torch.cuda.manual_seed_all(seed)\n    device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n\n    model = MiniGPT(GPTConfig()).to(device)\n    optimizer = torch.optim.AdamW(\n        model.parameters(),\n        lr=1e-3,\n        weight_decay=1e-2,\n    )\n    inputs, targets = make_fixed_batch(device)\n    assert inputs.shape == targets.shape == (3, 2)\n\n    # Observe the labelled [我,喜欢] -> AI row before any update.\n    model.eval()\n    with torch.no_grad():\n        before_logits, _ = model(inputs)\n        before_probs = torch.softmax(before_logits[0, 1, :], dim=-1)  # [5]\n\n    initial_parameters = [p.detach().clone() for p in model.parameters()]\n    with torch.no_grad():\n        _, initial_loss = model(inputs, targets)\n    completed_updates = 0\n    for _ in range(100):\n        loss, grad_norm, completed_updates = train_mini_gpt_step(\n            model,\n            optimizer,\n            inputs,\n            targets,\n            device,\n            completed_updates=completed_updates,\n        )\n        assert torch.isfinite(loss) and torch.isfinite(grad_norm)\n    assert completed_updates == 100\n    assert any(not torch.equal(old, new)\n               for old, new in zip(initial_parameters, model.parameters()))\n    validate_mini_gpt_adamw_completed_updates(\n        model,\n        optimizer,\n        completed_updates,\n    )\n\n    model.eval()\n    with torch.no_grad():\n        reference_logits, reference_loss = model(inputs, targets)\n    assert reference_logits.shape == (3, 2, 5)\n    assert reference_loss is not None and reference_loss.ndim == 0\n    after_probs = torch.softmax(reference_logits[0, 1, :], dim=-1)  # [5]\n    print(\"parameters=\", sum(p.numel() for p in model.parameters()))\n    print(\"completed_updates=\", completed_updates)\n    print(\"same_batch_loss_before=\", initial_loss.item())\n    print(\"same_batch_loss_after=\", reference_loss.item())\n    print(\"observed context=[我,喜欢], target=AI\")\n    print(\"vocabulary_order=\", CANONICAL_ORDERED_TOKENS)\n    print(\"before_probs=\", before_probs.detach().cpu().tolist())\n    print(\"after_probs=\", after_probs.detach().cpu().tolist())\n\n    path = Path(\"mini-gpt-training.pt\")\n    save_mini_gpt_training_checkpoint(\n        str(path),\n        model=model,\n        optimizer=optimizer,\n        completed_updates=completed_updates,\n        ordered_tokens=CANONICAL_ORDERED_TOKENS,\n        tokenizer_policy=CANONICAL_TOKENIZER_POLICY,\n        tokenizer_version=CANONICAL_TOKENIZER_VERSION,\n    )\n    restored, restored_optimizer, restored_updates = (\n        load_mini_gpt_training_resume(str(path), device=device)\n    )\n    assert restored_updates == completed_updates\n    validate_mini_gpt_adamw_completed_updates(\n        restored,\n        restored_optimizer,\n        restored_updates,\n    )\n\n    restored.eval()\n    with torch.no_grad():\n        restored_logits, _ = restored(inputs)\n    torch.testing.assert_close(restored_logits, reference_logits)\n    print(\"checkpoint_round_trip=PASS\")\n\n    prompt = torch.tensor(\n        [[FROZEN_STOI[\"我\"], FROZEN_STOI[\"喜欢\"]]],\n        dtype=torch.long,\n        device=device,\n    )\n    generated_history = generate_mini_gpt_sampled(\n        restored,\n        prompt,\n        max_new_tokens=3,\n        temperature=0.8,\n        top_k=3,\n    )\n    assert generated_history.shape == (1, 5)\n    print(\"generated_ids=\", generated_history[0].tolist())\n    print(\"generated_text=\", \" \".join(\n        CANONICAL_ORDERED_TOKENS[i] for i in generated_history[0].tolist()))\n    print(\"以上是固定三句数据的机制演示，不是 held-out 泛化评测。\")\n\n\nif __name__ == \"__main__\":\n    main()",
+          "filename": "week12_end_to_end.py"
+        }
+      }
+    ],
+    "resources": [
+      {
+        "label": "下载全部可运行配套代码 course-examples.zip",
+        "href": "/downloads/course-examples.zip"
+      },
+      {
+        "label": "阅读配套代码说明与运行顺序",
+        "href": "/downloads/course-examples-readme.txt"
+      }
+    ],
+    "replacements": [
+      {
+        "from": "下面代码与Week 9-12 的tokenizer、architecture、training、checkpoint 和generation 主线配套。",
+        "to": "本附录使用与 Weeks 10–12 相同的 mini-gpt-v1：五个词、V=5、block_size=2、C=4、H=2、两层、无 dropout、untied、520 个参数。下方是完整组装入口；它依赖的两个完整模块已随配套代码包提供。"
+      }
+    ]
+  },
+  {
+    "sectionId": "o0416-2-pipeline",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0417-3",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0419-5-embedding-lookup",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0420-6-transformer-block",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0421-7-q-k-v-shape-trace",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0424-10-backward-trace",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0425-11-embedding-rows",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0426-12-optimizer-step",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0428-14-autoregressive-generation-trace",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0430-16",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  },
+  {
+    "sectionId": "o0436-19-model",
+    "rationale": "删去本章逐节重复的整段配置，用章首同一固定表作为参照，减轻阅读负担。",
+    "replacements": [
+      {
+        "from": "固定 trace 始终使用 mini-gpt-v1：[我, 喜欢, AI, 学习, 猫] 对应 IDs 0..4；B=3、N=3、T=2、C=4、H=2、d_head=2、V=5、n_layer=2。B 在一般 API 中可变，但本训练例固定为 3。",
+        "to": ""
+      }
+    ]
+  }
+]
+
