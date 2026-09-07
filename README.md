@@ -80,8 +80,8 @@ python week06_probability.py
 React 19、TypeScript、Vinext/Vite、Tailwind CSS、KaTeX、MiniSearch 和 Zustand 构成网站主体；构建预览使用 Cloudflare Workers 工具链。Vite 读取 `.openai/hosting.json`，当前 D1/R2 绑定为空，本地阅读不要求数据库或云账号。
 
 ```text
+app/                      页面与路由
 src/
-  app/                    页面与路由
   components/             阅读界面与交互组件
   content/
     course.generated.json 原始转换底稿
