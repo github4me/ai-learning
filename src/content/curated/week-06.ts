@@ -1708,20 +1708,63 @@ loss = F.cross_entropy(
     ),
     section(
       'o0244-13-bigram-language-model',
-      '13. 最简单的 Bigram Language Model',
-      '我们已有输入 embedding [V,C]=[5,4]，但还需要一个能直接给所有下一 token 打分的最小模型。',
+      '13. Bigram：只看当前 Token 的最小 Language Model',
+      'Bigram 是一个真正能训练、算 Loss、生成 Token 的最小语言模型。它的用途不是写好文章，而是把“当前 Token → 下一 Token 概率”这条完整训练链跑通，并清楚暴露为什么后续需要 Attention。',
       [
+        '说明 Bigram 做什么、为什么它是学习 Language Model 机制的有用起点，以及它明确做不到什么。',
         '区分通常的 token embedding 表与 Bigram 的 [V,V] next-token-logit table。',
+        '用本课六道题统计相邻 Token 对，解释 Bigram 实际会学到哪些局部规律与冲突。',
         '用可运行模型显示 [B,T] IDs 如何产生 [B,T,V_vocab] logits 和 loss。',
       ],
       [
         paragraph(
-          '通常的输入 nn.Embedding(V,C)=nn.Embedding(5,4) 的 row 是四维连续 representation；本节的 nn.Embedding(V_vocab,V_vocab)=nn.Embedding(5,5) 是另一张表。它的每一 row 直接存五个“候选下一 token”的 logits，不是五维语义 embedding。',
+          'Bigram 的名字来自 bi-gram（两个相邻 Token）。它只学一件事：看见当前 Token x_t 时，历史数据里紧接着它的 Token 通常是什么。比如它可以学习“猫”后常出现“喜欢”；但它不会问“猫喜欢”前面是否还有别的文字。它不是完整 GPT 的替代品，而是一个可完全看透的最小基线。',
         ),
+        callout('Bigram 在整套课程中负责什么？', [
+          table(
+            ['它做的事', '为什么适合作为第一台语言模型'],
+            [
+              ['把当前 Token ID 映射为 V 个 next-token Logits', '直接复用已经学过的 ID、Logits、Softmax、Cross Entropy 与 Gradient。'],
+              ['根据训练文本中的相邻 Token 对，调整每一行 Logits', '能用很少的参数和很小的数据跑完一次真实训练。'],
+              ['从最后一个 Token 的分布选择并 append 新 Token', '能实际生成，而不是只有公式或分类表。'],
+              ['故意忽略更早上下文', '它会在需要区分“我 喜欢”和“猫 喜欢”时失败；失败本身引出 Attention 的必要性。'],
+            ],
+          ),
+          paragraph(
+            '因此 Bigram 的价值是“机制实验台”：如果它不能训练或生成，先检查 Token、Target shift、Loss、Gradient 或生成循环；如果它能跑通但读不懂长上下文，这正是模型能力边界，而不是代码故障。',
+          ),
+        ]),
         formula(
           String.raw`P(x_{t+1}\mid x_1,\ldots,x_t)=P(x_{t+1}\mid x_t)`,
           'Bigram 的强假设：预测时只使用当前 token，忽略更早左侧上下文。',
         ),
+        callout('先从本课的六道题看它会学到什么', [
+          paragraph(
+            '第 8 节的三条原始文字一共给出六个相邻 Token 对。Bigram 把每一对都理解为“当前 Token 的一行应该提高哪个下一 Token 的概率”。',
+          ),
+          table(
+            ['训练文字', '从中得到的 Bigram 题'],
+            [
+              ['我 喜欢 AI', '我 → 喜欢；喜欢 → AI'],
+              ['猫 喜欢 我', '猫 → 喜欢；喜欢 → 我'],
+              ['我 学习 AI', '我 → 学习；学习 → AI'],
+            ],
+          ),
+          table(
+            ['当前 Token / table row', '训练中见到的下一 Token', '只看当前 Token 时的经验规律'],
+            [
+              ['我 / row 0', '喜欢 1 次；学习 1 次', '无法区分两种前缀；理想上会在 喜欢 与 学习 间分配概率。'],
+              ['喜欢 / row 1', 'AI 1 次；我 1 次', '同样有两个冲突的下一 Token。'],
+              ['猫 / row 4', '喜欢 1 次', '在此极小数据中，喜欢得到最高支持。'],
+              ['学习 / row 3', 'AI 1 次', '在此极小数据中，AI 得到最高支持。'],
+              ['AI / row 2', '没有作为 Input 出现', '这个窗口没有提供“AI 后面是什么”的监督。'],
+            ],
+            '这是相邻对的频次直觉，不是声称有限训练必然得到精确 0.5 或 1.0；实际概率还受初始化、优化步数和有限 Logits 影响。',
+          ),
+          paragraph(
+            '特别注意“喜欢”这行：在“我 喜欢 AI”里它的正确答案是 AI，在“猫 喜欢 我”里正确答案却是 我。Bigram 两次都只看见当前 ID=喜欢，所以必须使用同一行 Logits；它没有信息把这两种情况分开。完整 Transformer 会为“我 喜欢”和“猫 喜欢”产生不同的 Context Representation h，因此可以给出不同分布。',
+          ),
+        ]),
         table(
           ['table', 'shape', 'row meaning', 'column / feature meaning'],
           [
@@ -1739,6 +1782,28 @@ loss = F.cross_entropy(
             ],
           ],
         ),
+        callout('一行表怎样完成一次预测？', [
+          paragraph(
+            '设当前 Token 是“猫” / ID 4。Bigram 不先构造四维语义 Embedding，也不读取“猫”前面的 Token；它只做一次 row lookup：读出 W_bigram[4,:] 这一整行五个 Logits。Softmax 把这行分数转为五个候选概率，随后 Cross Entropy 用训练给出的 Target ID 检查其中正确的一项。',
+          ),
+          code(
+            'text',
+            `当前 Token ID = 4 / 猫
+
+固定教学用的一行 Logits：
+W_bigram[4,:] = [0, 2, 1, -1, 0]
+候选顺序          我  喜欢  AI  学习  猫
+Softmax 后 p      0.0802, 0.5923, 0.2179, 0.0295, 0.0802
+
+训练对“猫 → 喜欢”的 Target ID=1：
+Cross Entropy 读取 p[1]=0.5923
+Loss = -ln(0.5923) ≈ 0.5237
+Backward 让 row 4 中“喜欢”这一列的相对分数更有利。`,
+          ),
+          paragraph(
+            '所以 [V,V]=[5,5] 的含义非常具体：5 个可能的当前 Token，每一个都保存 5 个候选下一 Token 的原始分数，共 25 个可训练数（本极简实现没有额外 Bias）。训练时“猫”作为 Input 出现，主要会给 row 4 的五个数产生梯度；“喜欢”作为 Input 出现，则主要更新 row 1。',
+          ),
+        ]),
         code(
           'python',
           `import torch
@@ -1771,17 +1836,32 @@ class BigramLanguageModel(nn.Module):
           String.raw`\mathrm{logits}[b,t,:]=W_{\mathrm{bigram}}[\mathrm{token\_ids}[b,t],:]`,
           '输入每一个 ID 时，读出该 ID 的完整 five-candidate logit row；本 batch 输出 [3,2,5]。',
         ),
+        callout('Bigram 的能力边界正好说明 Attention 为什么存在', [
+          table(
+            ['当前任务', 'Bigram 能看到什么', '会发生什么'],
+            [
+              ['预测“我”之后的 Token', '当前 ID=我', '可学到“我”后常接喜欢或学习的局部规律。'],
+              ['比较“我 喜欢”与“猫 喜欢”后面是什么', '两次都只有当前 ID=喜欢', '必定使用同一 row 1 与同一分布，无法按更早前缀区分。'],
+              ['预测“喜欢”之后是什么', '当前 ID=喜欢', '只能折中适应训练中 AI 与我两种答案，不能知道此刻来自哪条短句。'],
+            ],
+          ),
+          paragraph(
+            '这不是说 Bigram “没用”，而是它有意采用 P(next｜current Token) 这个很小的假设。Transformer 将假设改成 P(next｜完整可见前缀)：Attention 把可见前缀整理成 h，再由 Output Head 打分。因此 Bigram 是通往 Attention 的对照基线，而不是最终架构。',
+          ),
+        ]),
       ],
       [
+        'Bigram 是“当前 Token → 下一 Token 分布”的最小、可训练语言模型，主要用于验证完整训练与生成机制。',
         'Bigram row 的值是 logits，Softmax 前不是 probabilities。',
-        'nn.Embedding(5,5) 在这里不是同一张 [5,4] semantic/input table。',
-        'Bigram 不会综合整句；相同当前 token 必然给相同 logits。',
+        'nn.Embedding(5,5) 在这里不是同一张 [5,4] semantic/input table：它保存的是 V 个候选的下一词评分规则。',
+        'Bigram 不会综合整句；相同当前 Token 必然给相同 Logits，即使更早的上下文不同。',
+        'Bigram 能学局部相邻规律，但不能解决同一当前 Token 在不同前缀下需要不同下一词的问题。',
       ],
       check(
-        '为什么 Bigram 的 token_table.weight.shape 是 [5,5]，而输入 embedding 是 [5,4]？',
+        'Bigram 是做什么的？为什么它无法区分“我 喜欢”与“猫 喜欢”？',
         [
           paragraph(
-            'Bigram 每个 row 必须直接给 V=5 个下一-token logits；普通输入 embedding 每个 row 则只携带 C=4 个 learned features。',
+            '它学习“当前 Token 后面通常接什么”，用一张 [V,V]=[5,5] 表从当前 ID 直接查出五个 next-token Logits，再经 Softmax、Cross Entropy 和训练更新。两种短句的当前最后 Token 都是“喜欢” / ID 1，因此 Bigram 只能查同一个 row 1；它没有前面是“我”还是“猫”的信息。Attention 的任务正是把这样的更长前缀带入 Context Representation h。',
           ),
         ],
       ),
