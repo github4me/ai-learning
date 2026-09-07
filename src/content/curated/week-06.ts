@@ -1868,16 +1868,87 @@ class BigramLanguageModel(nn.Module):
     ),
     section(
       'o0246-14-loop',
-      '14. 训练仍然是同一个 Loop',
-      'Bigram 刚创建时的 [5,5] 表是随机的；它必须根据右移 targets 调整相对 logits。',
+      '14. 亲手走完一次 Bigram 训练：出题、算错多少、修改评分表',
+      '训练循环是在同一套参数上反复做预测、计算 Loss、求 Gradient、更新参数。本节固定六道题，从一张全零评分表开始，追踪第一步到底改了哪些数。',
       [
         '把 forward、cross-entropy、zero_grad、backward 与 step 连到一个可运行循环。',
-        '再次区分 teacher forcing 的并行训练和生成的逐 token 追加。',
+        '手算重复使用的同一行怎样汇总六题中的 Gradient，并用 SGD 更新这一行。',
+        '解释重复 500 步时什么保持不变、什么重新计算，以及训练与追加 Token 的区别。',
       ],
       [
+        paragraph(
+          '上一节的 Bigram 已经可以查表预测，但一张刚创建的表还不知道“我”后面常出现什么。训练的目的就是调整这张表：反复用文本中的下一 Token 作为答案，告诉模型哪些候选应该获得更多概率。Loop 只是“重复执行这些步骤”的程序循环。',
+        ),
+        callout('先摆清桌上的三样东西', [
+          table(
+            ['对象', '本例内容', '训练中会改变吗？'],
+            [
+              ['inputs：题目', '[[我,喜欢],[猫,喜欢],[我,学习]]，shape [3,2]', '本节固定这六道题，循环中保持不变。'],
+              ['targets：标准答案', '[[喜欢,AI],[喜欢,我],[学习,AI]]，shape [3,2]', '来自原始文本，模型不能修改答案。'],
+              ['model.token_table.weight：评分规则', '5 行×5 列的 Logits 参数表', 'Optimizer 每一步修改它；这是学习真正发生的位置。'],
+            ],
+          ),
+          paragraph(
+            '本节为了手算，把 25 个参数全部初始化为 0，使用 SGD、学习率 0.1，不加动量或权重衰减。对于独立的 Bigram 查表参数，这样做可以观察每行怎样学到不同统计；不要推广为所有深层神经网络都适合零初始化。',
+          ),
+        ]),
+        callout('第一步 forward：先用旧表给六题评分', [
+          paragraph(
+            'Forward 就是执行预测计算。inputs 中的每个 ID 都查出一行五个分数，因此 [3,2] 个 IDs 得到 [3,2,5] 个 Logits。开始时每行都是 [0,0,0,0,0]；Softmax 将其变成 [0.2,0.2,0.2,0.2,0.2]。无论正确 Target 是哪一个，当前模型都只给它 20% 概率。',
+          ),
+          formula(
+            String.raw`p_i=\frac{e^0}{5e^0}=0.2,\qquad L_r=-\ln(0.2)\approx1.609438`,
+            'r 表示六道题中的某一道。第一轮六题 Loss 全相同，所以 Mean Loss 也是 1.609438。这里只计算结果，尚未改变评分表。',
+          ),
+        ]),
+        callout('backward：同一行被用两次，反馈怎样合起来？', [
+          paragraph(
+            '只盯住 row 0，它回答“我之后是什么”。本次有两题使用它：我→喜欢、我→学习。它们共用同一行参数，因此必须先汇总两题对该行的影响，不能各自更新成两张表。',
+          ),
+          code(
+            'text',
+            `候选顺序：             [我,   喜欢, AI,  学习, 猫]
+当前概率 p：           [0.2,  0.2,  0.2, 0.2,  0.2]
+
+题目 A：我 → 喜欢
+one-hot 标签：         [0,    1,    0,   0,    0]
+单题 p - one_hot：     [0.2, -0.8,  0.2, 0.2,  0.2]
+
+题目 B：我 → 学习
+one-hot 标签：         [0,    0,    0,   1,    0]
+单题 p - one_hot：     [0.2,  0.2,  0.2,-0.8,  0.2]
+
+两题对 row 0 的贡献相加：[0.4, -0.6, 0.4, -0.6, 0.4]
+整个 Batch 的 Loss 对六题取平均，所以再除以 6：
+row 0 的 Gradient ≈ [0.066667, -0.1, 0.066667, -0.1, 0.066667]`,
+          ),
+          paragraph(
+            '为什么除以 6 而非 2？因为当前优化目标是六题的平均 Loss。虽然其中只有两题查到 row 0，另外四题对 row 0 的数据梯度为 0，但平均的分母仍是全部六题。row 1“喜欢”也会汇总两题；row 3“学习”和 row 4“猫”各收到一题的反馈。',
+          ),
+        ]),
+        callout('optimizer.step：真正改表的时刻', [
+          code(
+            'text',
+            `SGD 更新规则：new_parameter = old_parameter - 0.1 × gradient
+
+row 0 更新前： [0, 0, 0, 0, 0]
+row 0 Gradient：[0.066667, -0.1, 0.066667, -0.1, 0.066667]
+row 0 更新后： [-0.006667, 0.01, -0.006667, 0.01, -0.006667]`,
+          ),
+          paragraph(
+            '“喜欢”和“学习”的分数同时上升，其余三个下降。这反映了数据里“我”后有两种答案。下一次 forward 再查 row 0 时，读到的就是这些新数；Softmax 重新计算，两种正确后续的概率会从 0.2 各略微提高。参数是一起更新的，其它行也按各自汇总的梯度变化。',
+          ),
+          paragraph(
+            'backward() 只把计算出的 Gradient 写入参数的 .grad；optimizer.step() 才修改参数值。它们是两个不同动作。这里选 SGD 是为了让代码精确对应上面的减法；AdamW 还维护梯度统计，不能直接用这组简单减法当作它的数值更新过程。',
+          ),
+        ]),
+        paragraph(
+          '下面是训练脚本主体：放在第 13 节的 BigramLanguageModel 类定义之后运行。每一步开头清除旧梯度，然后使用同一批题目、当前参数做一次新预测。模型和 Optimizer 只在循环外创建一次。',
+        ),
         code(
           'python',
-          `inputs = torch.tensor([
+          `# 接在第 13 节的 imports 与 BigramLanguageModel 定义之后。
+inputs = torch.tensor([
     [0, 1],  # 我→喜欢，喜欢→AI
     [4, 1],  # 猫→喜欢，喜欢→我
     [0, 3],  # 我→学习，学习→AI
@@ -1891,18 +1962,24 @@ targets = torch.tensor([
 
 torch.manual_seed(7)
 model = BigramLanguageModel(vocab_size=5)
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-2)
+with torch.no_grad():
+    model.token_table.weight.zero_()  # 与上面的全零手算一致
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
 
 model.train()
 for step in range(500):
+    optimizer.zero_grad(set_to_none=True)       # 清掉上一步的梯度
     logits, loss = model(inputs, targets)         # [3,2,5], scalar
-
-    optimizer.zero_grad(set_to_none=True)
-    loss.backward()
-    optimizer.step()
+    loss.backward()                            # 计算当前参数处的梯度
+    optimizer.step()                           # 修改评分表
 
     if step % 100 == 0:
-        print(step, loss.item())`,
+        print("step", step, "loss_before_update", loss.item())
+
+# 需要更新后的 Loss 时，必须用最后的参数重新 forward。
+with torch.no_grad():
+    _, final_loss = model(inputs, targets)
+print("loss_after_500_updates", final_loss.item())`,
         ),
         formula(
           String.raw`L=-\frac{1}{B\times T}\sum_b\sum_t\log\operatorname{softmax}(\mathrm{logits}[b,t,:])[\mathrm{targets}[b,t]]`,
@@ -1917,24 +1994,23 @@ for step in range(500):
             ['step', 'optimizer 用 gradient 更新 [5,5] table'],
           ],
         ),
-        callout('现在再回看 Embedding Row 怎样更新', [
+        callout('第二步、第三步……循环究竟在重复什么？', [
           paragraph(
-            '在一般、未绑权的语言模型中，flatten(inputs)=[0,1,4,1,0,3]。Input Embedding 的 row 0（我）被 lookup 两次，row 1（喜欢）两次，row 3（学习）一次，row 4（猫）一次；这些使用路径产生的 Gradients 会分别累加回同一参数 row。',
-          ),
-          code(
-            'text',
-            `教学示例：假设 Backward 已算出 E[0] 的 gradient
-
-E_before[0] = [ 0.20, -0.10, 0.70, 0.30]
-gradient    = [ 0.40, -0.20, 0.10, 0.00]
-η           = 0.10
-
-E_after[0]
-= E_before[0] - η × gradient
-= [0.16, -0.08, 0.69, 0.30]`,
+            '第二步仍然读相同的 inputs 和 targets，但评分表已经变了。因此新的 Logits、概率、Loss 与 Gradient 都要重新计算。程序保留已经学到的参数，只清掉旧 Gradient；zero_grad 不会把评分表清零。如果把 model 的创建或 weight.zero_() 放进循环里，每轮都会丢掉之前的学习。',
           ),
           paragraph(
-            '这组 Gradient 是教学假设值，不能只看语料直接推导。Bigram 本身使用 [V,V]=[5,5] Logit Table，没有独立的 [V,C] Input Embedding；但它的 row update 仍遵循相同的 Parameter − Learning Rate × Gradient 原则。',
+            'range(500) 意味着对这个固定 Batch 做 500 次参数更新，不是生成 500 个 Token。实际训练通常不断读取不同 Batch，本节反复使用六题是为了观察机制。model.train() 只是设置训练模式，本身不执行学习；真正的学习循环是 forward、backward 和 optimizer.step。',
+          ),
+          paragraph(
+            '打印 loss.item() 得到的是这一轮 forward 已经算出的数，即更新前的 Loss。即使 print 写在 optimizer.step() 后面，这个数也不会自动变成更新后的结果；需要重新 forward 才能看到新参数对应的 Loss。',
+          ),
+        ]),
+        callout('学到什么才算合理？', [
+          paragraph(
+            'row 0“我”应逐渐偏向“喜欢”和“学习”；row 1“喜欢”应偏向“AI”和“我”；row 4“猫”偏向“喜欢”；row 3“学习”偏向“AI”。row 2“AI”没有作为输入被查到，在本节无动量、无衰减的 SGD 下保持原值。其它使用 AdamW 的实验可能因权重衰减而改变未使用行，要区别看待。',
+          ),
+          paragraph(
+            '不要要求六题 Loss 全部降到 0：“我”和“喜欢”各有两个不同答案，Bigram 无法用同一个当前 Token 区分它们。在无正则化的理想极限下，四道有冲突的题各有 Loss=ln(2)，另外两题趋近 0，所以平均 Loss 的下界是 4×ln(2)/6≈0.4621。500 步是观察长度，不承诺达到下界；训练 Loss 下降也只能说明学到了这批数据。',
           ),
         ]),
       ],
