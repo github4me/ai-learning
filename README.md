@@ -12,7 +12,7 @@
 git clone --branch main https://github.com/github4me/ai-learning.git
 cd ai-learning
 pnpm install --frozen-lockfile
-pnpm dev --host 0.0.0.0 --port 8787
+pnpm dev --hostname 0.0.0.0 --port 8787
 ```
 
 电脑访问 [http://localhost:8787](http://localhost:8787)。以启动终端实际显示的端口为准；端口被占用时，停止占用它的课程服务或选择其它端口。
@@ -77,7 +77,7 @@ python week06_probability.py
 
 ## 技术与目录
 
-React 19、TypeScript、Vinext/Vite、Tailwind CSS、KaTeX、MiniSearch 和 Zustand 构成网站主体；构建预览使用 Cloudflare Workers 工具链。Vite 读取 `.openai/hosting.json`，当前 D1/R2 绑定为空，本地阅读不要求数据库或云账号。
+React 19、TypeScript、Vinext/Vite、Tailwind CSS、KaTeX、MiniSearch 和 Zustand 构成网站主体；生产环境使用 Node.js 服务，无需数据库。Vite 已移除 Cloudflare/Sites 运行插件及 `.openai/hosting.json` 依赖。
 
 ```text
 app/                      页面与路由
@@ -114,7 +114,7 @@ pnpm build
 pnpm start
 ```
 
-`build` 先校验内容，再生成构建产物；`start` 使用 `dist/server/wrangler.json` 启动本地 Workers 预览，地址由终端显示。
+`build` 先校验内容，再生成 Node.js 构建产物；`start` 使用 `vinext start` 启动生产服务，默认端口 3000，也可以由环境变量 `PORT` 指定。
 
 | 命令 | 用途 |
 | --- | --- |
@@ -127,4 +127,8 @@ pnpm start
 
 这些是仓库提供的检查入口，不代表每次文案更新均执行过全部检查。`pnpm normalize:content` 属于历史转换维护操作；正常编辑课程不需要重跑 PDF 提取流程。
 
-推送到 GitHub 不会自动发布网站。当前课程通过本地启动命令运行，公网发布需要另外配置托管。
+## Azure 发布
+
+已提供 `.github/workflows/azure-app-service.yml`，使用 Linux、Node 24 和 OIDC 部署到 Azure App Service。完整设置步骤见 [Azure 部署指南](docs/AZURE_DEPLOYMENT.md)。
+
+先在 Azure 创建 Web App 并设置 GitHub 身份授权，然后添加三个 Azure ID secrets 和 `AZURE_WEBAPP_NAME` repository variable。在 GitHub Actions 手动运行首次部署；配置完成后，推送 `main` 会自动构建和发布。尚未设置应用名称时，只构建，不部署。

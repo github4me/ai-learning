@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "pnpm validate:content && pnpm validate:curated && vinext build",
-    "start": "wrangler dev --config dist/server/wrangler.json",
+    "start": "vinext start",
     "lint": "oxlint",
     "format": "oxfmt",
     "test": "vitest run",
