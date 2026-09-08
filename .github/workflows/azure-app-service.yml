@@ -29,40 +29,55 @@ jobs:
       - name: Validate content and build Node server
         run: pnpm build
       - name: Prepare deployment package
-        run: |
-          mkdir azure-package
-          cp -R dist public node_modules azure-package/
-          cp package.json azure-package/
+        # Outside the checkout: missing dependencies must not resolve from its parent.
+        run: node scripts/prepare-azure-package.mjs "$RUNNER_TEMP/azure-course"
       - name: Check packaged production server
-        working-directory: azure-package
+        working-directory: ${{ runner.temp }}/azure-course
         env:
           NODE_ENV: production
           PORT: '8080'
+          HOST: '127.0.0.1'
         run: |
-          npm start > ../production-start.log 2>&1 &
+          node server.js > "$RUNNER_TEMP/production-start.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           ready=false
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:8080/ > /dev/null; then
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat "$RUNNER_TEMP/production-start.log"
+              exit 1
+            fi
+            if curl --fail --silent --max-time 5 http://127.0.0.1:8080/ > /dev/null; then
               ready=true
               break
             fi
             sleep 2
           done
           if [ "$ready" != true ]; then
-            cat ../production-start.log
+            cat "$RUNNER_TEMP/production-start.log"
             exit 1
           fi
-          curl --fail --silent http://127.0.0.1:8080/week/week-06 > /dev/null
-          curl --fail --silent http://127.0.0.1:8080/downloads/course-examples.zip > /dev/null
+          curl --fail --silent --show-error --max-time 30 http://127.0.0.1:8080/week/week-06 > /dev/null
+          curl --fail --silent --show-error --max-time 30 http://127.0.0.1:8080/downloads/course-examples.zip > /dev/null
+      - name: Preserve production startup log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-start-log
+          path: ${{ runner.temp }}/production-start.log
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Archive only deployable files
-        working-directory: azure-package
-        run: zip -q -r ../azure-course.zip .
+        working-directory: ${{ runner.temp }}/azure-course
+        run: |
+          zip -q -r "$RUNNER_TEMP/azure-course.zip" .
+          zip_bytes=$(stat -c%s "$RUNNER_TEMP/azure-course.zip")
+          echo "Deployment ZIP: $zip_bytes bytes"
+          echo "Deployment ZIP: $zip_bytes bytes" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: azure-course
-          path: azure-course.zip
+          path: ${{ runner.temp }}/azure-course.zip
           retention-days: 7
 
   deploy:
@@ -88,4 +103,4 @@ jobs:
         with:
           app-name: ${{ vars.AZURE_WEBAPP_NAME }}
           package: azure-course.zip
-          startup-command: npm start
+          startup-command: cd /home/site/wwwroot && node server.js

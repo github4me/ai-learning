@@ -10,3 +10,7 @@ coverage/
 playwright-report/
 test-results/
 
+# Keep the independent AstroCourse directory out of this repository.
+AstroCourse/
+astrocourse/
+
