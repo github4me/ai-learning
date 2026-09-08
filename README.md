@@ -4,6 +4,12 @@
 
 正文、公式、表格和代码直接在网页中阅读，支持手机与桌面。`main` 收录当前 V1 课程，`feature/v1-course` 保留其开发分支。
 
+## 在线学习 / Live course
+
+[打开公开课程网站 / Open the course](https://ai-learning-geadc0g3f5c9h3ek.australiasoutheast-01.azurewebsites.net/)
+
+无需安装，使用手机或电脑浏览器即可阅读，也可以直接分享以上链接。学习进度和笔记保存在各自浏览器中，不会随链接分享。
+
 ## 快速启动
 
 需要 Node.js **22.13.0 或以上**和项目指定的 **pnpm 11.19.0**。Python 仅用于配套实验，启动网站不需要 Python 或 GPU。
