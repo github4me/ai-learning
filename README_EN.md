@@ -137,6 +137,18 @@ Zero missing translations and a successful build do not replace semantic or
 numerical review. Keep formulas, token mappings, worked targets and downloadable
 code in agreement. Re-run the affected examples after changing them.
 
+## License and attribution
+
+The course prose, translations, exercises and original diagrams use
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Anyone may use, share
+and adapt them, including commercially. When sharing, credit Chao Wang, link to
+this repository and the license, and indicate whether changes were made.
+
+Application code, scripts and course code examples use [MIT](LICENSE-MIT):
+retain the copyright and permission notice when redistributing them.
+Third-party material retains its own terms. See [LICENSE](LICENSE) for the
+scope and a ready-to-use attribution example.
+
 ## Azure publishing
 
 The existing `.github/workflows/azure-app-service.yml` builds a Linux Node package

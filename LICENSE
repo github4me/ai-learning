@@ -1,0 +1,48 @@
+# Licensing
+
+Copyright (c) 2026 Chao Wang
+
+This project uses different licenses for educational content and software.
+These grants apply only to material for which the project copyright holders
+have the right to grant a license. Third-party material retains its own terms.
+
+## Course content — CC BY 4.0
+
+Unless otherwise marked, the original Chinese and English course prose,
+translations, exercises, explanations, diagrams and instructional data in this
+repository are licensed under the Creative Commons Attribution 4.0
+International License (CC BY 4.0).
+
+Legal terms: https://creativecommons.org/licenses/by/4.0/legalcode
+Readable summary: https://creativecommons.org/licenses/by/4.0/
+
+You may share and adapt this content for any purpose, including commercial use.
+When sharing it, give appropriate credit to Chao Wang, retain supplied notices,
+link to the source and license, and indicate any changes. Do not imply endorsement
+or impose restrictions that prevent others from exercising the licensed rights.
+The linked legal terms govern; this paragraph is a summary, not a replacement.
+
+Source: https://github.com/github4me/ai-learning
+Title: AI First Principles / AI 第一性原理
+
+Suggested attribution (adapt the changes statement to your actual use):
+
+> Based on AI First Principles by Chao Wang,
+> https://github.com/github4me/ai-learning, licensed under CC BY 4.0,
+> https://creativecommons.org/licenses/by/4.0/.
+> Changes: [describe your modifications, or state "none"].
+
+## Software and code examples — MIT
+
+Original application source, build scripts, runnable labs and code examples
+(including code embedded in lessons) are licensed under the MIT License in
+LICENSE-MIT. Retain its copyright and permission notice when redistributing
+copies or substantial portions. CC BY 4.0 applies to the surrounding course
+explanations, not as an additional condition on these code examples.
+
+## Third-party material
+
+Dependencies, fonts, attributed quotations, linked resources and other
+third-party material are not relicensed by this notice. Follow their respective
+licenses and attribution requirements. No rights in third-party trademarks
+or endorsements are granted.

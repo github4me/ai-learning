@@ -141,6 +141,12 @@ pnpm start
 
 这些是仓库提供的检查入口，不代表每次文案更新均执行过全部检查。`pnpm normalize:content` 属于历史转换维护操作；正常编辑课程不需要重跑 PDF 提取流程。
 
+## 许可证与引用
+
+课程正文、翻译、练习和原创图解采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh-hans)：任何人均可免费使用、分享、修改，包括商业用途；分享时须注明作者 Chao Wang、链接到本项目及许可证，并说明是否作过修改。
+
+网站代码、脚本和课程代码示例采用 [MIT](LICENSE-MIT)，分发时保留版权和许可声明。第三方材料遵循其各自许可。完整适用范围与引用范例见 [LICENSE](LICENSE)。
+
 ## Azure 发布
 
 已提供 `.github/workflows/azure-app-service.yml`，使用 Linux、Node 24 和 OIDC 部署到 Azure App Service。完整设置步骤见 [Azure 部署指南](docs/AZURE_DEPLOYMENT.md)。
