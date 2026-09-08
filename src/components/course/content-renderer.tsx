@@ -56,7 +56,7 @@ function internalFragment(href: string): string | undefined {
   const hashIndex = href.indexOf('#');
   if (hashIndex < 0) return undefined;
   const path = href.slice(0, hashIndex);
-  if (path && !/^\/?(?:week|appendix)\//u.test(path)) return undefined;
+  if (path && !/^\/?(?:en\/)?(?:week|appendix)\//u.test(path)) return undefined;
   const fragment = href.slice(hashIndex + 1);
   if (!fragment) return undefined;
   try {

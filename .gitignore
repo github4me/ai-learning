@@ -9,6 +9,8 @@ dist/
 coverage/
 playwright-report/
 test-results/
+__pycache__/
+*.py[cod]
 
 # Keep the independent AstroCourse directory out of this repository.
 AstroCourse/

@@ -6,7 +6,7 @@ import * as React from 'react';
 import { Check, RotateCcw } from 'lucide-react';
 
 import { useLearningStore } from '@/src/components/providers';
-import { courseSectionPath } from '@/src/content/course-runtime';
+import { useCourseRuntime } from '@/src/components/course-locale';
 import type { InlineNode } from '@/src/content/schema';
 import { requestSectionAnchorFocus } from '@/src/search/search-focus';
 
@@ -37,6 +37,7 @@ export function KnowledgeCheck({
   reviewSectionId: string;
   renderPrompt: (nodes: InlineNode[]) => React.ReactNode;
 }) {
+  const { courseSectionPath } = useCourseRuntime();
   const attempt = useLearningStore(
     (state) => state.quizAttemptsByQuestion[questionId],
   );

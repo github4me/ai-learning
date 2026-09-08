@@ -4,6 +4,8 @@ import { applyBeginnerReview } from './beginner/apply-beginner-review';
 import { applyLegacyCodePromotions } from './legacy-code-promotions';
 import { findSection, flattenSections, loadCourse } from './load-course';
 import type { Course, CourseUnit, SectionNode } from './schema';
+import { courseUnitPath } from './course-paths';
+export { courseUnitPath } from './course-paths';
 
 const generatedCourse = loadCourse(courseData);
 const course = loadCourse(
@@ -34,10 +36,6 @@ export function getUnitForSection(
 
 export function getSection(sectionIdOrAlias: string): SectionNode | undefined {
   return findSection(course, sectionIdOrAlias);
-}
-
-export function courseUnitPath(unit: CourseUnit): string {
-  return unit.kind === 'appendix' ? '/appendix/mini-gpt' : `/week/${unit.slug}`;
 }
 
 export function courseSectionPath(

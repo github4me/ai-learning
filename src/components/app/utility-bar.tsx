@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react';
 import type { Ref } from 'react';
+import { LanguageSwitcher } from './language-switcher';
 
 export type CourseProgress = {
   completed: number;
@@ -59,6 +60,7 @@ export function UtilityBar({
         {currentContextLabel ??
           (currentWeek ? `Week ${currentWeek}` : 'Course overview')}
       </p>
+      <LanguageSwitcher />
       {focusMode ? (
         <button
           type="button"

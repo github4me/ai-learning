@@ -1,6 +1,11 @@
+'use client';
 /* oxlint-disable next/no-html-link-for-pages -- Vinext routes are intentionally not Next runtime routes. */
+import { usePathname } from 'next/navigation';
+import { localePath } from '@/src/content/course-paths';
 
 export default function NotFound() {
+  const pathname = usePathname();
+  const locale = /^\/en(?:\/|$)/.test(pathname) ? 'en' : 'zh';
   return (
     <main id="lesson-content" className="not-found-page">
       <p className="eyebrow">Route not found</p>
@@ -10,10 +15,13 @@ export default function NotFound() {
         the course map, or start from the nearest valid week.
       </p>
       <div className="not-found-actions">
-        <a className="primary-action" href="/">
+        <a className="primary-action" href={localePath('/', locale)}>
           Course overview
         </a>
-        <a href="/week/week-01">Open Week 1</a>
+        <a href={localePath('/week/week-01', locale)}>Open Week 1</a>
+        <a href={locale === 'en' ? '/' : '/en'} lang={locale === 'en' ? 'zh-CN' : 'en'}>
+          {locale === 'en' ? '中文版课程' : 'English course'}
+        </a>
       </div>
     </main>
   );

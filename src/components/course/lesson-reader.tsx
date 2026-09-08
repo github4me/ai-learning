@@ -10,15 +10,10 @@ import {
   useFlushPendingNotes,
   useLearningStore,
 } from '@/src/components/providers';
-import {
-  courseUnitPath,
-  getCourse,
-  getSection,
-  getUnit,
-  getUnitForSection,
-} from '@/src/content/course-runtime';
+import { useCourseRuntime } from '@/src/components/course-locale';
+import { COURSE_LOCATION_EVENT, courseUnitPath, type CourseLocale } from '@/src/content/course-paths';
 import { flattenSections } from '@/src/content/load-course';
-import type { CourseUnit, SectionNode } from '@/src/content/schema';
+import type { Course, CourseUnit, SectionNode } from '@/src/content/schema';
 import {
   appendixReadSections,
   isAppendixReadSection,
@@ -43,8 +38,8 @@ function unitLeaves(unit: CourseUnit): SectionNode[] {
   return leaves.filter((section) => section.isCompletable);
 }
 
-function readingOrder(): ReadingLocation[] {
-  return getCourse().units.flatMap((unit) =>
+function readingOrder(course: Course): ReadingLocation[] {
+  return course.units.flatMap((unit) =>
     unitLeaves(unit).map((section) => ({ unit, section })),
   );
 }
@@ -84,6 +79,7 @@ function SectionActions({
   section: SectionNode;
   unit: CourseUnit;
 }) {
+  const { course } = useCourseRuntime();
   const completedIds = useLearningStore((state) =>
     unit.kind === 'appendix'
       ? state.appendixReadSectionIds
@@ -98,11 +94,15 @@ function SectionActions({
   const isBookmarked = bookmarks.some(
     (bookmark) => bookmark.sectionId === section.id,
   );
+  const completionLabel = isComplete
+    ? unit.kind === 'appendix' ? 'Read · Reopen' : 'Complete · Reopen'
+    : unit.kind === 'appendix' ? 'Mark read' : 'Mark complete';
+  const bookmarkLabel = isBookmarked ? 'Bookmarked · Remove' : 'Bookmark';
   const completable =
     (unit.kind === 'week' &&
       section.children.length === 0 &&
       section.isCompletable) ||
-    isAppendixReadSection(getCourse(), section.id);
+    isAppendixReadSection(course, section.id);
 
   function handleCompletion() {
     const result = isComplete
@@ -142,7 +142,7 @@ function SectionActions({
           type="button"
           className="learning-button"
           aria-pressed={isComplete}
-          aria-label={`${isComplete ? 'Reopen section' : unit.kind === 'appendix' ? 'Mark appendix section read' : 'Mark section complete'}: ${section.title}`}
+          aria-label={`${completionLabel}: ${section.title}`}
           onClick={handleCompletion}
         >
           {isComplete ? (
@@ -150,20 +150,14 @@ function SectionActions({
           ) : (
             <Circle aria-hidden="true" />
           )}
-          {isComplete
-            ? unit.kind === 'appendix'
-              ? 'Read · Reopen'
-              : 'Complete · Reopen'
-            : unit.kind === 'appendix'
-              ? 'Mark read'
-              : 'Mark complete'}
+          {completionLabel}
         </button>
       )}
       <button
         type="button"
         className="learning-button"
         aria-pressed={isBookmarked}
-        aria-label={`${isBookmarked ? 'Remove bookmark' : 'Bookmark section'}: ${section.title}`}
+        aria-label={`${bookmarkLabel}: ${section.title}`}
         onClick={handleBookmark}
       >
         {isBookmarked ? (
@@ -171,7 +165,7 @@ function SectionActions({
         ) : (
           <Bookmark aria-hidden="true" />
         )}
-        {isBookmarked ? 'Bookmarked · Remove' : 'Bookmark'}
+        {bookmarkLabel}
       </button>
       <output className="learning-live" aria-live="polite">
         {message}
@@ -227,13 +221,14 @@ function decodeHash(hash: string): string {
 function locationHref(
   location: ReadingLocation,
   currentUnitId: string,
+  locale: CourseLocale,
 ): string {
   if (location.unit.id === currentUnitId) return `#${location.section.id}`;
-  return `${courseUnitPath(location.unit)}#${location.section.id}`;
+  return `${courseUnitPath(location.unit, locale)}#${location.section.id}`;
 }
 
 export function LessonReader({ unitId }: { unitId: string }) {
-  const course = getCourse();
+  const { course, locale, getUnit, getSection, getUnitForSection } = useCourseRuntime();
   const unit = getUnit(unitId);
   if (!unit) throw new Error(`Unknown course unit: ${unitId}`);
 
@@ -242,6 +237,16 @@ export function LessonReader({ unitId }: { unitId: string }) {
     initialSection.id,
   );
   const articleRef = React.useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = React.useState(64);
+  React.useEffect(() => {
+    const header = document.querySelector('.utility-bar');
+    if (!header) return;
+    const measure = () => setHeaderHeight(Math.ceil(header.getBoundingClientRect().height));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
   const visibleSections = React.useRef(new Map<string, DOMRectReadOnly>());
   const lastVisited = React.useRef('');
   const visitSection = useLearningStore((state) => state.visitSection);
@@ -294,6 +299,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
         );
       }
 
+      window.dispatchEvent(new Event(COURSE_LOCATION_EVENT));
       setActiveSectionId(section.id);
       document.getElementById(section.id)?.scrollIntoView({ block: 'start' });
       consumeSectionFocus(requested, section.id);
@@ -321,7 +327,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
       window.removeEventListener('hashchange', resolveHash);
       window.removeEventListener(SECTION_FOCUS_EVENT, resolveHash);
     };
-  }, [currentUnitId]);
+  }, [currentUnitId, getSection, getUnitForSection]);
 
   React.useEffect(() => {
     const article = articleRef.current;
@@ -339,7 +345,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
 
         const closest = [...visible.entries()].sort(
           ([leftId, left], [rightId, right]) =>
-            Math.abs(left.top - 72) - Math.abs(right.top - 72) ||
+            Math.abs(left.top - headerHeight - 8) - Math.abs(right.top - headerHeight - 8) ||
             leftId.localeCompare(rightId),
         )[0];
         if (!closest) return;
@@ -351,6 +357,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
             '',
             `${window.location.pathname}${window.location.search}#${sectionId}`,
           );
+          window.dispatchEvent(new Event(COURSE_LOCATION_EVENT));
         }
         const continueSectionId = continueTargets.get(sectionId);
         if (!continueSectionId) return;
@@ -359,7 +366,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
         lastVisited.current = visitKey;
         visitSection(unit.id, continueSectionId);
       },
-      { rootMargin: '-64px 0px -55% 0px', threshold: [0, 0.2, 0.65] },
+      { rootMargin: `-${headerHeight}px 0px -55% 0px`, threshold: [0, 0.2, 0.65] },
     );
 
     const targets = article.querySelectorAll<HTMLElement>('[data-section-id]');
@@ -368,9 +375,9 @@ export function LessonReader({ unitId }: { unitId: string }) {
       observer.disconnect();
       visible.clear();
     };
-  }, [continueTargets, unit.id, visitSection]);
+  }, [continueTargets, unit.id, visitSection, headerHeight]);
 
-  const order = React.useMemo(() => readingOrder(), []);
+  const order = React.useMemo(() => readingOrder(course), [course]);
   const unitStart = order.findIndex((entry) => entry.unit.id === unit.id);
   const activeIndex = order.findIndex(
     (entry) => entry.section.id === activeSectionId,
@@ -466,7 +473,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
           {previous ? (
             <a
               className="lesson-previous"
-              href={locationHref(previous, unit.id)}
+              href={locationHref(previous, unit.id, locale)}
               onClick={(event) => {
                 requestSectionAnchorFocus(previous.section.id, event);
                 flushNavigation();
@@ -481,7 +488,7 @@ export function LessonReader({ unitId }: { unitId: string }) {
           {next ? (
             <a
               className="lesson-next"
-              href={locationHref(next, unit.id)}
+              href={locationHref(next, unit.id, locale)}
               onClick={(event) => {
                 requestSectionAnchorFocus(next.section.id, event);
                 flushNavigation();

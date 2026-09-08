@@ -6,6 +6,15 @@ import { Highlight, Prism, themes } from 'prism-react-renderer';
 
 import type { SourceRef } from '@/src/content/schema';
 
+// Comments carry teaching explanations and need the same readable contrast as code.
+const readableCodeTheme = {
+  ...themes.oneDark,
+  styles: [...themes.oneDark.styles, {
+    types: ['comment', 'prolog', 'doctype', 'cdata'],
+    style: { color: '#a9b7c6' },
+  }],
+};
+
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- The labelled code scroller must be keyboard-focusable. */
 
 export type CodeBlockProps = {
@@ -60,7 +69,7 @@ export function CodeBlock({
         </button>
       </figcaption>
       <Highlight
-        theme={themes.oneDark}
+        theme={readableCodeTheme}
         code={code}
         language={highlightedLanguage}
       >

@@ -1,0 +1,100 @@
+{
+  "documents": [
+    {
+      "split": "train",
+      "document": "garden.txt",
+      "characters": 249,
+      "normalized_text_sha256": "170cc00f0d3ec44c683259da90231283aea85d4ffe5f8614e6f1a1bd3b0895ec",
+      "windows": 10,
+      "effective_targets": 240
+    },
+    {
+      "split": "train",
+      "document": "kitchen.txt",
+      "characters": 261,
+      "normalized_text_sha256": "6517231e5ca9e88d6a7ccfb6b9312782281baa3a18cbc3a3800f3f2ef4da5a02",
+      "windows": 10,
+      "effective_targets": 240
+    },
+    {
+      "split": "train",
+      "document": "learning.txt",
+      "characters": 263,
+      "normalized_text_sha256": "4675b61befce63a930513d2e6c735ffd8ce383e95606af9fc17f47f9edad41cd",
+      "windows": 10,
+      "effective_targets": 240
+    },
+    {
+      "split": "train",
+      "document": "library.txt",
+      "characters": 255,
+      "normalized_text_sha256": "3d1ae47ed72a8f2e5065c3f4846bf55965c016a1b110b145d27a4ed002107fec",
+      "windows": 10,
+      "effective_targets": 240
+    },
+    {
+      "split": "train",
+      "document": "music.txt",
+      "characters": 251,
+      "normalized_text_sha256": "e0754c401deeb8aa351a8f2c57e59b3c4e3a1f50cb224814980cc401abe0ccac",
+      "windows": 10,
+      "effective_targets": 240
+    },
+    {
+      "split": "train",
+      "document": "river.txt",
+      "characters": 259,
+      "normalized_text_sha256": "83809879514f23019c2428be9fb26caebc057cf05df16f9aaff12496b1d7a891",
+      "windows": 10,
+      "effective_targets": 240
+    },
+    {
+      "split": "train",
+      "document": "weather.txt",
+      "characters": 258,
+      "normalized_text_sha256": "3b9f82e2b19aed7b58bc1c52f5b540b9d49023902396558eec03caf1bc85a9a8",
+      "windows": 10,
+      "effective_targets": 240
+    },
+    {
+      "split": "train",
+      "document": "workshop.txt",
+      "characters": 247,
+      "normalized_text_sha256": "3bf8e30212c99dd0e2d81fa6dd6e8a39cd1da21cf86de3cc7429ee8c74f779b3",
+      "windows": 10,
+      "effective_targets": 240
+    },
+    {
+      "split": "validation",
+      "document": "greenhouse.txt",
+      "characters": 286,
+      "normalized_text_sha256": "b5c111e77ad1ba27f942f5e76dd4f5b7d0e9dd7ebc9878243983f00e7b2909bd",
+      "windows": 11,
+      "effective_targets": 264
+    },
+    {
+      "split": "validation",
+      "document": "notebook.txt",
+      "characters": 289,
+      "normalized_text_sha256": "21227a9058793d1f84369b3c172efeb603b87aad9d18d0d39d6e62041147cc84",
+      "windows": 12,
+      "effective_targets": 288
+    },
+    {
+      "split": "validation",
+      "document": "repair.txt",
+      "characters": 285,
+      "normalized_text_sha256": "bbdf0e3c238b2ef4deee9c46db23acf5a04e217c80340f4a59bea29fe8188d57",
+      "windows": 11,
+      "effective_targets": 264
+    }
+  ],
+  "full_validation_containment": [],
+  "overlap_characters": 48,
+  "whitespace_normalized_overlap_counts": {
+    "greenhouse.txt": 0,
+    "notebook.txt": 0,
+    "repair.txt": 0
+  },
+  "limitation": "Finite overlap audit, not a proof against all near duplicates or bias."
+}

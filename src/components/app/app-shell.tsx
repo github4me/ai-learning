@@ -11,7 +11,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import type { Course } from '@/src/content/schema';
-import { getCourse } from '@/src/content/course-runtime';
+import { useCourseRuntime } from '@/src/components/course-locale';
+import { isCoursePath } from '@/src/content/course-paths';
 import { findSection } from '@/src/content/load-course';
 import { selectCourseProgress } from '@/src/learning/learning-store';
 import { requestSectionAnchorFocus } from '@/src/search/search-focus';
@@ -70,12 +71,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 function isApplicationRoute(pathname: string): boolean {
-  return (
-    pathname === '/' ||
-    pathname === '/review' ||
-    pathname === '/appendix/mini-gpt' ||
-    /^\/week\/[^/]+\/?$/u.test(pathname)
-  );
+  return isCoursePath(pathname);
 }
 
 function decodeFragment(hash: string): string | undefined {
@@ -117,7 +113,8 @@ export function AppShell({
   currentContextLabel: injectedContextLabel,
 }: AppShellProps) {
   const router = useRouter();
-  const course = injectedCourse ?? getCourse();
+  const runtime = useCourseRuntime();
+  const course = injectedCourse ?? runtime.course;
   const [activeSurface, setActiveSurface] =
     React.useState<ActiveSurface>('none');
   const compactReturnFocusRef = React.useRef<HTMLButtonElement>(null);
@@ -215,6 +212,9 @@ export function AppShell({
         return;
 
       flushPendingNotes();
+      // Switching crosses a server-selected locale and rehydrates the same
+      // saved state. Let the browser load the destination root layout.
+      if (anchor.hasAttribute('data-language-switch')) return;
       const current = window.location;
       if (
         destination.pathname === current.pathname &&
@@ -414,6 +414,12 @@ export function AppShell({
           settingsTriggerRef={utilitySettingsRef}
         />
         <main id="lesson-content" tabIndex={-1} className="lesson-content">
+          {runtime.locale === 'en' && runtime.untranslatedCount > 0 && (
+            <aside className="translation-preview">
+              Some recently changed material is awaiting English translation.
+              The original Chinese text is shown where a translation is missing.
+            </aside>
+          )}
           {children}
         </main>
       </section>

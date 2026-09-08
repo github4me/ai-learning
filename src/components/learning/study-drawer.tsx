@@ -10,11 +10,9 @@ import {
   useFlushPendingNotes,
   useLearningStore,
 } from '@/src/components/providers';
-import {
-  GLOSSARY_ENTRIES,
-  type RuntimeGlossaryEntry,
-} from '@/src/content/glossary';
-import { getCourse, getSection } from '@/src/content/course-runtime';
+import type { RuntimeGlossaryEntry } from '@/src/content/glossary';
+import { useCourseRuntime } from '@/src/components/course-locale';
+import { findSection } from '@/src/content/load-course';
 import type { Course } from '@/src/content/schema';
 import { MAX_NOTE_CODE_POINTS } from '@/src/learning/storage-adapter';
 import {
@@ -52,7 +50,7 @@ function NotesPanel({
   const [undoAvailable, setUndoAvailable] = React.useState(false);
   const undoTimer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
   const deletedText = React.useRef('');
-  const section = sectionId ? getSection(sectionId) : undefined;
+  const section = sectionId ? findSection(course, sectionId) : undefined;
   const count = Array.from(text).length;
 
   React.useEffect(() => {
@@ -204,7 +202,7 @@ function GlossaryPanel({
       ) : (
         <dl>
           {filtered.map((entry) => (
-            <div key={entry.sectionId} className="glossary-entry">
+            <div key={`${entry.sectionId}:${entry.term}`} className="glossary-entry">
               <dt>{entry.term}</dt>
               <dd>
                 {entry.aliases.length > 0 && (
@@ -235,8 +233,8 @@ function GlossaryPanel({
 
 export function StudyDrawer({
   activeSectionId,
-  course = getCourse(),
-  glossary = GLOSSARY_ENTRIES,
+  course: injectedCourse,
+  glossary: injectedGlossary,
   onSectionNavigate,
 }: {
   activeSectionId?: string;
@@ -244,6 +242,9 @@ export function StudyDrawer({
   glossary?: readonly RuntimeGlossaryEntry[];
   onSectionNavigate?: () => void;
 }) {
+  const runtime = useCourseRuntime();
+  const course = injectedCourse ?? runtime.course;
+  const glossary = injectedGlossary ?? runtime.glossary;
   return (
     <Tabs defaultValue="notes" className="study-tabs">
       <TabsList aria-label="Study tool sections" variant="line">

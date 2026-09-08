@@ -37,6 +37,8 @@ for (const entry of [
   'dist/client',
   'node_modules',
   'public/downloads/course-examples.zip',
+  'public/downloads/course-examples-en.zip',
+  'public/downloads/course-examples-en-readme.txt',
 ]) {
   if (!existsSync(join(source, entry)))
     throw new Error(

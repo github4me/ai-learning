@@ -4,7 +4,7 @@
 import * as React from 'react';
 
 import type { Course } from '@/src/content/schema';
-import { getCourse } from '@/src/content/course-runtime';
+import { useCourseRuntime } from '@/src/components/course-locale';
 import {
   useFlushPendingNotes,
   useOptionalLearningStore,
@@ -25,7 +25,8 @@ export function CourseOverview({
   continueLocation?: { unitId: string; sectionId: string };
   courseProgress?: { completed: number; total: number; percent: number };
 }) {
-  const course = injectedCourse ?? getCourse();
+  const { course: localizedCourse, path, courseUnitPath, text } = useCourseRuntime();
+  const course = injectedCourse ?? localizedCourse;
   const flushPendingNotes = useFlushPendingNotes();
   const learningSnapshot = useOptionalLearningStore((state) => ({
     completedSectionIds: state.completedSectionIds,
@@ -64,8 +65,8 @@ export function CourseOverview({
   );
   const completed = unit === undefined;
   const destination = unit
-    ? `${unit.kind === 'appendix' ? '/appendix/mini-gpt' : `/week/${unit.slug}`}#${continueLocation.sectionId}`
-    : '/review';
+    ? `${courseUnitPath(unit)}#${continueLocation.sectionId}`
+    : path('/review');
   const actionLabel = completed
     ? 'Review your learning'
     : hasSavedContinueLocation
@@ -77,7 +78,7 @@ export function CourseOverview({
       <h1>{course.title}</h1>
       <p className="course-premise">
         {course.description}{' '}
-        阅读以原始教程为准，按周次、章节与可验证练习持续推进。
+        {text('Work through the lessons in order, following the calculations and trying the exercises yourself.', '阅读以原始教程为准，按周次、章节与可验证练习持续推进。')}
       </p>
       <div
         className="overview-status"
@@ -100,7 +101,7 @@ export function CourseOverview({
         {actionLabel}
       </a>
       {completed && (
-        <a className="review-link" href="/review" onClick={flushPendingNotes}>
+        <a className="review-link" href={path('/review')} onClick={flushPendingNotes}>
           Review notes and bookmarks
         </a>
       )}
@@ -114,7 +115,7 @@ export function CourseOverview({
             .filter((unit) => unit.kind === 'week')
             .map((week) => (
               <li key={week.id}>
-                <a href={`/week/${week.slug}`} onClick={flushPendingNotes}>
+                <a href={courseUnitPath(week)} onClick={flushPendingNotes}>
                   <span>Week {week.weekNumber}</span>
                   {week.title}
                 </a>

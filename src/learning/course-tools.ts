@@ -6,7 +6,7 @@ import type {
   InlineNode,
   SectionNode,
 } from '@/src/content/schema';
-import { courseUnitPath } from '@/src/content/course-runtime';
+import { courseUnitPath, type CourseLocale } from '@/src/content/course-paths';
 
 export type SectionReference = {
   section: SectionNode;
@@ -75,6 +75,7 @@ export function sectionExcerpt(section: SectionNode, limit = 180): string {
 
 export function sectionReferenceMap(
   course: Course,
+  locale: CourseLocale = 'zh',
 ): ReadonlyMap<string, SectionReference> {
   const references = new Map<string, SectionReference>();
   course.units.forEach((unit, index) => {
@@ -86,7 +87,7 @@ export function sectionReferenceMap(
       const reference = {
         section,
         unit,
-        href: `${courseUnitPath(unit)}#${section.id}`,
+        href: `${courseUnitPath(unit, locale)}#${section.id}`,
         groupLabel,
         groupOrder: index,
       };

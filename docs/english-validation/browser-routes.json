@@ -1,0 +1,155 @@
+{
+  "scope": "Rendered local production build, Chrome mobile emulation 390x844. Entry-page layout and metadata checks, not a replacement for chapter semantic review.",
+  "records": [
+    {
+      "path": "/en",
+      "lang": "en",
+      "heading": "AI First Principles · The complete course",
+      "sections": 0,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-01",
+      "lang": "en",
+      "heading": "Week 1 — Essential mathematical intuition: learn to read AI formulas",
+      "sections": 37,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-02",
+      "lang": "en",
+      "heading": "Week 2 — Linear regression: from prediction to gradient descent",
+      "sections": 38,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-03",
+      "lang": "en",
+      "heading": "Week 3 — Neural networks: from one neuron to multiple layers",
+      "sections": 100,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-04",
+      "lang": "en",
+      "heading": "Week 4 — Backpropagation: learning across all the network's parameters",
+      "sections": 22,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-05",
+      "lang": "en",
+      "heading": "Week 5 — Tensors and PyTorch: let the computer do the calculations",
+      "sections": 20,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-06",
+      "lang": "en",
+      "heading": "Week 6 — From tokens to a small language model: understanding prediction through one example",
+      "sections": 21,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-07",
+      "lang": "en",
+      "heading": "Week 7 — Attention: read the relevant preceding context",
+      "sections": 21,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-08",
+      "lang": "en",
+      "heading": "Week 8 — Transformers: build a trainable network around attention",
+      "sections": 21,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-09",
+      "lang": "en",
+      "heading": "Week 9 — Tokenizers: from raw text to training batches",
+      "sections": 20,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-10",
+      "lang": "en",
+      "heading": "Week 10 — GPT architecture: assemble a trainable Mini GPT",
+      "sections": 19,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-11",
+      "lang": "en",
+      "heading": "Week 11 — Training and inference: learn, evaluate, save, and generate with the same Mini GPT",
+      "sections": 24,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/week/week-12",
+      "lang": "en",
+      "heading": "Week 12 — End-to-end Mini GPT: from text and training to generation after loading",
+      "sections": 26,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/appendix/mini-gpt",
+      "lang": "en",
+      "heading": "Appendix A — Complete Mini GPT reference code",
+      "sections": 1,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    },
+    {
+      "path": "/en/review",
+      "lang": "en",
+      "heading": "Review notes and bookmarks",
+      "sections": 0,
+      "formulaErrors": 0,
+      "overflow": false,
+      "descriptionInHead": true,
+      "languageLinks": 2
+    }
+  ]
+}

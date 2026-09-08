@@ -3,6 +3,7 @@
 
 import { CheckCircle2, ChevronDown, Circle } from 'lucide-react';
 import * as React from 'react';
+import { useCourseRuntime } from '@/src/components/course-locale';
 
 import type {
   Course,
@@ -48,10 +49,6 @@ function defaultExpandedUnitIds(unitId?: string): ReadonlySet<string> {
   return new Set(unitId ? [unitId] : []);
 }
 
-function unitPath(unit: CourseUnit): string {
-  return unit.kind === 'appendix' ? '/appendix/mini-gpt' : `/week/${unit.slug}`;
-}
-
 function completionStatusMap(
   unit: CourseUnit,
   completed: ReadonlySet<string>,
@@ -95,6 +92,7 @@ function SectionLinks({
   onNavigate?: CourseNavigationProps['onNavigate'];
   depth?: number;
 }) {
+  const { courseUnitPath: unitPath } = useCourseRuntime();
   return (
     <ul className="course-section-list" data-depth={depth}>
       {nodes
@@ -181,6 +179,7 @@ function UnitOutline({
   onNavigate?: CourseNavigationProps['onNavigate'];
   onToggle: (unitId: string) => void;
 }) {
+  const { courseUnitPath: unitPath } = useCourseRuntime();
   const unitLabel =
     unit.kind === 'week' ? `Week ${unit.weekNumber}` : 'Appendix A';
   const current = unit.id === currentUnitId;
@@ -274,6 +273,7 @@ function CompactNavigation({
   | 'compactOpenUnitId'
   | 'onCompactOpenChange'
 >) {
+  const { courseUnitPath: unitPath, path } = useCourseRuntime();
   const selectedWeek = course.units.find(
     (unit): unit is WeekUnit =>
       unit.kind === 'week' && unit.id === compactOpenUnitId,
@@ -291,7 +291,7 @@ function CompactNavigation({
         <li>
           <a
             className="compact-destination-link"
-            href="/"
+            href={path('/')}
             aria-label="Course overview"
             onClick={(event) => {
               if (isUnmodifiedPrimaryActivation(event))
@@ -347,7 +347,7 @@ function CompactNavigation({
         <li>
           <a
             className="compact-destination-link"
-            href="/review"
+            href={path('/review')}
             aria-label="Review notes and bookmarks"
             onClick={onBeforeNavigate}
           >
@@ -405,6 +405,7 @@ export const CourseNavigation = React.memo(function CourseNavigation({
   compactOpenUnitId,
   onCompactOpenChange,
 }: CourseNavigationProps) {
+  const { path, text } = useCourseRuntime();
   const completed = React.useMemo(
     () => new Set(completedSectionIds),
     [completedSectionIds],
@@ -477,7 +478,7 @@ export const CourseNavigation = React.memo(function CourseNavigation({
       </div>
       <a
         className="course-identity"
-        href="/"
+        href={path('/')}
         onClick={(event) => {
           if (isUnmodifiedPrimaryActivation(event))
             onNavigate?.({
@@ -487,7 +488,7 @@ export const CourseNavigation = React.memo(function CourseNavigation({
         }}
       >
         <span>AI First Principles</span>
-        <small>核心教程深度扩展版</small>
+        <small>{text('The complete first-principles course', '核心教程深度扩展版')}</small>
       </a>
       {mode === 'mobile' && (
         <div className="mobile-rail-actions">
@@ -497,7 +498,7 @@ export const CourseNavigation = React.memo(function CourseNavigation({
             onClick={onOpenSearch}
             aria-label="Search course"
           >
-            Search course / 搜索课程
+            {text('Search course', 'Search course / 搜索课程')}
           </button>
           <button
             type="button"
@@ -505,7 +506,7 @@ export const CourseNavigation = React.memo(function CourseNavigation({
             onClick={onOpenSettings}
             aria-label="Reading settings and local data backup"
           >
-            Reading settings / 阅读设置
+            {text('Reading settings', 'Reading settings / 阅读设置')}
           </button>
         </div>
       )}
@@ -579,7 +580,7 @@ export const CourseNavigation = React.memo(function CourseNavigation({
       )}
       <a
         className="review-navigation-link"
-        href="/review"
+        href={path('/review')}
         onClick={onBeforeNavigate}
       >
         Review notes and bookmarks

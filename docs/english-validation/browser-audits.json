@@ -1,0 +1,41 @@
+{
+  "scope": "Chrome mobile emulation, Week 6, local production build; not a physical Safari or screen-reader certification",
+  "records": [
+    {
+      "state": "page",
+      "fetchTime": "2026-09-08T17:11:01.380Z",
+      "mode": "snapshot",
+      "scores": {
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1,
+        "agentic-browsing": 1
+      },
+      "failed": []
+    },
+    {
+      "state": "emptySearch",
+      "fetchTime": "2026-09-08T17:19:29.680Z",
+      "mode": "snapshot",
+      "scores": {
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1,
+        "agentic-browsing": 1
+      },
+      "failed": []
+    },
+    {
+      "state": "populatedSearch",
+      "fetchTime": "2026-09-08T17:19:44.652Z",
+      "mode": "snapshot",
+      "scores": {
+        "accessibility": 1,
+        "best-practices": 1,
+        "seo": 1,
+        "agentic-browsing": 1
+      },
+      "failed": []
+    }
+  ]
+}

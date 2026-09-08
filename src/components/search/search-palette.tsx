@@ -6,19 +6,15 @@ import { useRouter } from 'next/navigation';
 import {
   Command,
   CommandDialog,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
 import { useFlushPendingNotes } from '@/src/components/providers';
-import {
-  courseUnitPath,
-  getCourse,
-  getUnit,
-} from '@/src/content/course-runtime';
-import { GLOSSARY_ENTRIES } from '@/src/content/glossary';
+import { useCourseRuntime } from '@/src/components/course-locale';
+import type { Course } from '@/src/content/schema';
+import type { RuntimeGlossaryEntry } from '@/src/content/glossary';
 import {
   createCourseSearch,
   searchCourse,
@@ -31,20 +27,15 @@ import {
   requestSearchResultFocus,
 } from '@/src/search/search-focus';
 
-let cachedSearchIndex: CourseSearchIndex | undefined;
+const cachedSearchIndexes = new WeakMap<Course, CourseSearchIndex>();
 
-function getSearchIndex(): CourseSearchIndex {
-  cachedSearchIndex ??= createCourseSearch(getCourse(), {
-    glossary: GLOSSARY_ENTRIES,
-  });
-  return cachedSearchIndex;
-}
-
-function destinationFor(result: SearchResult): string {
-  const unit = getUnit(result.unitId);
-  if (!unit)
-    throw new Error(`Search result has no routable unit: ${result.unitId}`);
-  return `${courseUnitPath(unit)}#${result.sectionId}`;
+function getSearchIndex(course: Course, glossary: readonly RuntimeGlossaryEntry[]): CourseSearchIndex {
+  let index = cachedSearchIndexes.get(course);
+  if (!index) {
+    index = createCourseSearch(course, { glossary });
+    cachedSearchIndexes.set(course, index);
+  }
+  return index;
 }
 
 export type SearchPaletteProps = {
@@ -58,13 +49,14 @@ export default function SearchPalette({
   onOpenChange,
   returnFocusRef,
 }: SearchPaletteProps) {
+  const { course, glossary, getUnit, courseUnitPath, text } = useCourseRuntime();
   const router = useRouter();
   const [query, setQuery] = React.useState('');
   const [activeValue, setActiveValue] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
   const navigating = React.useRef(false);
   const flushPendingNotes = useFlushPendingNotes();
-  const index = React.useMemo(() => getSearchIndex(), []);
+  const index = React.useMemo(() => getSearchIndex(course, glossary), [course, glossary]);
   const results = React.useMemo(
     () => searchCourse(index, query),
     [index, query],
@@ -103,7 +95,9 @@ export default function SearchPalette({
   }
 
   function selectResult(result: SearchResult) {
-    const destination = destinationFor(result);
+    const unit = getUnit(result.unitId);
+    if (!unit) return;
+    const destination = `${courseUnitPath(unit)}#${result.sectionId}`;
     flushPendingNotes();
     requestSearchResultFocus(result.sectionId);
     navigating.current = true;
@@ -118,7 +112,7 @@ export default function SearchPalette({
     <CommandDialog
       open={open}
       onOpenChange={changeOpen}
-      title="Search course / 搜索课程"
+      title={text('Search course', 'Search course / 搜索课程')}
       description="Search headings, explanations, formulas, glossary terms, and code labels."
       className="search-palette"
     >
@@ -132,13 +126,15 @@ export default function SearchPalette({
           ref={inputRef}
           value={query}
           onValueChange={setQuery}
-          placeholder="Search concepts or code / 搜索概念或代码"
+          placeholder={text('Search concepts or code', 'Search concepts or code / 搜索概念或代码')}
           aria-label="Search course"
         />
         <CommandList>
           {query.trim() && results.length === 0 && (
-            <CommandEmpty className="search-empty">
-              <p>No matching lesson / 没有匹配的课程内容</p>
+            <div className="search-empty">
+              <CommandItem disabled forceMount value="no-results">
+                {text('No matching lesson', 'No matching lesson / 没有匹配的课程内容')}
+              </CommandItem>
               {suggestions.length > 0 && (
                 <div
                   className="search-suggestions"
@@ -159,13 +155,12 @@ export default function SearchPalette({
               {suggestions.length === 0 && (
                 <p>No deterministic spelling suggestion is available.</p>
               )}
-            </CommandEmpty>
+            </div>
           )}
           {!query.trim() && (
-            <div className="search-prompt">
-              Search by 中文概念, English technical term, formula, or code
-              label.
-            </div>
+            <CommandItem disabled forceMount value="search-prompt" className="search-prompt">
+              {text('Search by concept, technical term, formula, or code label.', 'Search by 中文概念, English technical term, formula, or code label.')}
+            </CommandItem>
           )}
           {[...groups.entries()].map(([groupTitle, groupResults]) => (
             <CommandGroup key={groupTitle} heading={groupTitle}>

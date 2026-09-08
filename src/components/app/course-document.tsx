@@ -7,9 +7,10 @@ import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource-variable/noto-sans-sc/wght.css';
 import 'katex/dist/katex.min.css';
-import './globals.css';
+import '@/app/globals.css';
 import { Providers } from '@/src/components/providers';
 import { COURSE_CONTENT_VERSION } from '@/src/content/content-version';
+import { getLocalizedCourse } from '@/src/content/english/localize-course';
 
 export const metadata: Metadata = {
   applicationName: 'AI First Principles / AI 第一性原理',
@@ -65,18 +66,21 @@ const preferenceBootstrap = `
   root.dataset.focusMode = String(preferences.focusMode);
 })();`;
 
-export default function RootLayout({
+export default function CourseDocument({
   children,
+  locale,
 }: Readonly<{
   children: React.ReactNode;
+  locale: 'zh' | 'en';
 }>) {
+  const localized = getLocalizedCourse(locale);
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang={localized.locale === 'en' ? 'en' : 'zh-CN'} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: preferenceBootstrap }} />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers {...localized}>{children}</Providers>
       </body>
     </html>
   );

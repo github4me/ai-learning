@@ -19,7 +19,8 @@ import {
   useFlushPendingNotes,
   useLearningStore,
 } from '@/src/components/providers';
-import { getCourse } from '@/src/content/course-runtime';
+import { useCourseRuntime } from '@/src/components/course-locale';
+import type { CourseLocale } from '@/src/content/course-paths';
 import type { Course } from '@/src/content/schema';
 import { sectionReferenceMap } from '@/src/learning/course-tools';
 import type { LearningStore } from '@/src/learning/learning-store';
@@ -42,8 +43,9 @@ type ReviewItem = {
 function collectItems(
   course: Course,
   state: Pick<LearningStore, 'notesBySection' | 'bookmarks'>,
+  locale: CourseLocale,
 ): ReviewItem[] {
-  const references = sectionReferenceMap(course);
+  const references = sectionReferenceMap(course, locale);
   const orphanLabel = 'Unavailable in this course version';
   const items: ReviewItem[] = [];
   for (const [sectionId, note] of Object.entries(state.notesBySection)) {
@@ -81,7 +83,7 @@ function collectItems(
 }
 
 export function LearningItemGroups({
-  course = getCourse(),
+  course: injectedCourse,
   kinds = ['note', 'bookmark'],
   compact = false,
   onNavigate,
@@ -93,6 +95,8 @@ export function LearningItemGroups({
   onNavigate?: () => void;
   onNoteDeleted?: (sectionId: string) => void;
 }) {
+  const { course: localizedCourse, locale } = useCourseRuntime();
+  const course = injectedCourse ?? localizedCourse;
   const state = useLearningStore((current) => ({
     notesBySection: current.notesBySection,
     bookmarks: current.bookmarks,
@@ -105,8 +109,8 @@ export function LearningItemGroups({
   const [noteToDelete, setNoteToDelete] = React.useState<ReviewItem>();
   const items = React.useMemo(() => {
     const allowed = new Set(kinds);
-    return collectItems(course, state).filter((item) => allowed.has(item.kind));
-  }, [course, kinds, state]);
+    return collectItems(course, state, locale).filter((item) => allowed.has(item.kind));
+  }, [course, kinds, state, locale]);
 
   function confirmNoteDelete() {
     if (!noteToDelete || noteToDelete.kind !== 'note') return;
@@ -226,7 +230,9 @@ export function LearningItemGroups({
   );
 }
 
-export function ReviewWorkspace({ course = getCourse() }: { course?: Course }) {
+export function ReviewWorkspace({ course: injectedCourse }: { course?: Course }) {
+  const { course: localizedCourse } = useCourseRuntime();
+  const course = injectedCourse ?? localizedCourse;
   return (
     <article className="review-workspace">
       <p className="eyebrow">Local learning workspace</p>

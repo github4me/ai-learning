@@ -1,0 +1,4 @@
+# English-edition numerical review: Python 3.14.7, torch 2.14.0+cpu, Windows CPU.
+# Use the official CPU wheel index in README for that configuration.
+# Other devices/platforms require the appropriate official wheel selection.
+torch==2.14.0

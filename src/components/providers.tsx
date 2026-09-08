@@ -5,7 +5,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { Course } from '@/src/content/schema';
-import { getCourse } from '@/src/content/course-runtime';
+import { CourseLocaleContext, type CourseLocaleContextValue } from './course-locale';
 import {
   createLearningStore,
   type LearningStore,
@@ -23,14 +23,24 @@ const emptySnapshot = () => undefined;
 
 export function Providers({
   course,
+  locale = 'zh',
+  glossary = [],
+  untranslatedCount = 0,
   store,
   children,
 }: {
   course?: Course;
+  locale?: CourseLocaleContextValue['locale'];
+  glossary?: CourseLocaleContextValue['glossary'];
+  untranslatedCount?: number;
   store?: StoreApi<LearningStore>;
   children: React.ReactNode;
 }) {
-  const resolvedCourse = course ?? getCourse();
+  if (!course) throw new Error('Providers requires the server-selected course');
+  const resolvedCourse = course;
+  const localeContext = React.useMemo(() => ({
+    course: resolvedCourse, locale, glossary, untranslatedCount,
+  }), [resolvedCourse, locale, glossary, untranslatedCount]);
   const [learning] = React.useState<{
     store: StoreApi<LearningStore>;
     adapter?: HydratableStorageAdapter;
@@ -86,9 +96,11 @@ export function Providers({
   }, [learning.store]);
 
   return (
+    <CourseLocaleContext.Provider value={localeContext}>
     <LearningStoreContext.Provider value={learning.store}>
       {children}
     </LearningStoreContext.Provider>
+    </CourseLocaleContext.Provider>
   );
 }
 

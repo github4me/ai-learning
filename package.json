@@ -9,7 +9,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vinext dev",
-    "build": "pnpm validate:content && pnpm validate:curated && vinext build",
+    "build": "pnpm validate:content && pnpm validate:curated && pnpm validate:english && vinext build",
     "start": "vinext start",
     "lint": "oxlint",
     "format": "oxfmt",
@@ -19,7 +19,9 @@
     "normalize:content": "tsx scripts/normalize-course.mts",
     "validate:content": "tsx scripts/validate-content.mts",
     "validate:curated": "tsx scripts/validate-curated-content.mts",
-    "export:examples": "node --import tsx scripts/export-course-examples.mts"
+    "validate:english": "node --import tsx scripts/translation-inventory.mts --check",
+    "export:examples": "node --import tsx scripts/export-course-examples.mts",
+    "export:examples:en": "node --import tsx scripts/export-course-examples.mts --locale=en"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",
