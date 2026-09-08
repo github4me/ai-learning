@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import torch
+from course_data import DEMO_DOCUMENTS, FIVE_WORD_TOKENIZER, configure_console
 
 from mini_gpt_walkthrough import (
     GPTConfig,
@@ -22,11 +23,7 @@ from week11_training_and_generation import (
 )
 
 
-RAW_TEXTS = (
-    "我 喜欢 AI",
-    "猫 喜欢 我",
-    "我 学习 AI",
-)
+RAW_TEXTS = DEMO_DOCUMENTS
 EXPECTED_RAW_IDS = (
     (0, 1, 2),  # 我 喜欢 AI
     (4, 1, 0),  # 猫 喜欢 我
@@ -36,22 +33,17 @@ FROZEN_STOI = {
     token: token_id
     for token_id, token in enumerate(CANONICAL_ORDERED_TOKENS)
 }
-assert CANONICAL_ORDERED_TOKENS == ("我", "喜欢", "AI", "学习", "猫")
+assert CANONICAL_ORDERED_TOKENS == FIVE_WORD_TOKENIZER.tokens
 assert CANONICAL_TOKENIZER_POLICY == (
     "whitespace-delimited;no-specials;no-pad;no-unk"
 )
 
 
 def encode_mini_gpt_v1(text: str) -> list[int]:
-    pieces = text.split()
-    if not pieces:
+    ids = FIVE_WORD_TOKENIZER.encode(text)
+    if not ids:
         raise ValueError("mini-gpt-v1 text must contain a token")
-    try:
-        return [FROZEN_STOI[piece] for piece in pieces]
-    except KeyError as error:
-        raise ValueError(
-            f"mini-gpt-v1 has no unknown-token fallback: {error.args[0]}"
-        ) from error
+    return ids
 
 
 def make_fixed_batch(device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
@@ -64,6 +56,7 @@ def make_fixed_batch(device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 def main() -> None:
+    configure_console()
     # 极小 CPU 教学模型用单线程，减少线程调度开销。
     torch.set_num_threads(1)
     seed = 7

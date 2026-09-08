@@ -227,7 +227,13 @@ export const week09Revision: CuratedWeekRevision = {
           'decode(skip_special_tokens=True) → 我喜欢AI，AI也喜欢猫。',
         ]),
         table(
-          ['教学 artifact', '使用位置', '基本单位 / ID space', '学习目的', '何时结束'],
+          [
+            '教学 artifact',
+            '使用位置',
+            '基本单位 / ID space',
+            '学习目的',
+            '何时结束',
+          ],
           [
             [
               'character-demo',
@@ -448,14 +454,14 @@ export const week09Revision: CuratedWeekRevision = {
           'Week 10 的 canonical MiniGPT 使用 bias-free、untied LM head，因此 vocabulary-facing 参数为 2VC。',
         ),
         table(
-          ['example', 'input embedding VC', 'bias-free untied LM head VC', 'total 2VC'],
           [
-            [
-              '本章教学尺寸 V=11, C=4',
-              '11×4=44',
-              '11×4=44',
-              '88 parameters',
-            ],
+            'example',
+            'input embedding VC',
+            'bias-free untied LM head VC',
+            'total 2VC',
+          ],
+          [
+            ['本章教学尺寸 V=11, C=4', '11×4=44', '11×4=44', '88 parameters'],
             [
               '示意规模 V=50,000, C=768',
               '38,400,000',
@@ -591,7 +597,12 @@ assert utf8_bytes.hex(" ").upper() == (
           '在变成 bytes 之前，还必须回答 normalization：哪些 Unicode 序列应被当作同一种输入？例如屏幕上都像 é 的文字，可以由一个 composed code point U+00E9 表示，也可以由 e（U+0065）加 combining acute accent（U+0301）表示；identity policy 会保留差异，NFC 会把后一种规范化成前一种。',
         ),
         table(
-          ['visible text', 'code points before normalization', 'UTF-8 bytes', 'policy result'],
+          [
+            'visible text',
+            'code points before normalization',
+            'UTF-8 bytes',
+            'policy result',
+          ],
           [
             [
               'é（composed）',
@@ -738,6 +749,32 @@ assert unicodedata.normalize("NFKC", "ＡＩ") == "AI"`,
         '精确保留跨 code-point pair (9C,E6)，并验证两轮后长度 31−2−2=27。',
       ],
       [
+        callout('先完成可读字符的两轮，再选择是否读字节实现', [
+          paragraph(
+            '设训练资料中 low 出现 5 次、lower 出现 2 次、new 出现 2 次。先把每个词拆成字符，并只统计词内相邻对。l-o 和 o-w 都出现 7 次，并列时约定按字符对字典序选择 l-o。不是“唯一最常见”。',
+          ),
+          table(
+            ['轮次', '关键频次', '合并及结果'],
+            [
+              [
+                '初始',
+                'l-o=7，o-w=7，w-e=2，e-r=2，n-e=2，e-w=2',
+                '(l,o)→lo：low 变 [lo,w]，lower 变 [lo,w,e,r]。',
+              ],
+              [
+                '重数后',
+                'lo-w=7；其余上述频次为 2 的对不变',
+                '(lo,w)→low：low 变 [low]，lower 变 [low,e,r]。',
+              ],
+            ],
+          ),
+          paragraph(
+            '训练 tokenizer 是从语料统计并保存这两条规则。编码新词 lower 时，只按保存的先后顺序应用规则，不再现场重新统计一套词表。合并是为相邻片段建立可还原的编号，不是求和，也不是已经学到了词义。',
+          ),
+          paragraph(
+            '下面是独立的字节版细节，会换成中文混合文本和十六进制编号。若字节表示还不熟，先完成本段练习和主线数据入口，再回看下一节 Unicode；不影响继续学习 GPT。',
+          ),
+        ]),
         paragraph(
           '这是一个无 pre-token boundaries 的 toy byte-level BPE training：固定句的每对相邻 bytes 都可参与计数。只列频率至少为 2 的初始 pairs；(9C,E6) 跨越 喜 的最后 byte 与 欢 的第一 byte，并在两次 喜欢 中出现。',
         ),
@@ -921,12 +958,36 @@ assert restored_text == text`,
           'toy_byte_bpe.py',
         ),
         table(
-          ['stage', 'selected pair', 'replacements', 'stream length', 'what changed'],
+          [
+            'stage',
+            'selected pair',
+            'replacements',
+            'stream length',
+            'what changed',
+          ],
           [
             ['initial bytes', '—', '—', '31', '只有 base byte IDs 0..255'],
-            ['round 1', '(41,49)→256', '2', '29', '两次 AI 各缩短一个 position'],
-            ['round 2', '(96,9C)→257', '2', '27', '两次 喜 的后两个 bytes 各缩短一个 position'],
-            ['encoding', '按 256 再 257 的顺序应用', '由输入决定', '本句仍为 27', '不重新训练、不改变 rules'],
+            [
+              'round 1',
+              '(41,49)→256',
+              '2',
+              '29',
+              '两次 AI 各缩短一个 position',
+            ],
+            [
+              'round 2',
+              '(96,9C)→257',
+              '2',
+              '27',
+              '两次 喜 的后两个 bytes 各缩短一个 position',
+            ],
+            [
+              'encoding',
+              '按 256 再 257 的顺序应用',
+              '由输入决定',
+              '本句仍为 27',
+              '不重新训练、不改变 rules',
+            ],
           ],
           '训练决定 merge list；之后的 encoding 只按固定顺序重放它',
         ),
@@ -1146,12 +1207,7 @@ assert W09_READABLE_V1.decode(
               '[我,喜欢,AI,，,AI,也,喜欢,猫,。]',
               'none',
             ],
-            [
-              runningText,
-              'encode_content',
-              '[4,5,6,7,6,8,5,9,10]',
-              'none',
-            ],
+            [runningText, 'encode_content', '[4,5,6,7,6,8,5,9,10]', 'none'],
             [
               runningText,
               'encode_document',
@@ -1192,6 +1248,14 @@ assert W09_READABLE_V1.decode(
         '用 w09-readable-v1 中 AI / 喜欢 的 ID swap 显示静默错位。',
       ],
       [
+        callout('主线先保持简单：沿用 Week 6 的编码器', [
+          paragraph(
+            '本课必修计算仍使用五词表；实现放在 course_examples/course_data.py。先运行 python week09_data_protocol.py，它会打印同一份 inputs/targets、一次未知词报错说明，以及文档窗口的边界。本节后面的 w09-readable-v1 是有特殊 token 的比较实验，不接替主线词表。',
+          ),
+          paragraph(
+            '按空格切分的 encode 不学习参数，也不改变词表。“我   喜欢”与“我 喜欢”会编码相同；decode 返回规范的单空格文本，不能声称保留任意原始空白。字符版则逐字符保留本实验允许的原文。每个往返保证都要说明范围。',
+          ),
+        ]),
         paragraph(
           'w09-readable-v1 把“我喜欢AI，AI也喜欢猫。”中的 喜欢 编为 5、AI 编为 6。若另一个同样 V=11 的 tokenizer 把两者交换，输入 6 会读取原本为 AI 训练的 embedding row，却被新系统解释成 喜欢；输出 column 6 也会 decode 成错误 piece。',
         ),
@@ -1423,7 +1487,12 @@ assert W09_READABLE_V1.decode(
           '接下来把规则落到一个较短的 T_mask=7 next-token batch。Row 0 从主句取连续八个 source IDs，形成七组 input→target；Row 1 的完整短文档只有六个 IDs，所以 input 补一个 PAD，同时把“EOS 后没有本文件内 next token”和 PAD 对应的 targets 都设为 -100。',
         ),
         table(
-          ['row', 'input_ids [7]', 'attention_mask [7]', 'next-token targets [7]'],
+          [
+            'row',
+            'input_ids [7]',
+            'attention_mask [7]',
+            'next-token targets [7]',
+          ],
           [
             [
               '0: 主句 prefix',
@@ -1578,7 +1647,12 @@ assert stream_tensor.dtype == torch.long`,
           '每份 document sequence 已包含约定边界，按 document order 串接后得到一维 stream。',
         ),
         table(
-          ['multi-document policy', 'boundary example', '会训练哪种 transition', 'trade-off'],
+          [
+            'multi-document policy',
+            'boundary example',
+            '会训练哪种 transition',
+            'trade-off',
+          ],
           [
             [
               '连续串接 boundary tokens',
@@ -1944,96 +2018,54 @@ assert inputs.shape == targets.shape == (2, 4)`,
     ),
     section(
       'o0349-18-week-9-week-10',
-      '18. Week 9 → Week 10：先结束一个 ID Space，再切换模型协议',
-      'Week 9 的 readable batch 含 IDs 5、6、8、9 且 T=4；若直接交给 Week 10 的 V=5、block_size=2 MiniGPT，会出现 out-of-range lookup 与 context-length violation。',
+      '18. Week 9 → Week 10：把同一批输入直接交给模型',
+      '学会 tokenizer 后，不应再被迫丢掉刚准备的主线数据。我们保留 Week 6 的五词编号，直接把同样的 x/y 交给 MiniGPT。',
       [
-        '把“会构造 [B,T] IDs”的通用技能与某个 tokenizer artifact 的具体数字分开。',
-        '显式结束 w09-readable-v1，并让 Week 10 从独立的 mini-gpt-v1 与 idx=[2,2] 重新开始。',
+        '区分贯穿主线的数据入口与独立的切词比较实验。',
+        '确认下一周模型只替换“怎样计算表示”，而不偷偷修改答案和编号。',
       ],
       [
         paragraph(
-          '“我喜欢AI，AI也喜欢猫。”已经完成 Week 9 的全部可读 pipeline。它的 w09-readable-v1 IDs 只用于本章，不能因为都是整数就自动兼容另一模型。Week 10 会回到课程的五-token、按空格切分 corpus，并在进入 embedding 前重新按 mini-gpt-v1 编码。',
+          '主线统一使用 course_examples/course_data.py 中的 FIVE_WORD_TOKENIZER：我=0、喜欢=1、AI=2、学习=3、猫=4。按空格切分，无 BOS/EOS/PAD/UNK。原文仍是“我 喜欢 AI”“猫 喜欢 我”“我 学习 AI”；输入 [[0,1],[4,1],[0,3]]，目标 [[1,2],[1,0],[3,2]]。',
         ),
         table(
-          [
-            'artifact',
-            'tokens / IDs',
-            'V and specials',
-            'context example',
-            'lifetime',
-          ],
+          ['材料', '用途', '是否直接给主线 MiniGPT'],
           [
             [
-              'w09-readable-v1',
-              '<BOS>=0,<EOS>=1,<PAD>=2,<UNK>=3,我=4,喜欢=5,AI=6,，=7,也=8,猫=9,。=10',
-              'V=11; specials 0..3',
-              'stream L=11; batch T=4',
-              'ends in Week 9',
+              '五词 tokenizer + T=2 窗口',
+              'Week 6–12 的逐步计算与机制演示',
+              '是。V=5，ID 含义一直不变。',
             ],
             [
-              'mini-gpt-v1',
-              '[我,喜欢,AI,学习,猫] → [0,1,2,3,4]',
-              'V=5; no specials, padding, or UNK',
-              'block_size=2; initial idx shape [2,2]',
-              'canonical Week 10–12 model interface',
+              'w09-readable-v1 / character-demo / toy-byte-bpe',
+              '比较切词、未知字符、特殊 token 与字节合并',
+              '否。它们是独立实验，不重解释已有整数。',
+            ],
+            [
+              '最终独立文档项目的字符 tokenizer',
+              'Week 12 明确开启一个新实验',
+              '使用同一模型类，但显式新建词表、配置和 checkpoint。',
             ],
           ],
-          '两个 artifacts 的 numeric IDs 互不兼容',
         ),
         code(
           'python',
-          `# Week 10 starts fresh with mini-gpt-v1.
-mini_gpt_tokens = ["我", "喜欢", "AI", "学习", "猫"]
-mini_gpt_token_to_id = {token: index for index, token in enumerate(mini_gpt_tokens)}
-
-idx = torch.tensor([
-    [0, 1],  # 我 喜欢
-    [4, 1],  # 猫 喜欢
-], dtype=torch.long)
-
-assert tuple(idx.shape) == (2, 2)
-assert int(idx.min()) >= 0
-assert int(idx.max()) < 5
-
-# Never pass Week 9's IDs [5,6,8,9] or T=4 batch to this V=5,
-# block_size=2 model.`,
+          '# 可独立运行：在 course_examples 目录中执行。\nimport torch\nfrom course_data import FIVE_WORD_TOKENIZER, DEMO_DOCUMENTS, make_windows\n\nx, y = make_windows(DEMO_DOCUMENTS, FIVE_WORD_TOKENIZER, block_size=2)\ninputs = torch.tensor(x, dtype=torch.long)\ntargets = torch.tensor(y, dtype=torch.long)\nprint(inputs.tolist())   # [[0,1],[4,1],[0,3]]\nprint(targets.tolist())  # [[1,2],[1,0],[3,2]]\n# Week 10 接入：logits, loss = model(inputs, targets)',
         ),
-        chain([
-          'finish w09-readable-v1: mixed-script text → stream [11] → Week 9 batch [2,4]',
-          'switch tokenizer/model bundle; do not reinterpret old integers',
-          'mini-gpt-v1 tokens [我,喜欢,AI,学习,猫], IDs [0..4], V=5',
-          'idx=[[0,1],[4,1]], shape [B,T]=[2,2]',
-          'Week 10 token + position embeddings [2,2,4]',
-          'two Transformer blocks → logits [2,2,5]',
-        ]),
-        formula(
-          String.raw`\mathrm{idx}\in\{0,\ldots,4\}^{2\times2}\xrightarrow{\mathrm{Embedding}(5,4)}\mathbb{R}^{2\times2\times4}\xrightarrow{\mathrm{MiniGPT}}\mathbb{R}^{2\times2\times5}`,
-          'Week 10 begins with mini-gpt-v1 IDs inside 0..4 and T=2; it does not consume the Week 9 [2,4] tensor。',
-        ),
-        callout(
-          '通用 handoff 与具体 artifact',
-          [
-            paragraph(
-              '通用 contract 仍是 frozen tokenizer → integer input_ids [B,T] → embedding → Transformer → logits [B,T,V]。但 V、T、ID meaning 与 special policy 必须来自同一 bundle；更换 bundle 就要从 raw/model-specific text 重新 encode。',
-            ),
-          ],
-          'principle',
+        paragraph(
+          '本章的独立切词示例没有消失：它们帮助你判断何时需要新方案，但不是主线代码的隐含前置。你不必实现工业 BPE，才能看懂 GPT 训练。下一周保留这些 inputs/targets，只把 Bigram 的一行查分换成 embedding、位置、多个 block 和输出层。',
         ),
       ],
       [
-        '绝不能把 Week 9 的 ID 6 送入只有 rows 0..4 的 Week 10 embedding。',
-        '绝不能把 Week 9 的 T=4 window 送入 block_size=2 的 canonical MiniGPT。',
-        'mini-gpt-v1 没有 BOS/EOS/PAD/UNK；不要把 0..3 继续解释为 Week 9 specials。',
-        'Tokenizer 提供 IDs；token/position embeddings 与 contextual representation 仍由模型负责。',
+        '相同词表大小不保证 ID 含义相同。',
+        '同一模型类可以用于新数据，但新词表必须显式绑定新配置与权重。',
+        '生成 prompt 必须由当前模型配套的 tokenizer 编码。',
       ],
-      check(
-        'Week 10 从本章接收的精确起点是什么？为什么不能复用 Week 9 batch？',
-        [
-          paragraph(
-            '它从 mini-gpt-v1 的 idx=[[0,1],[4,1]]、shape [2,2] 开始；该 artifact 为 V=5、无 specials、block_size=2。Week 9 batch 属于 V=11、T=4 的另一 ID space，会导致地址越界与长度不兼容。',
-          ),
-        ],
-      ),
+      check('从 Bigram 换成 MiniGPT 后，这六个 target ID 应该改变吗？', [
+        paragraph(
+          '不应该。它们来自同一训练文字的右移，不由模型架构决定。改变的是产生 logits 的函数。现在模型可以区分“我 喜欢”和“猫 喜欢”，但两个相同“我”的起始上下文仍不能因目标不同而产生两种确定性预测。',
+        ),
+      ]),
     ),
   ],
 };

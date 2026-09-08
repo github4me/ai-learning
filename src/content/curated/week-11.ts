@@ -408,13 +408,44 @@ assert inputs.dtype == targets.dtype == torch.long`,
     ),
     section(
       'o0384-3-adamw',
-      '3. 为什么常用 AdamW：Optimizer 也拥有长期 State',
+      '3. AdamW：把历史梯度变成这一步的参数改变量',
       '如果把 optimizer 当作“parameter 减去 learning rate 乘 gradient”的无状态按钮，就会漏掉 AdamW 为每个参数元素保存的历史，也会误以为只加载 model weights 就能原样续训。',
       [
         '从 plain gradient descent 过渡到 AdamW 的 first/second moments 与 decoupled weight decay。',
         '把 optimizer state 的 owner、shape、创建时机和 checkpoint 需求说清楚。',
       ],
       [
+        callout('完整算两步：先把复杂公式变成一张账单', [
+          paragraph(
+            '这是独立的单参数镜头：初值 θ=1，学习率 η=0.01，decay λ=0.1，β1=0.9、β2=0.999、ε=1e−8。为只看 optimizer，人工提供两次梯度 g1=2、g2=4；它们不是下面 MiniGPT 运行产生的日志。',
+          ),
+          paragraph(
+            'm 保存梯度的移动平均，v 保存梯度平方的移动平均。它们从 0 开始，第一步 m=0.1×2=0.2、v=0.001×4=0.004。因为刚开始历史很短，分别除以 1−β1^t、1−β2^t，得到校正后的 m_hat=2、v_hat=4。帽子只表示做过这次修正，不是一组新的模型参数。',
+          ),
+          table(
+            ['计算项', '第 1 步，g=2', '第 2 步，g=4'],
+            [
+              ['m', '0.2', '0.9×0.2+0.1×4=0.58'],
+              ['v', '0.004', '0.999×0.004+0.001×16=0.019996'],
+              ['m_hat', '2', '0.58/(1−0.9²)≈3.052632'],
+              ['v_hat', '4', '0.019996/(1−0.999²)≈10.003002'],
+              [
+                '自适应梯度改变量 η m_hat/(sqrt(v_hat)+ε)',
+                '约 0.010000',
+                '约 0.009652',
+              ],
+              ['衰减改变量 ηλθ_old', '0.001000', '0.000989'],
+              ['新 θ', '约 0.989000', '约 0.978359'],
+            ],
+          ),
+          paragraph(
+            '第一步不是用 0.01×2=0.02 直接减参数，因为这里使用 AdamW，不是 SGD。第二步梯度更大，也不代表这一步按相同比例变大；m、v 的历史共同参与了更新。decay 单独缩小旧参数，不应混称为 CE 算出的梯度。',
+          ),
+          paragraph(
+            '运行 python week11_adamw_numbers.py 可逐项重算；参数 θ 和 optimizer 的 m/v 都是跨步保留的状态，而当前 logits 与 loss 下一轮会重算。清除 .grad 不清除 m/v。',
+          ),
+        ]),
+
         paragraph(
           '直白地说，AdamW 不只看当前 gradient g_t；它为每个 parameter coordinate 维护一阶 moving average m_t 与平方 gradient 的 moving average v_t，再用它们调节 update scale。weight decay 另行轻微收缩 weights。它适合 noisy、scale 差异大的 language-model gradients，但仍需要选择 learning rate。',
         ),
@@ -482,6 +513,20 @@ optimizer = torch.optim.AdamW(
         '按执行顺序说明 train mode、device、zeroing、forward、loss、backward、clipping、step 与 detached logging。',
       ],
       [
+        callout('先看可以直接运行的最小循环', [
+          paragraph(
+            '先把六道题反复交给同一模型，完整代码如下。输入和 optimizer 只建立一次；每轮重新算 logits 与 loss，再算梯度并更新。下面没有梯度累积、裁剪或恢复训练：它们是随后按需要增加的部件。',
+          ),
+        ]),
+        code(
+          'python',
+          '# 在 course_examples 目录运行：python week11_minimal_loop.py\nimport torch\nfrom mini_gpt_walkthrough import GPTConfig, MiniGPT\nfrom course_data import DEMO_DOCUMENTS, FIVE_WORD_TOKENIZER, make_windows, configure_console\n\nconfigure_console()\ntorch.set_num_threads(1)\ntorch.manual_seed(7)\nx, y = make_windows(DEMO_DOCUMENTS, FIVE_WORD_TOKENIZER, block_size=2)\ninputs = torch.tensor(x, dtype=torch.long)\ntargets = torch.tensor(y, dtype=torch.long)\nmodel = MiniGPT(GPTConfig())\noptimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.01)\n\nfor step in range(1, 101):\n    model.train()\n    optimizer.zero_grad(set_to_none=True)\n    logits, loss = model(inputs, targets)\n    if loss is None or not torch.isfinite(loss):\n        raise ValueError("Non-finite loss; no parameter update performed")\n    loss.backward()\n    optimizer.step()\n    if step == 1 or step % 20 == 0:\n        print("completed_update=", step, "loss_before_this_update=", loss.item())\n\nmodel.eval()\nwith torch.no_grad():\n    _, final_loss = model(inputs, targets)\nprint("same_batch_loss_after_100_updates=", final_loss.item())\nprint("这是三句固定数据的流程演示，不是独立验证或泛化证明。")',
+          'week11_minimal_loop.py',
+        ),
+        paragraph(
+          '日志中的 loss 是本次更新之前那次 forward 的值；最后的 final_loss 才是 100 次更新后重新计算的结果。optimizer.step 不会改写旧 loss 变量。请先预测删除 step 或每轮重建 model 会发生什么，再看下面带诊断保护的可复用函数。',
+        ),
+
         paragraph(
           '直白地说，一个 training step 把一个 batch 的监督误差变成一次 parameter update。以下函数属于 week11_training_and_generation.py，并直接使用导入的 canonical MiniGPT；它没有重定义 config、attention、blocks、initializer 或 state-dict names。',
         ),
@@ -602,7 +647,7 @@ optimizer = torch.optim.AdamW(
     ),
     section(
       'o0389-5-training-loop',
-      '5. 完整 Training Loop：安全地累积完整窗口',
+      '5. 工程选读：多个小 Batch 怎样合成一次更新',
       '一个 step 还不是训练过程；重复 batches 时，如果没有先决定 accumulation window、loss scaling、zeroing、clipping、update counting 与空 loader 行为，循环可能在报错前留下半窗口 gradients。',
       [
         '把 backward 默认累加变成有意设计的 gradient accumulation。',
@@ -1261,7 +1306,7 @@ optimizer = torch.optim.AdamW(
     ),
     section(
       'o0397-12-checkpoint',
-      '12. Checkpoint：严格复用 Week 10 的 Identity Contract',
+      '12. 工程选读：继续训练需要保存哪些状态',
       '只保存 model.state_dict() 也许能在外部条件恰好一致时 inference，却不能证明 tokenizer meanings、architecture policy 或 AdamW history 匹配，更不能 faithful resume。',
       [
         '直接调用 Week 10 的 canonical saver/inference loader，不重定义或削弱其 schema、config、tokenizer hash 与 untied policy。',

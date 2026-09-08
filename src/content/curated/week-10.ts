@@ -191,7 +191,7 @@ targets = torch.tensor([
     ),
     section(
       'o0352-1-configuration',
-      '1. 先定义 Configuration：把数字变成架构合同',
+      '1. 模型配置：每个数字控制什么',
       '如果 embeddings、norms、projections 与 heads 到处重复匿名数字 4，就无法判断它们是否表达同一宽度，也无法从 checkpoint 精确重建模型。',
       [
         '用一个 immutable GPTConfig 集中声明全部 shape/depth 决策，而不是把它误当 learned parameters。',
@@ -363,13 +363,52 @@ except ValueError as error:
     ),
     section(
       'o0355-3-gpt',
-      '3. GPT 的顶层数据流：先定位 Owner，再读 Class',
+      '3. GPT 数据流：先看输入输出，再看各层',
       '一开始就抄完整 class 容易让 learner 看见很多 lines，却不知道输入、position、blocks、loss 与 generation decision 分别归谁负责。',
       [
         '在 class 之前建立一张 ownership map，并固定 forward(idx, targets=None) 的单一合同。',
         '把 training 与 inference 的分叉放在 targets 是否存在，而不让 forward 自行 backward、step 或 sampling。',
       ],
       [
+        callout('第一遍先用五个可运行阶段组装', [
+          paragraph(
+            '不要一次复制完整大类。运行 course_examples/week10_stages.py，依次选择 embedding、single、multi、block、full。每一阶段使用相同五词 inputs/targets；程序打印 logits shape、loss 和参数量，目的是看新增计算，不把随机初始化的 loss 排序当成性能结论。',
+          ),
+          table(
+            ['阶段', '本次新增', '为什么需要'],
+            [
+              [
+                'embedding',
+                'token 表 + position 表 + 输出层',
+                '先得到合法词表分数，但还没有跨位置读取。',
+              ],
+              [
+                'single',
+                '一组 Q/K/V、causal mask、加权求和',
+                '让当前位置能够读取左侧；本阶段是单头。',
+              ],
+              [
+                'multi',
+                '同一输入上的多组投影与拼接',
+                '同时形成多种读取表示，不是串行看两遍。',
+              ],
+              [
+                'block',
+                '两条 Pre-Norm 残差与 FFN',
+                '沿上一周解释的顺序加工表示。',
+              ],
+              [
+                'full',
+                '多个 block + final norm',
+                '得到下方完整 MiniGPT 的同一实现。',
+              ],
+            ],
+          ),
+          paragraph(
+            '先预测每一阶段仍应返回 [3,2,5]，再运行。shape 不变不表示内容没变；改造的是每个位置怎样得到那五个分数。完整默认模型仍是 520 参数，阶段代码只为看见组装过程。',
+          ),
+        ]),
+
         paragraph(
           'MiniGPT.forward 总会计算 logits。training/evaluation caller 提供 aligned targets 时，它额外返回 scalar mean cross-entropy；generation caller 不提供 targets，只消费 logits。forward 是神经网络映射，不在内部改变 optimizer，也不挑选 next token。',
         ),
@@ -547,6 +586,28 @@ except ValueError as error:
         '追踪 score 的两个 T axes 与 head outputs 如何重新合并为 C=4。',
       ],
       [
+        callout('先跟踪一个元素，再背 shape', [
+          paragraph(
+            '把一个位置的八个通道标成 [a,b,c,d,e,f,g,h]。当 H=2、D=4 时，拆头得到 head0=[a,b,c,d]、head1=[e,f,g,h]。transpose 只是把 head 轴移到 position 轴前面，没有把 a 变成 e，也没有做求和。',
+          ),
+          table(
+            ['步骤', 'shape（B=1,T=3,C=8）', '原来第二个位置的 e 在哪里'],
+            [
+              ['原张量', '[1,3,8]', 'x[0,1,4]'],
+              ['reshape', '[1,3,2,4]', 'reshaped[0,1,1,0]'],
+              ['transpose(1,2)', '[1,2,3,4]', 'heads[0,1,1,0]'],
+              [
+                '计算后 transpose/merge',
+                '[1,3,8]',
+                '回到该位置第 4 通道；数值可能经 Attention 改变',
+              ],
+            ],
+          ),
+          paragraph(
+            '最后先换回 [B,T,H,D] 再拼成 C。不能仅看到元素总数相同就直接 reshape：那可能把不同位置的通道错接。下方默认配置的多个轴恰好都是 2，因此另用这个不等长例子辨认轴。',
+          ),
+        ]),
+
         paragraph(fixedDimensions),
         table(
           ['stage', 'shape with named axes', 'operation meaning'],
@@ -705,7 +766,7 @@ class TransformerBlock(nn.Module):
     ),
     section(
       'o0361-7-gpt-model',
-      '7. 完整 MiniGPT：稳定 Names、Validation 与 Forward',
+      '7. 完整 MiniGPT：把已经学过的计算接起来',
       '组件已经各自成立，但若顶层 class 没有统一 registration、initialization、input validation 与 optional-loss contract，checkpoint 和 caller 仍无法可靠依赖它。',
       [
         '用稳定 member names 组装 token_embedding、position_embedding、blocks、final_norm 与 lm_head。',
@@ -1026,7 +1087,7 @@ assert "blocks.0.attention.qkv.weight" in registered.state_dict()`,
     ),
     section(
       'o0365-10-parameter-count',
-      '10. 手算 Parameter Count：Canonical Untied Total = 520',
+      '10. 手算参数量：默认不共享权重时为 520',
       '“更宽”或“更多层”太抽象；不逐项数 learned tensor，就难以发现漏注册、错误 bias 或意外 weight sharing。',
       [
         '按 owner 数元素，排除 activations 与 causal-mask buffer。',
@@ -1086,7 +1147,7 @@ assert parameter_count == 520`,
     ),
     section(
       'o0371-11-weight-tying',
-      '11. Weight Tying：理解 Optional Variant，不改 Canonical Policy',
+      '11. 选读：输入表与输出层怎样共享权重',
       'token_embedding 与 lm_head 的 weights 都是 [V,C]=[5,4]，容易误以为相同 shape 就会自动共享，或把教学 tying 实验偷偷混入 canonical checkpoint。',
       [
         '说明 tying 是两个 names 引用同一 Parameter 的显式 architecture choice。',
@@ -1344,7 +1405,7 @@ assert torch.allclose(
     ),
     section(
       'o0374-14-architecture-state-dict',
-      '14. Architecture 与 State Dict：Checkpoint 是一份兼容性合同',
+      '14. 工程选读：保存格式与词表一致性',
       'state_dict 只是一组 named tensors；它不知道怎样执行 forward，也不知道 ID 1 是“喜欢”、weights 是否应 tying，或 AdamW 已完成多少次 update。',
       [
         '把 code/config、tokenizer identity、untied policy、model state、optimizer state 与 completed_updates 一起明确保存。',
@@ -1753,7 +1814,7 @@ def load_mini_gpt_for_inference(
     ),
     section(
       'o0377-17-week-10-week-11',
-      '17. Week 10 → Week 11：Model 负责 Forward，Caller 负责 State Change',
+      '17. Week 10 → Week 11：预测函数怎样接入训练循环',
       '刚组装的 520 个 parameters 都是初始化值；shape 与 causality checks 不会自动训练 weights，也不会替 caller 管理 device、mode、gradients、optimizer 或 generation history。',
       [
         '给 Week 11 一条最小、明确的 one-update boundary，而不提前展开完整 training/evaluation protocol。',

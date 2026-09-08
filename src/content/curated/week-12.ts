@@ -93,6 +93,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import torch
+from course_data import DEMO_DOCUMENTS, FIVE_WORD_TOKENIZER, configure_console
 
 from mini_gpt_walkthrough import (
     GPTConfig,
@@ -110,11 +111,7 @@ from week11_training_and_generation import (
 )
 
 
-RAW_TEXTS = (
-    "我 喜欢 AI",
-    "猫 喜欢 我",
-    "我 学习 AI",
-)
+RAW_TEXTS = DEMO_DOCUMENTS
 EXPECTED_RAW_IDS = (
     (0, 1, 2),  # 我 喜欢 AI
     (4, 1, 0),  # 猫 喜欢 我
@@ -124,22 +121,17 @@ FROZEN_STOI = {
     token: token_id
     for token_id, token in enumerate(CANONICAL_ORDERED_TOKENS)
 }
-assert CANONICAL_ORDERED_TOKENS == ("我", "喜欢", "AI", "学习", "猫")
+assert CANONICAL_ORDERED_TOKENS == FIVE_WORD_TOKENIZER.tokens
 assert CANONICAL_TOKENIZER_POLICY == (
     "whitespace-delimited;no-specials;no-pad;no-unk"
 )
 
 
 def encode_mini_gpt_v1(text: str) -> list[int]:
-    pieces = text.split()
-    if not pieces:
+    ids = FIVE_WORD_TOKENIZER.encode(text)
+    if not ids:
         raise ValueError("mini-gpt-v1 text must contain a token")
-    try:
-        return [FROZEN_STOI[piece] for piece in pieces]
-    except KeyError as error:
-        raise ValueError(
-            f"mini-gpt-v1 has no unknown-token fallback: {error.args[0]}"
-        ) from error
+    return ids
 
 
 def make_fixed_batch(device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
@@ -152,6 +144,7 @@ def make_fixed_batch(device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 def main() -> None:
+    configure_console()
     seed = 7
     torch.manual_seed(seed)
     if torch.cuda.is_available():
@@ -999,7 +992,7 @@ completed_updates += 1  # only after the successful step returns`,
     ),
     section(
       'o0427-13-training',
-      '13. 完整 Training 与 Checkpoint Round-trip',
+      '13. 项目 A：固定三句的训练与保存加载',
       '零散 excerpts 容易漏掉 save 后的严格 reload，或继续用内存中的旧 model 生成，从而没有真正验证持久化链路。',
       [
         '展示一个按静态顺序可编译的 Week 12 caller。',
@@ -1273,87 +1266,130 @@ def evaluate_token_weighted(model, held_out_batches, device, ignore_index=-100):
     ),
     section(
       'o0434-17-corpus',
-      '17. 换 Corpus：先重新定义数据协议，再训练',
-      '直接替换文字会引入未知 token、可变长度、数据泄漏或与旧 checkpoint 不兼容的 ID meanings。',
+      '17. 项目 B：用独立文档完成训练、验证与结果解释',
+      '反复学习三句话能检查更新链路，却回答不了“遇到没参与更新的资料时怎样”。现在保留同一个 MiniGPT 类，明确开启一个独立文档实验。',
       [
-        '说明 corpus 变化为什么会连锁影响 tokenizer、batch、split 与 checkpoint。',
-        '给出 one-dimensional stream 的安全 shifted-window 例子。',
+        '先按文档划分，再各自构造窗口；不要把验证内容喂给 optimizer。',
+        '用同一种损失和同一种评估模式比较训练/验证，保存真正运行的结果。',
       ],
       [
         paragraph(
-          '扩展数据时先记录每个 document/source/example 的 provenance group，再按这些 group 建立 train/held-out split。随后只依据事先声明的 training-split protocol fit tokenizer 并冻结它；最后各 split 独立 encode，并只在各自 document/example 边界内建立 windows。若 mapping/config 改变，默认新建 model/checkpoint。',
+          '本实验使用下载包 data/documents 内的 8 篇原创英文训练短文和 3 篇独立验证短文。题材都与观察、学习、日常活动有关，降低“完全不同领域”造成的混淆，但材料很少、文风单一，不能作为语言能力 benchmark。训练文件不含验证原文，不等于已经排除所有近似重复或数据偏差。',
         ),
         table(
-          ['顺序', '动作', '禁止的捷径'],
+          ['条件', '本实验设置', '为什么明确写出'],
           [
             [
-              '1',
-              '定义 provenance groups 与许可/隐私规则',
-              '先混合全部文字再追溯来源',
+              '输入单位',
+              '30 个固定字符：a–z、空格、句点、逗号、换行',
+              '字符表独立规定，不从验证集扩词表。',
             ],
             [
-              '2',
-              '按 document/source/example 分 train/held-out',
-              '把同源片段随机泄漏到两边',
+              '模型',
+              '同一 MiniGPT 类；T_max=24、C=32、H=4、2 个 block',
+              '这是新配置，不再声称默认五词模型只有 520 参数。',
             ],
             [
-              '3',
-              '按 declared training-only protocol fit tokenizer',
-              '默认用 held-out 内容学习 merges/Vocabulary',
+              '结构',
+              '手写 causal attention、Pre-Norm、GELU FFN、不共享权重、无 dropout',
+              '机制与主线一致；改变数据后明确新建模型。',
             ],
             [
-              '4',
-              'freeze tokenizer artifact/version',
-              '每个 split 重新分配 IDs',
+              '训练',
+              'CPU、seed=7、batch=4、AdamW lr=0.003、decay=0.01、梯度范数上限 1',
+              '记录实际条件；不承诺某个速度或收敛数值。',
             ],
             [
-              '5',
-              '各 split、各 document 独立 encode/window',
-              '串接跨 split 或跨 document 的 boundary window',
+              '评估',
+              '每 20 次更新，在全部固定训练/验证窗口上 eval + no_grad',
+              '不用不同随机小批次制造误导曲线，也不改变训练抽样随机序列。',
             ],
           ],
+        ),
+        paragraph(
+          '先分文档，再切窗口。T=24 意味着每道窗口要取连续 25 个字符：前 24 个作输入，后 24 个作目标。stride=24 让相邻窗口的目标位置不重叠；不足 25 个字符的末尾部分不用于本实验，报告会记录真正计分的目标数量。窗口不跨文档，更不能跨训练/验证边界。',
         ),
         code(
-          'python',
-          `def windows_within_document(
-    document_ids: torch.Tensor,
-    block_size: int,
-) -> tuple[torch.Tensor, torch.Tensor]:
-    if document_ids.dtype != torch.long or document_ids.numel() <= block_size:
-        raise ValueError("need long IDs and block_size + 1 tokens")
-    starts = range(document_ids.numel() - block_size)
-    x = torch.stack([document_ids[i : i + block_size] for i in starts])
-    y = torch.stack(
-        [document_ids[i + 1 : i + block_size + 1] for i in starts]
-    )
-    return x, y`,
+          'text',
+          '示意一个文档开头（实际程序按字符切，不按单词）：\n原始 25 个字符  [c0,c1,...,c24]\ninputs 长度 24 [c0,c1,...,c23]\ntargets 长度24 [c1,c2,...,c24]\n下一窗从 c24 开始；它的第一个目标是 c25。',
         ),
-        formula(
-          String.raw`s\in\mathbb N^L,\qquad x_i=s_{i:i+T},\qquad y_i=s_{i+1:i+T+1}`,
-          '在单一 split 的单一 document/example 内，每个 length-T input window 的 target 向右平移一位；绝不跨 provenance 或 split 边界。',
+        paragraph(
+          '回忆 Week 6：给出目标不表示模型能看见目标。位置 t 的输出只使用本窗口中到 t 为止的输入。把不同位置都算 loss，是并行提供多道监督题，不是取消 causal mask。',
+        ),
+        code(
+          'bash',
+          'cd course_examples\npython week12_generalization.py --steps 200 --eval-every 20 --seed 7 --output runs/first',
+        ),
+        paragraph(
+          '这是可直接运行的完整程序，需要先按下载包 README 安装 PyTorch。输出目录必须不存在；重复实验请换成 runs/second，程序不会覆盖原记录。不需要下载外部语料，也不需要 GPU。',
         ),
         table(
-          ['change', '必须重新核对'],
+          ['生成的文件', '怎样阅读它'],
           [
-            ['新文字/语言', 'normalization、coverage、rights/privacy'],
-            ['新 tokenizer', 'IDs、V、special/pad policy、embedding/head'],
-            ['新 lengths', 'window/padding/mask、block_size'],
-            ['新 split', 'tokenizer fitting protocol 与 held-out leakage'],
-            ['旧 checkpoint', 'exact identity 或 deliberate migration'],
+            [
+              'config.json',
+              '记录 Python/PyTorch、CPU、seed、模型、词表和评估设置。',
+            ],
+            [
+              'data_report.json',
+              '逐文档字符数、窗口数、文本校验值、完整包含检查和 48 字符重叠计数。',
+            ],
+            [
+              'loss.csv / loss.svg',
+              '每次记录都来自真正 forward；两条曲线都在 eval 模式下对固定窗口计算。',
+            ],
+            [
+              'samples.json',
+              '三个固定 prompt 的续写；可能重复、拼写混乱，不能只挑最好的一条。',
+            ],
+            [
+              'inference.pt',
+              '模型配置、词表、权重及明确的文件格式；只用于加载推理，不包含精确续训所需全部状态。',
+            ],
+            [
+              'experiment_record.md',
+              '实际首尾损失和加载差异，以及需要你自己补写的解释。',
+            ],
           ],
         ),
+        paragraph(
+          '如何汇总验证 Loss？假设一批有 48 个有效目标，平均损失 2；另一批有 24 个有效目标，平均损失 1。总平均是 (48×2+24×1)/(48+24)=1.6667，不是直接平均两个 batch 得 1.5。程序累加每批平均损失乘有效目标数，再除以总数；这是 Week 11 的同一约定。',
+        ),
+        paragraph(
+          '怎样解释曲线：两条都下降，表示在这个有限实验中两份资料的平均预测改善；训练下降、验证上升，先检查重复/切分、目标对齐、模式与样本量，再考虑过拟合。单个点反弹不足以定论；验证改善也不能证明事实正确性、推理能力或开放域泛化。',
+        ),
+        code(
+          'bash',
+          'python week12_generalization.py --generate-only runs/first/inference.pt --prompt "a " --new-tokens 80',
+        ),
+        paragraph(
+          '加载时重建保存的同一模型配置和字符表。不要把这个 checkpoint 交给五词模型的严格恢复器；两种实验的格式和词表明确不同。程序会比较保存/加载前同一输入的 logits，但不宣称能逐步复现训练中断后的随机轨迹。',
+        ),
+        callout('独立任务：先写预期，再运行', [
+          paragraph(
+            'EX12-B1：运行前记录你预计哪条曲线更低、为什么，以及什么现象会推翻你的猜测。运行后填写实际首尾值，不把本页的示意算式当成实测。',
+          ),
+          paragraph(
+            'EX12-B2：挑一个生成错误，说明它更可能与小语料、短上下文、模型容量或采样有关；一次生成不能唯一定位原因，写出下一项能区分假设的实验。',
+          ),
+          paragraph(
+            'EX12-C：复制同一命令，只把 --learning-rate 改为 0.001，输出到新目录。其余数据、seed、步数、评估保持不变；也可以选择只改 --heads 或 --layers，不同时改三项。固定 C 时改变 head 数不必改变主要矩阵参数总量。',
+          ),
+        ]),
       ],
       [
-        '不要让 held-out text 无意参与 tokenizer/data fitting 后仍宣称完全隔离。',
-        '不要先 concatenate train/held-out 或不同 documents 再 window；那会制造跨边界的假监督对。',
-        '不要用新 mapping 继续训练旧 embedding rows。',
-        '数据更多不自动代表数据更干净或更有代表性。',
+        '没有运行时，不填写训练成功、实测 Loss 或生成质量结论。',
+        '验证频率不改变训练 batch 抽样；改变参数前先固定比较条件。',
+        '小语料独立验证是学习评估方法，不是可靠的通用能力测评。',
       ],
-      check('为何 checkpoint 必须携带 ordered tokenizer identity？', [
-        paragraph(
-          '同一个 integer row 必须在保存与恢复后继续表示同一个 token。',
-        ),
-      ]),
+      check(
+        '为什么这次实验比固定三句话多提供了一层证据，却仍不能证明模型具备真正的语言理解能力？',
+        [
+          paragraph(
+            '验证文档未参与参数更新，因此它测量了训练资料之外的一组预测；固定三句没有提供这层隔离。但资料数量、题材和写作风格非常有限，next-token loss 与事实正确性或推理能力也不是同一个指标。回顾本节数据说明及 Week 11 的评估范围。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0435-18-character-tokenizer-subword',
@@ -1471,7 +1507,7 @@ def evaluate_token_weighted(model, held_out_batches, device, ignore_index=-100):
     ),
     section(
       'o0437-20-mini-gpt',
-      '20. Mini GPT 分层检查清单：从输入协议到因果性',
+      '20. 项目检查清单：从输入与目标到学习证据',
       '一个 plausible completion 无法证明 tokenizer、batch、gradients、checkpoint round-trip 或 causal mask 正确。',
       [
         '把六类 collapsed child checks 吸收到一张分层清单。',
@@ -1717,7 +1753,7 @@ torch.testing.assert_close(logits_a[:, 0, :], logits_b[:, 0, :])`,
     ),
     section(
       'o0459-24',
-      '24. 整门课程最重要的一句话：最小化可检验的预测误差',
+      '24. 完成课程：用自己的话解释一次学习与生成',
       '十二周若只留下组件清单，就缺少一个能被数据和 evaluation 证伪的统一目标。',
       [
         '把数学 objective、实现 trace 与能力边界收束为一条原则。',

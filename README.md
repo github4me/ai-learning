@@ -40,6 +40,8 @@ pnpm dev --hostname 0.0.0.0 --port 8787
 
 建议每周约 7–10 小时，将阅读、手算与实验交替进行。参阅 [学习路线](course_examples/LEARNING_ROUTE.md) 和 [实验说明](course_examples/README.md)。教学语料很小，训练 Loss 下降不能单独证明泛化或语言质量。
 
+2026-09-08 连贯性修订：前五周用连续数值连接数学与训练；Week 3 按四个学习单元阅读；Week 6–12 保留共同五词数据入口，另外明确区分 tokenizer 比较与独立文档实验。原小节编号与链接保留，新阅读顺序不一定按旧编号排列。修改前基线标签为 `pre-course-clarity-revision-2026-09-08`，验证范围见 [修订记录](docs/COURSE_CLARITY_REVISION.md)。
+
 ## 阅读功能
 
 - 可折叠课程目录、稳定的小节链接、中英文全文搜索。
@@ -63,7 +65,7 @@ pnpm dev --hostname 0.0.0.0 --port 8787
 
 ## Python 实验
 
-Week 3、4 基础例子只需 Python；其它实验按 [配套说明](course_examples/README.md) 安装兼容的 PyTorch。网站本身不在浏览器里运行 Python。
+Week 1–4 基础数值例子、Week 9 数据协议及 Week 11 AdamW 数值镜头只需 Python；框架和 GPT 实验按 [配套说明](course_examples/README.md) 安装兼容的 PyTorch。网站本身不在浏览器里运行 Python。
 
 ```sh
 cd course_examples
@@ -71,6 +73,8 @@ python week03_neuron.py
 python week04_gradient_check.py
 # 安装 PyTorch 后：
 python week06_probability.py
+python week06_bigram.py
+python week12_generalization.py --steps 200 --output runs/first
 ```
 
 下载示例与历史附录可能使用不同的 tokenizer、模型配置和 checkpoint，运行时应遵循各自说明。
@@ -99,7 +103,7 @@ scripts/                   内容转换、校验与示例导出工具
 
 课程最初由 PDF 转换而来，网页正文已经持续扩展与修订。维护时以当前网站内容为准，历史 PDF 和转换底稿用于追溯来源。
 
-`course-runtime.ts` 依次应用生成底稿、curated 修订、代码块修正与 beginner 补充。编辑前检查对应周文件及覆盖规则，避免只改底稿而未改变显示内容。保留已有 section ID，可维持外部链接。
+`course-runtime.ts` 依次应用生成底稿、curated 修订、代码块修正与 beginner 编辑。基础章节的完整替换在 `beginner/foundation-revisions.ts`，各周导读在 `language-roadmaps.ts`，阅读顺序在 `learning-order.ts`。完整正文替换同时替代该节旧补充，避免新旧解释并存。编辑前检查覆盖规则；保留已有 section ID 可维持外部链接。
 
 ```sh
 pnpm export:examples

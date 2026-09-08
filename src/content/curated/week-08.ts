@@ -394,6 +394,22 @@ export const week08Revision: CuratedWeekRevision = {
           ],
           'example',
         ),
+        callout('只改一个权重，观察“混合特征”究竟是什么', [
+          paragraph(
+            '恒等矩阵让每个通道独立通过，适合核对数值，却看不出通道之间怎样组合。现在单独给 FFN 输入 z=[1,2,0,0]，其余设计不变，只把 W1[1,0] 从 0 改为 1。第一隐藏单元便从 z0 变成 z0+z1=3。',
+          ),
+          table(
+            ['量', '原来 W1[1,0]=0', '改成 1 后'],
+            [
+              ['第一隐藏值（激活前）', '1', '1+2=3'],
+              ['GELU 后', '约 0.841345', '约 2.995950'],
+              ['第二层乘以 0.25 后的首个输出', '约 0.210336', '约 0.748988'],
+            ],
+          ),
+          paragraph(
+            '输出仍有四个数，但首个输出现在依赖两个输入特征了。这就是通道混合，不是 shape 变大本身带来的魔法。其他通道保持相同。这是独立控制变量实验，不替换后面完整 block 的固定权重。',
+          ),
+        ]),
       ],
       [
         '4C 是 hidden width，不是 four attention heads，也不是数学定律。',
@@ -620,6 +636,26 @@ normalized
         paragraph(
           'BatchNorm 并非普遍错误；LayerNorm 更贴合 variable-length/autoregressive transformer：它不需要把一个 token row 的 normalization 依赖其他 batch examples。input/output 都是 [2,2,4]，γ、β 是 [4]。',
         ),
+        callout('为什么要做这一步：先把尺度差异看见', [
+          paragraph(
+            '比较 x=[1,2,3,4] 和 100x+1000=[1100,1200,1300,1400]。它们相对高低的排列一样，但原始数值尺度不同。LayerNorm 让子层主要看到本行各特征相对均值的偏离，减少整体平移与放大的影响。',
+          ),
+          table(
+            ['量', 'x', '100x+1000'],
+            [
+              ['均值', '2.5', '1250'],
+              ['总体方差', '1.25', '12500'],
+              [
+                '标准化后（近似）',
+                '[−1.342,−0.447,0.447,1.342]',
+                '[−1.342,−0.447,0.447,1.342]',
+              ],
+            ],
+          ),
+          paragraph(
+            '因为有 epsilon，两者不是逐位完全相等。标准化也不对每个任务都无损：整体偏移或尺度可能包含信息。Pre-Norm 的残差旁路仍传递原始 x，gamma/beta 允许训练调整归一化分支。控制输入尺度不是保证训练总会更快或 Loss 总下降。',
+          ),
+        ]),
       ],
       [
         'LayerNorm 不是 vocabulary Softmax，也不沿 T 或 B axis 统计。',
@@ -654,6 +690,14 @@ normalized
           String.raw`r_A=r_0+\operatorname{Attention}(\operatorname{LN}_1(r_0)),\qquad r_F=r_A+\operatorname{FFN}(\operatorname{LN}_2(r_A))`,
           'Pre-Norm sends normalized tensors into each branch while the direct residual route carries the corresponding raw residual stream.',
         ),
+        callout('先承接上一周，再看下面的两头手算', [
+          paragraph(
+            '运行 course_examples/week08_bridge.py。它导入 Week 7 的同一输入与 Q/K/V，先复现单头输出，再用明确的 [2,4] 投影恢复四通道。随后依次观察 LayerNorm 输入、Attention 分支、原始 x 的残差相加，以及 FFN 分支。',
+          ),
+          paragraph(
+            '这个过渡实验用于看清同一变量在哪里保留、在哪里重算。下方两头 block 的数值表使用本节明确给出的另一组简化投影；不要把不同实验的数字接成同一次计算。它们共用同一条 Pre-Norm 顺序。',
+          ),
+        ]),
         paragraph(
           '教学 Attention 使用最容易审计的参数：Head 1 选择 normalized row 的 Channels 0–1，Head 2 选择 Channels 2–3；每个 Head 内 Q=K=V；W_O 使用 Identity。它仍执行真实的 QKᵀ、Scale、Mask、Softmax 与 Weighted Values，只是把 Projection 简化为 Channel Selection。',
         ),
@@ -664,8 +708,16 @@ normalized
         table(
           ['LN1 Row', 'Prompt A', 'Prompt B'],
           [
-            ['Position 0', '[-0.2156,-1.2939,1.5095,0.0000]', '[-1.6731,0.6591,0.1521,0.8619]'],
-            ['Position 1: 喜欢', '[1.2206,0.3715,-1.5390,-0.0531]', '[1.2206,0.3715,-1.5390,-0.0531]'],
+            [
+              'Position 0',
+              '[-0.2156,-1.2939,1.5095,0.0000]',
+              '[-1.6731,0.6591,0.1521,0.8619]',
+            ],
+            [
+              'Position 1: 喜欢',
+              '[1.2206,0.3715,-1.5390,-0.0531]',
+              '[1.2206,0.3715,-1.5390,-0.0531]',
+            ],
           ],
           '最终“喜欢”的 LN1 Row 相同；两个 Prompt 的 Position 0 不同。',
         ),
@@ -688,10 +740,28 @@ Softmax([-0.5260, 1.1511])
 ≈ [0.1575, 0.8425]`,
         ),
         table(
-          ['Final Query', 'Scaled Scores Head 1', 'Weights Head 1', 'Scaled Scores Head 2', 'Weights Head 2'],
           [
-            ['Prompt A', '[-0.5260,1.1511]', '[0.1575,0.8425]', '[-1.6427,1.6768]', '[0.0349,0.9651]'],
-            ['Prompt B', '[-1.2709,1.1511]', '[0.0815,0.9185]', '[-0.1979,1.6768]', '[0.1330,0.8670]'],
+            'Final Query',
+            'Scaled Scores Head 1',
+            'Weights Head 1',
+            'Scaled Scores Head 2',
+            'Weights Head 2',
+          ],
+          [
+            [
+              'Prompt A',
+              '[-0.5260,1.1511]',
+              '[0.1575,0.8425]',
+              '[-1.6427,1.6768]',
+              '[0.0349,0.9651]',
+            ],
+            [
+              'Prompt B',
+              '[-1.2709,1.1511]',
+              '[0.0815,0.9185]',
+              '[-0.1979,1.6768]',
+              '[0.1330,0.8670]',
+            ],
           ],
           '每个 Head 对两条可见 Positions 分别做 Row Softmax。不同 Position-0 Rows 使最终 Attention Weights 不同。',
         ),
@@ -739,7 +809,9 @@ final LayerNorm h        = [ 1.2100, 0.3787, -1.5462, -0.0425]`,
         '不要把 LN(x) 错作 direct residual term；它必须是 raw x。',
       ],
       check('r_A=r_0+Attention(LN1(r_0)) 中 Direct Residual Path 传递什么？', [
-        paragraph('原始的、Pre-LayerNorm residual_0，Shape 仍是 [B,T,C]=[2,2,4]。'),
+        paragraph(
+          '原始的、Pre-LayerNorm residual_0，Shape 仍是 [B,T,C]=[2,2,4]。',
+        ),
       ]),
     ),
     section(
@@ -854,13 +926,13 @@ bias = torch.tensor([-0.2, 0.1, 0.0, 0.0, 0.0])
 logits = final_hidden @ W_out.T + bias
 vocabulary_probs = F.softmax(logits, dim=-1)
 
-print("final attention probabilities:\n", attention_probs[:, :, -1, :])
-print("attention update:\n", attention_update[:, -1, :])
-print("residual after attention:\n", residual_after_attention[:, -1, :])
-print("FFN update:\n", ffn_update[:, -1, :])
-print("final hidden:\n", final_hidden[:, -1, :])
-print("final logits:\n", logits[:, -1, :])
-print("final vocabulary probabilities:\n", vocabulary_probs[:, -1, :])`,
+print("final attention probabilities:", attention_probs[:, :, -1, :])
+print("attention update:", attention_update[:, -1, :])
+print("residual after attention:", residual_after_attention[:, -1, :])
+print("FFN update:", ffn_update[:, -1, :])
+print("final hidden:", final_hidden[:, -1, :])
+print("final logits:", logits[:, -1, :])
+print("final vocabulary probabilities:", vocabulary_probs[:, -1, :])`,
         ),
         code(
           'python',
@@ -1046,7 +1118,11 @@ z_B = [1.0100, -2.6987, -1.5887, 2.6821, 1.9674]`,
           'The shared output head maps every [C] contextual row to [V_vocab] raw scores.',
         ),
         table(
-          ['Prompt final row', 'Vocabulary Probabilities [我,喜欢,AI,学习,猫]', '最高候选'],
+          [
+            'Prompt final row',
+            'Vocabulary Probabilities [我,喜欢,AI,学习,猫]',
+            '最高候选',
+          ],
           [
             ['A', '[0.1742,0.0037,0.0124,0.4835,0.3261]', '学习'],
             ['B', '[0.1108,0.0027,0.0082,0.5897,0.2886]', '学习'],

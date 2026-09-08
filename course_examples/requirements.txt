@@ -1,4 +1,5 @@
-# CPU examples were verified with Python 3.12 and PyTorch 2.14.0.
+# Historical course pin; this revision has not rerun the PyTorch examples.
+# The current editing environment has Python 3.12 but no installed PyTorch.
 # For a GPU-specific build, follow the official PyTorch installation selector.
 torch==2.14.0
 

@@ -144,11 +144,14 @@ export const week07Revision: CuratedWeekRevision = {
         'Attention 不是更大的永久记忆，也不是对模型理解能力的证明。',
         'GPT 的 Causal Attention 只能读取当前位置和左侧历史，不能读取右侧未来 Token。',
       ],
-      check('为什么两个最后都是“喜欢”的 Prompt 在 Bigram 中相同，在 Attention 中却可能不同？', [
-        paragraph(
-          'Bigram 只查询“喜欢”的固定参数行；Attention 的最后 Query 可以读取不同的第一个位置，也就是 Prompt A 的“我”或 Prompt B 的“猫”。',
-        ),
-      ]),
+      check(
+        '为什么两个最后都是“喜欢”的 Prompt 在 Bigram 中相同，在 Attention 中却可能不同？',
+        [
+          paragraph(
+            'Bigram 只查询“喜欢”的固定参数行；Attention 的最后 Query 可以读取不同的第一个位置，也就是 Prompt A 的“我”或 Prompt B 的“猫”。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0257-1-context-aggregation',
@@ -235,7 +238,9 @@ export const week07Revision: CuratedWeekRevision = {
         'Key 用来形成读取比例；Value 才是最后被加权带回的内容。',
       ],
       check('Attention Weights 形成以后，Q、K、V 中哪一种会被加权相加？', [
-        paragraph('Value。Q 与 K 决定读取地址和比例，Value 提供被取回的 Payload。'),
+        paragraph(
+          'Value。Q 与 K 决定读取地址和比例，Value 提供被取回的 Payload。',
+        ),
       ]),
     ),
     section(
@@ -330,10 +335,7 @@ export const week07Revision: CuratedWeekRevision = {
       'o0263-5-softmax-scores-weights',
       '5. 从 Scores 到 Attention Weights',
       'Raw Scores 没有范围限制，不能直接解释为稳定的读取比例；同时必须区分 Attention Softmax 与 Vocabulary Softmax。',
-      [
-        '完整计算 Scale 与 Row Softmax。',
-        '明确 Softmax 的 Axis 和概率语义。',
-      ],
+      ['完整计算 Scale 与 Row Softmax。', '明确 Softmax 的 Axis 和概率语义。'],
       [
         paragraph(
           '先将最终 Query Row 除以 √d_k。本例 d_k=2，所以 Prompt A 从 [1.131,0.566] 得到 [0.8,0.4]，Prompt B 从 [0.141,0.566] 得到 [0.1,0.4]。最终位置可以读取两列，因此这一行没有未来位置需要屏蔽。',
@@ -359,8 +361,16 @@ weights       = [0.426, 0.574]`,
         table(
           ['Softmax', '竞争的 Axis', '回答的问题'],
           [
-            ['Attention Softmax', 'T 个 Key Positions', '当前 Query 应读取哪些位置？'],
-            ['Vocabulary Softmax', 'V 个 Vocabulary Tokens', '下一个 Token 应该是哪一个？'],
+            [
+              'Attention Softmax',
+              'T 个 Key Positions',
+              '当前 Query 应读取哪些位置？',
+            ],
+            [
+              'Vocabulary Softmax',
+              'V 个 Vocabulary Tokens',
+              '下一个 Token 应该是哪一个？',
+            ],
           ],
           '数学函数相同，但输入、Axis 与含义不同。Attention Weight 不是下一词概率。',
         ),
@@ -538,9 +548,21 @@ scaled scores    = [0.100, 0.400]`,
           ['Tensor', 'Shape', '三个 Axis 的含义'],
           [
             ['X', '[B,T,C] = [2,2,4]', 'Batch, Token Position, Model Feature'],
-            ['Q / K / V', '[B,T,d_head] = [2,2,2]', 'Batch, Token Position, Head Feature'],
-            ['Scores / Weights', '[B,T,T] = [2,2,2]', 'Batch, Query Position, Key/Value Position'],
-            ['Head Output', '[B,T,d_head] = [2,2,2]', 'Batch, Query Position, Head Feature'],
+            [
+              'Q / K / V',
+              '[B,T,d_head] = [2,2,2]',
+              'Batch, Token Position, Head Feature',
+            ],
+            [
+              'Scores / Weights',
+              '[B,T,T] = [2,2,2]',
+              'Batch, Query Position, Key/Value Position',
+            ],
+            [
+              'Head Output',
+              '[B,T,d_head] = [2,2,2]',
+              'Batch, Query Position, Head Feature',
+            ],
           ],
           'Shape 数字相同不表示 Axis 含义相同。',
         ),
@@ -719,13 +741,13 @@ masked_scores = scaled_scores.masked_fill(~causal_mask, float("-inf"))
 weights = torch.softmax(masked_scores, dim=-1)
 output = weights @ v
 
-print("Q:\n", q)
-print("K:\n", k)
-print("V:\n", v)
-print("Raw scores:\n", raw_scores)
-print("Scaled and masked scores:\n", masked_scores)
-print("Attention weights:\n", weights)
-print("Head output:\n", output)`,
+print("Q:", q)
+print("K:", k)
+print("V:", v)
+print("Raw scores:", raw_scores)
+print("Scaled and masked scores:", masked_scores)
+print("Attention weights:", weights)
+print("Head output:", output)`,
         ),
         code(
           'text',
@@ -810,8 +832,16 @@ class AttentionHead(nn.Module):
         table(
           ['代码阶段', '公式', 'Shape'],
           [
-            ['query/key/value(x)', 'Q=XW_Q, K=XW_K, V=XW_V', '[B,T,C] → [B,T,d_head]'],
-            ['q @ k.transpose(-2,-1)', 'S=QKᵀ', '[B,T,d_head] @ [B,d_head,T] → [B,T,T]'],
+            [
+              'query/key/value(x)',
+              'Q=XW_Q, K=XW_K, V=XW_V',
+              '[B,T,C] → [B,T,d_head]',
+            ],
+            [
+              'q @ k.transpose(-2,-1)',
+              'S=QKᵀ',
+              '[B,T,d_head] @ [B,d_head,T] → [B,T,T]',
+            ],
             ['scores / sqrt(k.size(-1))', 'S/√d_k', '[B,T,T] → [B,T,T]'],
             ['masked_fill', 'Future → −∞', '[B,T,T] → [B,T,T]'],
             ['softmax(dim=-1)', 'Row Softmax', '[B,T,T] → [B,T,T]'],
@@ -826,11 +856,14 @@ class AttentionHead(nn.Module):
         '该 Head 返回 [B,T,d_head]，还没有恢复 Model Width C，也没有产生 Vocabulary Logits。',
         'Runtime T 不能超过初始化时的 context_length。',
       ],
-      check('这个 AttentionHead 为什么不能直接与输入 x 做 Residual Addition？', [
-        paragraph(
-          '单 Head Output 的最后一维是 d_head=2，而输入的最后一维是 C=4；需要 Multi-Head Concat 与 Output Projection 恢复到 C。',
-        ),
-      ]),
+      check(
+        '这个 AttentionHead 为什么不能直接与输入 x 做 Residual Addition？',
+        [
+          paragraph(
+            '单 Head Output 的最后一维是 d_head=2，而输入的最后一维是 C=4；需要 Multi-Head Concat 与 Output Projection 恢复到 C。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0278-14-self-attention',
@@ -868,7 +901,9 @@ class AttentionHead(nn.Module):
         'Q/K 的内容比较本身不提供完整 Absolute Position；Week 8 会加入 Position Embedding。',
       ],
       check('Prompt A 的“喜欢”可以读取 Prompt B 的“猫”吗？', [
-        paragraph('不能。两条 Prompt 是独立 Batch Examples，各自拥有独立的 [T,T] Score Slice。'),
+        paragraph(
+          '不能。两条 Prompt 是独立 Batch Examples，各自拥有独立的 [T,T] Score Slice。',
+        ),
       ]),
     ),
     section(
@@ -966,12 +1001,61 @@ class AttentionHead(nn.Module):
         table(
           ['对象', '典型 Shape', '意义'],
           [
-            ['Attention Weights', '[B,n_head,T,T]', '每个 Query 读取哪些 Key/Value Positions'],
-            ['Contextual Features H', '[B,T,C]', '每个位置经过上下文处理后的表示'],
+            [
+              'Attention Weights',
+              '[B,n_head,T,T]',
+              '每个 Query 读取哪些 Key/Value Positions',
+            ],
+            [
+              'Contextual Features H',
+              '[B,T,C]',
+              '每个位置经过上下文处理后的表示',
+            ],
             ['Vocabulary Logits', '[B,T,V_vocab]', '每个候选 Token 的原始分数'],
-            ['Vocabulary Probabilities', '[B,T,V_vocab]', 'Logits 沿 Vocabulary Axis Softmax 后的分布'],
+            [
+              'Vocabulary Probabilities',
+              '[B,T,V_vocab]',
+              'Logits 沿 Vocabulary Axis Softmax 后的分布',
+            ],
           ],
         ),
+        callout('打开最后一段连接：损失怎样改变一次读取', [
+          paragraph(
+            '先不引入完整 GPT，只在本周的单头输出后接一个固定的两维评分层。A 的末位置输出 h=[0.598688,0.401312]，B 是 [−0.425557,0.574443]。这里 h 宽度为 2，是单头的小型分类实验；不是上一周四维输出层的同一组权重。词表和目标仍保持 A→AI、B→我。',
+          ),
+          code(
+            'text',
+            '固定评分矩阵 W_vocab（两行是特征，五列是候选）：\n[[0,1,2,-1,0],\n [0,0,0, 1,0]]\nlogits = h @ W_vocab；偏置为 0。',
+          ),
+          table(
+            ['上下文', '算出的 logits', '目标概率 / 单题损失'],
+            [
+              [
+                '我 喜欢',
+                '[0,0.598688,1.197375,−0.197375,0]',
+                'p(AI)≈0.416424；L≈0.876051',
+              ],
+              [
+                '猫 喜欢',
+                '[0,−0.425557,−0.851115,1,0]',
+                'p(我)≈0.172455；L≈1.757621',
+              ],
+            ],
+          ),
+          paragraph(
+            '两题平均损失约 1.316836。为了只观察一个因素，本实验只调整 Wq[1,0]：它原来是 1，因为“喜欢”的输入选择第 1 行，所以这个参数影响末位置 query 的第一个分量。先从 loss 求出这个参数的梯度，再改变它，整个评分层保持不动。',
+          ),
+          code(
+            'text',
+            'A 的末行 scaled scores：[0.8q, 0.2q+0.2]\nB 的末行 scaled scores：[0.1, 0.2q+0.2]\nq=Wq[1,0]=1。两行各做 Softmax，再加权 Value，最后算词表 logits 和 CE。\n此固定实验 d(mean loss)/dq≈−0.076159；学习率 0.01 时 q_new≈1.000762。',
+          ),
+          paragraph(
+            '上面的数值是固定公式的计算参考，不是训练日志。运行 course_examples/week07_attention.py 可以看到自动求导给出的梯度与更新前后概率。只有 q 这一个元素被更新，目的是隔离影响；一般训练会同时更新全部参与的参数。',
+          ),
+          paragraph(
+            '这解释了 Q/K/V 为什么不需要人工标注“谁该关注谁”：next-token 目标通过词表损失、输出表示和加权计算，把反馈传回投影矩阵。Value 有自己的加权求和路径，不必先绕过 score 才收到梯度；Q/K 则经 score 和 Softmax 路径收到反馈。',
+          ),
+        ]),
         callout(
           'Attention 不是什么',
           [
@@ -989,11 +1073,14 @@ class AttentionHead(nn.Module):
         '不要把 Attention Weights 直接送入 Vocabulary Softmax；LM Head 接收的是 Contextual Features。',
         '某个 Weight 为零不代表该 Token 没有经其他 Head、Residual 或 Layer 影响最终结果。',
       ],
-      check('Attention Weights 与 Vocabulary Probabilities 分别回答什么问题？', [
-        paragraph(
-          'Attention Weights 回答“当前 Query 读取哪些位置”；Vocabulary Probabilities 回答“下一个 Token 可能是哪一个”。',
-        ),
-      ]),
+      check(
+        'Attention Weights 与 Vocabulary Probabilities 分别回答什么问题？',
+        [
+          paragraph(
+            'Attention Weights 回答“当前 Query 读取哪些位置”；Vocabulary Probabilities 回答“下一个 Token 可能是哪一个”。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0282-17-attention',
@@ -1055,7 +1142,10 @@ class AttentionHead(nn.Module):
             ['7. Retrieval', '确认 Weights @ V，而不是 @ K'],
             ['8. Multi-Head', '确认在 Feature Axis Concat，并经 W_O 恢复 C'],
             ['9. Batch', '确认不同 Batch Examples 没有相互读取'],
-            ['10. Logits', '确认 LM Head 接收 Contextual Features，而不是 Attention Weights'],
+            [
+              '10. Logits',
+              '确认 LM Head 接收 Contextual Features，而不是 Attention Weights',
+            ],
           ],
         ),
         list(
@@ -1082,11 +1172,14 @@ class AttentionHead(nn.Module):
         '不要只打印 Shape；Shape 正确但 Softmax Axis 或 Matrix Axis 错误时，代码仍可能运行。',
         '不要用一张 Attention Weight Matrix 解释整个模型的最终预测。',
       ],
-      check('如果 Scores 正确，但 Future Position 仍有正 Weight，最应该先检查哪两步？', [
-        paragraph(
-          '先检查 Causal Mask 是否在 Softmax 前正确应用，再检查 Softmax 是否沿 Key Position Axis dim=-1 运行。',
-        ),
-      ]),
+      check(
+        '如果 Scores 正确，但 Future Position 仍有正 Weight，最应该先检查哪两步？',
+        [
+          paragraph(
+            '先检查 Causal Mask 是否在 Softmax 前正确应用，再检查 Softmax 是否沿 Key Position Axis dim=-1 运行。',
+          ),
+        ],
+      ),
     ),
     section(
       'o0284-19-week-7-week-8',
@@ -1116,7 +1209,10 @@ class AttentionHead(nn.Module):
           ['组件', '主要职责'],
           [
             ['Position Embedding', '提供 Token 顺序与位置信息'],
-            ['Causal Multi-Head Attention', '跨允许的 Token Positions 混合信息'],
+            [
+              'Causal Multi-Head Attention',
+              '跨允许的 Token Positions 混合信息',
+            ],
             ['FFN', '在每个 Position 独立执行相同非线性变换'],
             ['Residual Connection', '保留原路径并改善深层训练'],
             ['Layer Normalization', '帮助稳定各层输入尺度'],

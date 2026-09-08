@@ -9,12 +9,19 @@ const sections = getCourse().units.flatMap(flattenSections);
 const output = join(process.cwd(), 'course_examples');
 mkdirSync(output, { recursive: true });
 function python(prefix: string): string[] {
-  const matches = sections.filter(section => section.id.startsWith(`${prefix}-`));
-  if (matches.length !== 1) throw new Error(`Ambiguous example section ${prefix}`);
+  const matches = sections.filter((section) =>
+    section.id.startsWith(`${prefix}-`),
+  );
+  if (matches.length !== 1)
+    throw new Error(`Ambiguous example section ${prefix}`);
   return matches[0].blocks
-    .filter((block): block is Extract<ContentBlock, { type: 'code' }> =>
-      block.type === 'code' && block.language === 'python')
-    .map(block => block.code);
+    .filter(
+      (block): block is Extract<ContentBlock, { type: 'code' }> =>
+        block.type === 'code' &&
+        block.language === 'python' &&
+        block.filename !== 'week11_minimal_loop.py',
+    )
+    .map((block) => block.code);
 }
 const write = (name: string, chunks: string[]) =>
   writeFileSync(join(output, name), chunks.join('\n\n\n') + '\n');
@@ -42,10 +49,30 @@ if __name__ == "__main__":
 ]);
 write('week11_training_and_generation.py', [
   '"""Week 11 完整函数。Import 不训练、不生成、不保存文件。"""',
-  ...['o0379', 'o0387', 'o0389', 'o0393', 'o0394', 'o0396', 'o0397', 'o0402', 'o0403'].flatMap(python),
+  ...[
+    'o0379',
+    'o0387',
+    'o0389',
+    'o0393',
+    'o0394',
+    'o0396',
+    'o0397',
+    'o0402',
+    'o0403',
+  ].flatMap(python),
 ]);
 write('week12_end_to_end.py', python('o0427'));
 // The Week 9 readable tokenizer is deliberately a separate ID space.
 write('w09_readable_v1.py', python('o0337'));
-console.log('Exported complete Week 9–12 Python modules from the displayed course.');
-
+const minimalLoop = sections
+  .flatMap((section) => section.blocks)
+  .filter(
+    (block): block is Extract<ContentBlock, { type: 'code' }> =>
+      block.type === 'code' && block.filename === 'week11_minimal_loop.py',
+  );
+if (minimalLoop.length !== 1)
+  throw new Error('Expected one standalone minimal training loop');
+write('week11_minimal_loop.py', [minimalLoop[0].code]);
+console.log(
+  'Exported complete Week 9–12 modules and the standalone minimal training loop.',
+);

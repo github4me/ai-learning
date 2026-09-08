@@ -1,0 +1,1 @@
+a cook prepares soup by following a simple recipe. each ingredient has a measured amount, and the order of steps matters. after tasting the soup, the cook changes only the salt. changing every ingredient together would make the cause of a better taste unclear.
