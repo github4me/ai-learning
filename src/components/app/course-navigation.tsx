@@ -487,8 +487,8 @@ export const CourseNavigation = React.memo(function CourseNavigation({
             });
         }}
       >
-        <span>AI First Principles</span>
-        <small>{text('The complete first-principles course', '核心教程深度扩展版')}</small>
+        <span>AI Made Simple</span>
+        <small>{text('From the basics to Mini GPT', '轻松学 AI：从基础到 Mini GPT')}</small>
       </a>
       {mode === 'mobile' && (
         <div className="mobile-rail-actions">

@@ -1,4 +1,4 @@
-# AI First Principles
+# AI Made Simple
 
 English · [中文说明](README.md)
 
@@ -64,8 +64,8 @@ firewall restrictions or Wi-Fi client isolation may prevent access.
 | 12 | Trace the system, run an independent-document experiment and change one factor. |
 
 Allow roughly 7–10 hours per week, alternating reading, hand calculations and
-experiments. The original section numbers remain for stable references; follow
-the current page order rather than rearranging sections by their old numbers.
+experiments. Follow each week's reading order and work through the examples
+before moving to the next topic.
 Small training-loss improvements do not establish generalization or fluent language.
 
 ## Reader features and personal data
@@ -118,7 +118,7 @@ The build runs existing source-content validators and emits a standalone Node
 server. `PORT` selects the production port; its default is 3000.
 
 English dictionaries in `src/content/english` translate the **final reviewed
-website content**, not the historical PDF. Stable IDs and source identity fields
+website content**. Stable IDs and source identity fields
 are preserved. Editing a Chinese source string intentionally exposes a missing
 translation instead of silently keeping an outdated translation.
 

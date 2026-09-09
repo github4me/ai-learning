@@ -1,4 +1,4 @@
-# AI First Principles · AI 第一性原理
+# AI Made Simple · 轻松学 AI
 
 [English README](README_EN.md) · 中文说明
 
@@ -6,7 +6,7 @@
 
 面向有编程经验、希望补齐数学基础的学习者的 12 周 AI 课程网站。从加权求和与梯度下降开始，通过中文讲解、具体数值和 Python 例子理解神经网络、语言模型、Attention，最终完成教学版 Mini GPT 的训练与生成。
 
-正文、公式、表格和代码直接在网页中阅读，支持手机与桌面。`main` 收录当前 V1 课程，`feature/v1-course` 保留其开发分支。
+正文、公式、表格和代码直接在网页中阅读，支持手机与桌面。从基础概念到 Mini GPT，用一步一步的解释理解 AI 如何工作。
 
 ## 在线学习 / Live course
 
@@ -50,8 +50,6 @@ pnpm dev --hostname 0.0.0.0 --port 8787
 
 建议每周约 7–10 小时，将阅读、手算与实验交替进行。参阅 [学习路线](course_examples/LEARNING_ROUTE.md) 和 [实验说明](course_examples/README.md)。教学语料很小，训练 Loss 下降不能单独证明泛化或语言质量。
 
-2026-09-08 连贯性修订：前五周用连续数值连接数学与训练；Week 3 按四个学习单元阅读；Week 6–12 保留共同五词数据入口，另外明确区分 tokenizer 比较与独立文档实验。原小节编号与链接保留，新阅读顺序不一定按旧编号排列。修改前基线标签为 `pre-course-clarity-revision-2026-09-08`，验证范围见 [修订记录](docs/COURSE_CLARITY_REVISION.md)。
-
 ## 阅读功能
 
 - 可折叠课程目录、稳定的小节链接、中英文全文搜索。
@@ -63,7 +61,7 @@ pnpm dev --hostname 0.0.0.0 --port 8787
 | --- | --- |
 | `/` | 课程总览与继续学习 |
 | `/week/week-06` | 第 6 周；其它周使用 `week-01` 至 `week-12` |
-| `/appendix/mini-gpt` | 历史 Mini GPT 附录 |
+| `/appendix/mini-gpt` | Mini GPT 附录 |
 | `/review` | 笔记与书签复习 |
 | `/downloads/course-examples.zip` | Python 示例下载 |
 
@@ -87,18 +85,18 @@ python week06_bigram.py
 python week12_generalization.py --steps 200 --output runs/first
 ```
 
-下载示例与历史附录可能使用不同的 tokenizer、模型配置和 checkpoint，运行时应遵循各自说明。
+下载示例与附录可能使用不同的 tokenizer、模型配置和 checkpoint，运行时应遵循各自说明。
 
 ## 技术与目录
 
-React 19、TypeScript、Vinext/Vite、Tailwind CSS、KaTeX、MiniSearch 和 Zustand 构成网站主体；生产环境使用 Node.js 服务，无需数据库。Vite 已移除 Cloudflare/Sites 运行插件及 `.openai/hosting.json` 依赖。
+React 19、TypeScript、Vinext/Vite、Tailwind CSS、KaTeX、MiniSearch 和 Zustand 构成网站主体；生产环境使用 Node.js 服务，无需数据库。
 
 ```text
 app/                      页面与路由
 src/
   components/             阅读界面与交互组件
   content/
-    course.generated.json 原始转换底稿
+    course.generated.json 基础课程数据
     curated/              各周扩展与修订正文
     beginner/             初学者补充与内容覆盖逻辑
     course-runtime.ts     最终显示内容的组合入口
@@ -106,14 +104,14 @@ src/
   learning/               学习状态与备份逻辑
 course_examples/           Python 示例与学习说明
 public/downloads/          下载文件
-scripts/                   内容转换、校验与示例导出工具
+scripts/                   内容校验与示例导出工具
 ```
 
 ## 维护课程
 
-课程最初由 PDF 转换而来，网页正文已经持续扩展与修订。维护时以当前网站内容为准，历史 PDF 和转换底稿用于追溯来源。
+维护时以当前网站显示的完整课程为准，保持讲解、公式、数值例子与可下载代码一致。
 
-`course-runtime.ts` 依次应用生成底稿、curated 修订、代码块修正与 beginner 编辑。基础章节的完整替换在 `beginner/foundation-revisions.ts`，各周导读在 `language-roadmaps.ts`，阅读顺序在 `learning-order.ts`。完整正文替换同时替代该节旧补充，避免新旧解释并存。编辑前检查覆盖规则；保留已有 section ID 可维持外部链接。
+`course-runtime.ts` 组合基础课程数据、curated 内容、代码块修正与 beginner 讲解。基础章节在 `beginner/foundation-revisions.ts`，各周导读在 `language-roadmaps.ts`，阅读顺序在 `learning-order.ts`。编辑前检查内容组合规则；保留已有 section ID 可维持外部链接。
 
 ```sh
 pnpm export:examples
@@ -132,14 +130,14 @@ pnpm start
 
 | 命令 | 用途 |
 | --- | --- |
-| `pnpm validate:content` | 原始转换内容与来源完整性校验 |
+| `pnpm validate:content` | 基础课程数据完整性校验 |
 | `pnpm validate:curated` | 修订内容校验 |
 | `pnpm lint` | 静态代码检查 |
 | `pnpm exec tsc --noEmit` | TypeScript 类型检查 |
 | `pnpm test` | 已有单元/组件测试 |
 | `pnpm test:e2e` | 已有浏览器端测试 |
 
-这些是仓库提供的检查入口，不代表每次文案更新均执行过全部检查。`pnpm normalize:content` 属于历史转换维护操作；正常编辑课程不需要重跑 PDF 提取流程。
+这些是仓库提供的检查入口，不代表每次文案更新均执行过全部检查。
 
 ## 许可证与引用
 

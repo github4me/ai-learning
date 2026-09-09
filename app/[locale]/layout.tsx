@@ -4,7 +4,7 @@ import CourseDocument, { metadata as sharedMetadata } from '@/src/components/app
 
 export const metadata: Metadata = {
   ...sharedMetadata,
-  title: { default: 'AI First Principles · A 12-week course', template: '%s · AI First Principles' },
+  title: { default: 'AI Made Simple · A 12-week course', template: '%s · AI Made Simple' },
   description: 'Understand AI from numerical examples and working code: from linear regression and gradients to attention, Transformers and a small GPT.',
 };
 

@@ -26,7 +26,7 @@ export function courseMetadata(locale: CourseLocale, path: string, slug?: string
         'x-default': new URL(localePath(path, 'zh'), publicOrigin).href,
       },
     },
-    openGraph: { title, description, url, siteName: 'AI First Principles', type: 'website', locale: locale === 'en' ? 'en_US' : 'zh_CN', alternateLocale: locale === 'en' ? 'zh_CN' : 'en_US' },
+    openGraph: { title, description, url, siteName: 'AI Made Simple', type: 'website', locale: locale === 'en' ? 'en_US' : 'zh_CN', alternateLocale: locale === 'en' ? 'zh_CN' : 'en_US' },
     ...(review ? { robots: { index: false, follow: true } } : {}),
   };
 }

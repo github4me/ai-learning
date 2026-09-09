@@ -13,10 +13,10 @@ import { COURSE_CONTENT_VERSION } from '@/src/content/content-version';
 import { getLocalizedCourse } from '@/src/content/english/localize-course';
 
 export const metadata: Metadata = {
-  applicationName: 'AI First Principles / AI 第一性原理',
+  applicationName: 'AI Made Simple / 轻松学 AI',
   title: {
-    default: 'AI First Principles · 12周 AI 第一性原理学习教程',
-    template: '%s · AI First Principles',
+    default: 'AI Made Simple · 12 周轻松学 AI',
+    template: '%s · AI Made Simple',
   },
   description:
     '12周双语 AI 第一性原理学习教程：从 Linear Regression、数据、参数与梯度到可运行的 Mini GPT。',

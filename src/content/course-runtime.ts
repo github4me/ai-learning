@@ -8,11 +8,12 @@ import { courseUnitPath } from './course-paths';
 export { courseUnitPath } from './course-paths';
 
 const generatedCourse = loadCourse(courseData);
-const course = loadCourse(
-  applyBeginnerReview(
+const course = loadCourse({
+  ...applyBeginnerReview(
     applyLegacyCodePromotions(applyCuratedContent(generatedCourse)),
   ),
-);
+  title: 'AI Made Simple · 轻松学 AI',
+});
 
 export function getCourse(): Course {
   return course;
